@@ -1,59 +1,66 @@
 import random
+import json
 import configparser
 from enum import Enum
 import mesa
 
 class CustomerAgentState(Enum):
     """State for the CustomerAgent class"""
-    WAIT_FOR_SERVICE_AGENT = 0
-    EATING = 1
-    FINISHED_EATING = 2
+    WAIT_FOR_SERVICE_AGENT = 0  # gets selected by ServiceAgent
+    WAITING_FOR_FOOD = 1
+    EATING = 2
+    FINISHED_EATING = 3         # rating accordingly + agent removed from model
+    REJECTED = 4                # worst rating + agent removed from model
 
     def __str__(self):
         return self.name
 
 class CustomerAgent(mesa.Agent):
     """An agent that represents a table of customers"""
-    def __init__(self, model: mesa.Model, config: configparser.ConfigParser):
+    def __init__(self, model: mesa.Model):
         # Pass parameters to parent class
         super().__init__(model)
 
-        # Get config from configfile
-        self.config = config
+        # Get global config from model
+        config = self.model.config
+        menu = self.model.menu
 
         # Create random number of people (at least 1)
         self.num_people = random.randint(
             1,
-            int(self.config["Customers"]["max_customers_per_agent"])
+            int(config["Customers"]["max_customers_per_agent"])
         )
 
         # Create random number for time left (in minutes)
         self.time_left = random.randint(
-            int(self.config["Customers"]["time_min"]),
-            int(self.config["Customers"]["time_max"])
+            int(config["Customers"]["time_min"]),
+            int(config["Customers"]["time_max"])
         )
         self.init_time = self.time_left
 
-        # Served food needs time to be eaten. Value is set by ServiceAgent after serving
-        self.eating_time = 0
+        # Randomly select food from menu
+        self.menu_item = menu["menu"][random.randint(0, len(menu["menu"])-1)]
+        # Retrieve eating time for selected menu item
+        self.eating_time = self.menu_item["eatingTime"]
 
         # Default correctness of the order: 95%
-        self.order_correctness = float(self.config["Orders"]["order_correctness"])
+        self.order_correctness = float(config["Orders"]["order_correctness"])
 
         # Default rating is initally 5/5
-        self.rating = int(self.config["Rating"]["rating_default"])
-        self.rating_min = int(self.config["Rating"]["rating_min"])
-        self.rating_max = int(self.config["Rating"]["rating_max"])
+        self.rating = int(config["Rating"]["rating_default"])
+        self.rating_min = int(config["Rating"]["rating_min"])
+        self.rating_max = int(config["Rating"]["rating_max"])
 
         # Track agent's state
         self.state = CustomerAgentState.WAIT_FOR_SERVICE_AGENT
+        print(self)
 
     def calculate_table_rating(self):
         """Function to calculate the table rating according to waiting time exceeding and a random factor"""
         # Weight for waiting time exceeding
-        alpha = float(self.config["Weights"]["time_exceeding"])
+        alpha = float(self.model.config["Weights"]["time_exceeding"])
         # Weight for order errors
-        beta = float(self.config["Weights"]["order_error"])
+        beta = float(self.model.config["Weights"]["order_error"])
         # Error rate
         error_rate = 1 - self.order_correctness
 
@@ -68,18 +75,35 @@ class CustomerAgent(mesa.Agent):
         return self.rating * self.num_people
 
     def step(self):
-        # If table is eating, reduce the eating time. If eating has finished, set state accordingly
-        time_per_tick = int(self.config["Ticks"]["time_per_tick"])
+        # If customer is rejected, set rating to the worst and remove agent from model
+        if self.state == CustomerAgentState.REJECTED:
+            self.rating = self.rating_min
+            print(self)
+            self.remove()
+            return
+
+
+        # If table is waiting for food, count down and start eating after food preparation time
+        if self.state == CustomerAgentState.WAITING_FOR_FOOD and \
+            (self.init_time - self.time_left) >= self.menu_item["preparationTime"]:
+                self.state = CustomerAgentState.EATING
+
+
+        # If table is eating, reduce the eating time
         if self.state == CustomerAgentState.EATING:
-            if self.eating_time > time_per_tick:
-                self.eating_time -= time_per_tick
+            if self.eating_time > 1:
+                self.eating_time -= 1
+            # If eating has finished, set state accordingly and remove agent from model
             else:
                 self.state = CustomerAgentState.FINISHED_EATING
                 self.calculate_table_rating()
+                print(self)
+                self.remove()
+                return
 
-        # Always reduce time left by the set per tick
-        self.time_left -= time_per_tick
+        # Always reduce time left by 1
+        self.time_left -= 1
         print(self)
 
     def __str__(self):
-        return f"CustomerAgent {self.unique_id} with {self.num_people} people in state {self.state}. Time left: {self.time_left}. Current rating: {self.rating}"
+        return f"CustomerAgent {self.unique_id} with {self.num_people} people in state {self.state}. Time left: {self.time_left}. Current rating: {self.rating}. Selected menu item: {self.menu_item}"

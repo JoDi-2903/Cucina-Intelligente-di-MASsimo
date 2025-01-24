@@ -1,0 +1,40 @@
+{
+    "menu": [
+        {
+            "name": "Pizza Margherita",
+            "preparationTime": 8,
+            "eatingTime": 20,
+            "costs": 8.5
+        },
+        {
+            "name": "Pizza Salami",
+            "preparationTime": 12,
+            "eatingTime": 22,
+            "costs": 10.0
+        },
+        {
+            "name": "Pizza Quattro Formaggi",
+            "preparationTime": 10,
+            "eatingTime": 25,
+            "costs": 11.0
+        },
+        {
+            "name": "Spaghetti Carbonara",
+            "preparationTime": 12,
+            "eatingTime": 22,
+            "costs": 9.0
+        },
+        {
+            "name": "Spaghetti Bolognese",
+            "preparationTime": 10,
+            "eatingTime": 22,
+            "costs": 9.0
+        },
+        {
+            "name": "Lasagne",
+            "preparationTime": 25,
+            "eatingTime": 15,
+            "costs": 11.0
+        }
+    ]
+}

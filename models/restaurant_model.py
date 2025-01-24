@@ -1,5 +1,6 @@
 import configparser
-from agents import customer_agent
+import json
+from agents import customer_agent, service_agent
 import mesa
 
 class RestaurantModel(mesa.Model):
@@ -9,15 +10,25 @@ class RestaurantModel(mesa.Model):
         super().__init__()
 
         # Read config from configfile
-        config = configparser.ConfigParser()
-        config.read('config.ini')
+        self.config = configparser.ConfigParser()
+        self.config.read('config.ini')
+
+        # Read menu from file
+        with open(file="data/menu.json", mode="r", encoding="utf8") as file:
+            self.menu = json.load(file)
 
         # Initialize agents
-        agents = customer_agent.CustomerAgent.create_agents(
+        customer_agents = customer_agent.CustomerAgent.create_agents(
             model=self,
-            config=config,
-            n=int(config["Customers"]["customer_agents"])
+            n=int(self.config["Customers"]["customer_agents"])
         )
+        service_agents = service_agent.ServiceAgent.create_agents(
+            model=self,
+            n=int(self.config["Service"]["service_agents"])
+        )
+        
+        # Initialize global customer queue
+        self.customer_queue: list[customer_agent.CustomerAgent] = []
 
     def step(self):
         """Advance the model by one step."""
