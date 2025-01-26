@@ -26,7 +26,7 @@ class RestaurantModel(mesa.Model):
             model=self,
             n=int(self.config["Service"]["service_agents"])
         )
-        
+
         # Initialize global customer queue
         self.customer_queue: list[customer_agent.CustomerAgent] = []
 
