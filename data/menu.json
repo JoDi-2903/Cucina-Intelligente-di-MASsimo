@@ -1,40 +1,94 @@
 {
     "menu": [
         {
+            "name": "Garlic Bread",
+            "preparationTime": 6,
+            "eatingTime": 10,
+            "profit": 4.0
+        },
+        {
+            "name": "Antipasto Platter",
+            "preparationTime": 12,
+            "eatingTime": 30,
+            "profit": 9.5
+        },
+        {
+            "name": "Bruschetta",
+            "preparationTime": 5,
+            "eatingTime": 10,
+            "profit": 4.5
+        },
+        {
+            "name": "Caprese Salad",
+            "preparationTime": 7,
+            "eatingTime": 15,
+            "profit": 6.0
+        },
+        {
+            "name": "Minestrone Soup",
+            "preparationTime": 2,
+            "eatingTime": 8,
+            "profit": 7.5
+        },
+        {
             "name": "Pizza Margherita",
             "preparationTime": 8,
-            "eatingTime": 20,
-            "costs": 8.5
+            "eatingTime": 22,
+            "profit": 8.5
         },
         {
             "name": "Pizza Salami",
             "preparationTime": 12,
-            "eatingTime": 22,
-            "costs": 10.0
+            "eatingTime": 24,
+            "profit": 10.0
         },
         {
             "name": "Pizza Quattro Formaggi",
             "preparationTime": 10,
-            "eatingTime": 25,
-            "costs": 11.0
+            "eatingTime": 27,
+            "profit": 11.0
         },
         {
             "name": "Spaghetti Carbonara",
             "preparationTime": 12,
             "eatingTime": 22,
-            "costs": 9.0
+            "profit": 9.0
         },
         {
             "name": "Spaghetti Bolognese",
             "preparationTime": 10,
             "eatingTime": 22,
-            "costs": 9.0
+            "profit": 9.0
         },
         {
             "name": "Lasagne",
             "preparationTime": 25,
             "eatingTime": 15,
-            "costs": 11.0
+            "profit": 11.0
+        },
+        {
+            "name": "Risotto Milanese",
+            "preparationTime": 18,
+            "eatingTime": 25,
+            "profit": 10.5
+        },
+        {
+            "name": "Gnocchi al Pesto",
+            "preparationTime": 14,
+            "eatingTime": 22,
+            "profit": 9.5
+        },
+        {
+            "name": "Tiramisu",
+            "preparationTime": 7,
+            "eatingTime": 10,
+            "profit": 6.5
+        },
+        {
+            "name": "Panna Cotta",
+            "preparationTime": 6,
+            "eatingTime": 9,
+            "profit": 6.0
         }
     ]
 }
