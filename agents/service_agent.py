@@ -44,7 +44,7 @@ class ServiceAgent(mesa.Agent):
             # Only the specified amount of food can be processed at once.
             # The delay depends on the amount of customers
             preparation_delay = math.ceil(
-                customer.num_people / int(self.model.config["Orders"]["parallel_prepration"])
+                customer.num_people / int(self.model.config["Orders"]["parallel_preparation"])
             )
 
             # Occasionally introduce a probabilistic delay based on order_correctness
@@ -60,3 +60,4 @@ class ServiceAgent(mesa.Agent):
                 customer.food_preparation_time -= 1
             else:
                 customer.state = customer_agent.CustomerAgentState.EATING
+                customer.food_arrival_time = customer.time_left

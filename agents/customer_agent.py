@@ -1,3 +1,4 @@
+import os
 import random
 import logging
 from enum import Enum
@@ -9,7 +10,7 @@ logging.basicConfig(
     level=logging.DEBUG,
     handlers=[
         logging.StreamHandler(), # Log to console
-        logging.FileHandler("log/customer_agent.log") # Log to file
+        logging.FileHandler(os.path.join("log", "customer_agent.log")) # Log to file
     ]
 )
 
@@ -18,8 +19,9 @@ class CustomerAgentState(Enum):
     WAIT_FOR_SERVICE_AGENT = 0  # gets selected by ServiceAgent
     WAITING_FOR_FOOD = 1
     EATING = 2
-    FINISHED_EATING = 3         # rating accordingly + agent removed from model
-    REJECTED = 4                # worst rating + agent removed from model
+    FINISHED_EATING = 3         # rating accordingly + agent set to done
+    REJECTED = 4                # worst rating + agent set to done
+    DONE = 5
 
     def __str__(self):
         return self.name
@@ -53,6 +55,9 @@ class CustomerAgent(mesa.Agent):
         self.eating_time = self.menu_item["eatingTime"]
         # Retrieve eating time for selected menu item. Time is updated by service agent
         self.food_preparation_time = self.menu_item["preparationTime"]
+
+        # Attribute to save the time of food arrival. Value is set by service agent
+        self.food_arrival_time = 0
 
         # Default correctness of the order
         self.order_correctness = float(config["Orders"]["order_correctness"])
@@ -119,30 +124,38 @@ class CustomerAgent(mesa.Agent):
         return self.rating * self.num_people
 
     def step(self):
-        # If customer is rejected, set rating to the worst and remove agent from model
+        # If agent is done, don't do anything and don't decrease time_left
+        if self.state == CustomerAgentState.DONE:
+            return
+
+        # If customer is rejected, set rating to the worst and set agent to done
         if self.state == CustomerAgentState.REJECTED:
             self.rating = self.rating_min
             # print(self)
             logging.info(self)
-            self.remove()
+            self.state = CustomerAgentState.DONE
             return
 
         # If table is eating, reduce the eating time
         if self.state == CustomerAgentState.EATING:
             if self.eating_time > 1:
                 self.eating_time -= 1
-            # If eating has finished, set state accordingly and remove agent from model
+            # If eating has finished, set state accordingly and set agent to done
             else:
                 self.state = CustomerAgentState.FINISHED_EATING
                 self.calculate_table_rating()
                 # print(self)
                 logging.info(self)
-                self.remove()
+                self.state = CustomerAgentState.DONE
                 return
 
         # Always reduce time left by 1
         self.time_left -= 1
         # print(self)
+
+    def get_waiting_time(self):
+        """ Calculate waiting time of agent"""
+        return self.init_time - self.food_arrival_time
 
     def __str__(self):
         return f"CustomerAgent {self.unique_id} with {self.num_people} people in state {self.state}. Time left: {self.time_left}. Current rating: {self.rating}. Selected menu item: {self.menu_item}"
