@@ -21,7 +21,8 @@
       "time_max": 100
     },
     "Service": {
-      "service_agents": 5
+      "service_agents": 5,
+      "service_agent_capacity": 5
     },
     "Run": {
       "step_amount": 120

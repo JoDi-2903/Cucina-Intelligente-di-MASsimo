@@ -25,9 +25,6 @@ class RestaurantModel(mesa.Model):
             n=int(self.config["Service"]["service_agents"])
         )
 
-        # Initialize global customer queue
-        self.customer_queue: list[customer_agent.CustomerAgent] = []
-
     def step(self):
         """Advance the model by one step."""
         self.agents.shuffle_do("step")
