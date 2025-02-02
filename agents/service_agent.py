@@ -1,10 +1,15 @@
-from agents import customer_agent
-import random
 import math
+import random
+
 import mesa
+
+from agents import customer_agent
+from config.config import CONFIG
+
 
 class ServiceAgent(mesa.Agent):
     """An agent that represents the service in the restaurant"""
+
     def __init__(self, model: mesa.Model):
         super().__init__(model)
 
@@ -30,15 +35,14 @@ class ServiceAgent(mesa.Agent):
 
             # Check if the customer needs to be rejected
             if customer.menu_item["preparationTime"] + customer.menu_item["eatingTime"] \
-                > customer.time_left:
+                    > customer.time_left:
                 customer.state = customer_agent.CustomerAgentState.REJECTED
 
             # Check if the personal queue is full
-            elif len(self.customer_queue) < int(self.model.config["Service"]["service_agent_capacity"]):
+            elif len(self.customer_queue) < CONFIG.service.service_agent_capacity:
                 # Add the customer to the queue and update their state
                 self.customer_queue.append(customer)
                 customer.state = customer_agent.CustomerAgentState.WAITING_FOR_FOOD
-
 
         # Filter and sort customers waiting for food
         waiting_customers = sorted(
@@ -54,12 +58,12 @@ class ServiceAgent(mesa.Agent):
             # Only the specified amount of food can be processed at once.
             # The delay depends on the amount of customers
             preparation_delay = math.ceil(
-                customer.num_people / int(self.model.config["Orders"]["parallel_preparation"])
+                customer.num_people / CONFIG.orders.parallel_preparation
             )
 
             # Occasionally introduce a probabilistic delay based on order_correctness
-            random_delay = random.randint(0, int(self.model.config["Orders"]["delay_max"])) \
-                if random.random() > float(self.model.config["Orders"]["delay_randomness"]) \
+            random_delay = random.randint(0, CONFIG.orders.delay_max) \
+                if random.random() > CONFIG.orders.delay_randomness \
                 else 0
 
             # Total delay combines the batch adjustment and random delay (if applicable)

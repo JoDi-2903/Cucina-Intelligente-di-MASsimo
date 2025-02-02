@@ -1,0 +1,2 @@
+pyoptinterface[highs]~=0.4.0
+mesa~=3.0.3

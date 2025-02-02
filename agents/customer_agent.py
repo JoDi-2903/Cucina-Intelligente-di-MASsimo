@@ -1,56 +1,61 @@
+import logging
 import os
 import random
-import logging
 from enum import Enum
+
 import mesa
+
+from config.config import CONFIG
 
 # Configure logging
 logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
     level=logging.DEBUG,
     handlers=[
-        logging.StreamHandler(), # Log to console
-        logging.FileHandler(os.path.join("log", "customer_agent.log")) # Log to file
+        logging.StreamHandler(),  # Log to console
+        logging.FileHandler(os.path.join("log", "customer_agent.log"))  # Log to file
     ]
 )
+
 
 class CustomerAgentState(Enum):
     """State for the CustomerAgent class"""
     WAIT_FOR_SERVICE_AGENT = 0  # gets selected by ServiceAgent
     WAITING_FOR_FOOD = 1
     EATING = 2
-    FINISHED_EATING = 3         # rating accordingly + agent set to done
-    REJECTED = 4                # worst rating + agent set to done
+    FINISHED_EATING = 3  # rating accordingly + agent set to done
+    REJECTED = 4  # worst rating + agent set to done
     DONE = 5
 
     def __str__(self):
         return self.name
 
+
 class CustomerAgent(mesa.Agent):
     """An agent that represents a table of customers"""
+
     def __init__(self, model: mesa.Model):
         # Pass parameters to parent class
         super().__init__(model)
 
         # Get global config from model
-        config = self.model.config
         menu = self.model.menu
 
         # Create random number of people (at least 1)
         self.num_people = random.randint(
             1,
-            int(config["Customers"]["max_customers_per_agent"])
+            CONFIG.customers.max_customers_per_agent
         )
 
         # Create random number for time left (in minutes)
         self.time_left = random.randint(
-            int(config["Customers"]["time_min"]),
-            int(config["Customers"]["time_max"])
+            CONFIG.customers.time_min,
+            CONFIG.customers.time_max
         )
         self.init_time = self.time_left
 
         # Randomly select food from menu
-        self.menu_item = menu["menu"][random.randint(0, len(menu["menu"])-1)]
+        self.menu_item = menu["menu"][random.randint(0, len(menu["menu"]) - 1)]
         # Retrieve eating time for selected menu item
         self.eating_time = self.menu_item["eatingTime"]
         # Retrieve eating time for selected menu item. Time is updated by service agent
@@ -60,12 +65,12 @@ class CustomerAgent(mesa.Agent):
         self.food_arrival_time = 0
 
         # Default correctness of the order
-        self.order_correctness = float(config["Orders"]["order_correctness"])
+        self.order_correctness = CONFIG.orders.order_correctness
 
         # Default rating
-        self.rating = int(config["Rating"]["rating_default"])
-        self.rating_min = int(config["Rating"]["rating_min"])
-        self.rating_max = int(config["Rating"]["rating_max"])
+        self.rating = CONFIG.rating.rating_default
+        self.rating_min = CONFIG.rating.rating_min
+        self.rating_max = CONFIG.rating.rating_max
 
         # Track agent's state
         self.state = CustomerAgentState.WAIT_FOR_SERVICE_AGENT
@@ -74,10 +79,9 @@ class CustomerAgent(mesa.Agent):
     def calculate_table_rating(self):
         """Function to calculate the table rating according to waiting time exceeding and a random factor"""
         # Weight for waiting time exceeding
-        alpha = float(self.model.config["Weights"]["time_exceeding"])
+        alpha = CONFIG.weights.time_exceeding
         # Weight for order errors
-        beta = float(self.model.config["Weights"]["order_error"])
-
+        beta = CONFIG.weights.order_error
 
         ####### Order Correctness Penalty
 
@@ -88,23 +92,19 @@ class CustomerAgent(mesa.Agent):
         # If the random number exceeds the order correctness, consider the order wrong
         order_error_penalty = beta * error_rate if random_error > self.order_correctness else 0
 
-
         ####### Exceeding Time Penalty
-        
+
         # Ratio proportional to overall time
         exceedance_ratio = self.init_time + abs(self.time_left) / self.init_time \
             if self.time_left < 0 else 0
 
-
         # Apply penalty only if time_left is negative (time exceeded)
         waiting_penalty = exceedance_ratio * alpha if self.time_left < 0 else 0
-
 
         ####### Rating Variability
 
         # Introduce additional variability to the final rating
         rating_variability = random.uniform(-0.5, 0.5) * self.num_people
-
 
         ####### Final Rating
 
@@ -117,7 +117,8 @@ class CustomerAgent(mesa.Agent):
                 )
             ), 2
         )
-        logging.debug(f"num people {self.num_people}, alpha {alpha}, beta {beta}, random error {random_error}, exceedance ratio {exceedance_ratio}, waiting penalty {waiting_penalty}, order error penalty {order_error_penalty}, rating variabilty {rating_variability}")
+        logging.debug(
+            f"num people {self.num_people}, alpha {alpha}, beta {beta}, random error {random_error}, exceedance ratio {exceedance_ratio}, waiting penalty {waiting_penalty}, order error penalty {order_error_penalty}, rating variabilty {rating_variability}")
 
     def get_global_rating_contribution(self):
         """Return the contribution to the global restaurant rating"""
