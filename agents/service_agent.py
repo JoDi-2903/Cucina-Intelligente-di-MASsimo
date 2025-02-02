@@ -8,7 +8,15 @@ class ServiceAgent(mesa.Agent):
     def __init__(self, model: mesa.Model):
         super().__init__(model)
 
+        # Initialize the queue for customers. Queue is limited by capacity
+        self.customer_queue: list[customer_agent.CustomerAgent] = []
+
     def step(self):
+        # Remove all customers that are done eating
+        for c in self.customer_queue:
+            if c.state == customer_agent.CustomerAgentState.DONE:
+                self.customer_queue.remove(c)
+
         # Filter and sort new customers by time_left
         waiting_customers = sorted(
             (a for a in self.model.agents_by_type[customer_agent.CustomerAgent]
@@ -24,9 +32,11 @@ class ServiceAgent(mesa.Agent):
             if customer.menu_item["preparationTime"] + customer.menu_item["eatingTime"] \
                 > customer.time_left:
                 customer.state = customer_agent.CustomerAgentState.REJECTED
-            else:
+
+            # Check if the personal queue is full
+            elif len(self.customer_queue) < int(self.model.config["Service"]["service_agent_capacity"]):
                 # Add the customer to the queue and update their state
-                self.model.customer_queue.append(customer)
+                self.customer_queue.append(customer)
                 customer.state = customer_agent.CustomerAgentState.WAITING_FOR_FOOD
 
 
@@ -44,7 +54,7 @@ class ServiceAgent(mesa.Agent):
             # Only the specified amount of food can be processed at once.
             # The delay depends on the amount of customers
             preparation_delay = math.ceil(
-                customer.num_people / int(self.model.config["Orders"]["parallel_prepration"])
+                customer.num_people / int(self.model.config["Orders"]["parallel_preparation"])
             )
 
             # Occasionally introduce a probabilistic delay based on order_correctness
@@ -60,3 +70,4 @@ class ServiceAgent(mesa.Agent):
                 customer.food_preparation_time -= 1
             else:
                 customer.state = customer_agent.CustomerAgentState.EATING
+                customer.food_arrival_time = customer.time_left

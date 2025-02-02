@@ -1,0 +1,30 @@
+{
+    "Rating": {
+      "rating_default": 5,
+      "rating_min": 0,
+      "rating_max": 5
+    },
+    "Orders": {
+      "order_correctness": 0.90,
+      "parallel_preparation": 5,
+      "delay_randomness": 0.80,
+      "delay_max": 10
+    },
+    "Weights": {
+      "time_exceeding": 0.05,
+      "order_error": 2
+    },
+    "Customers": {
+      "customer_agents": 100,
+      "max_customers_per_agent": 15,
+      "time_min": 20,
+      "time_max": 100
+    },
+    "Service": {
+      "service_agents": 5,
+      "service_agent_capacity": 5
+    },
+    "Run": {
+      "step_amount": 120
+    }
+  }

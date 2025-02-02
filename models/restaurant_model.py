@@ -1,4 +1,3 @@
-import configparser
 import json
 from agents import customer_agent, service_agent
 import mesa
@@ -6,12 +5,11 @@ import mesa
 class RestaurantModel(mesa.Model):
     """A model with some number of agents."""
 
-    def __init__(self):
+    def __init__(self, config):
         super().__init__()
 
         # Read config from configfile
-        self.config = configparser.ConfigParser()
-        self.config.read('config.ini')
+        self.config = config
 
         # Read menu from file
         with open(file="data/menu.json", mode="r", encoding="utf8") as file:
@@ -27,9 +25,11 @@ class RestaurantModel(mesa.Model):
             n=int(self.config["Service"]["service_agents"])
         )
 
-        # Initialize global customer queue
-        self.customer_queue: list[customer_agent.CustomerAgent] = []
-
     def step(self):
         """Advance the model by one step."""
         self.agents.shuffle_do("step")
+
+    def get_total_waiting_time(self):
+        """ Compute the total waiting time for all customers in the model """
+        return sum(agent.get_waiting_time() for agent in \
+            self.agents_by_type[customer_agent.CustomerAgent])
