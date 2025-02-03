@@ -24,5 +24,10 @@ class Menu:
         # Initialize the dishes
         self.dishes: list[Dish] = []
         for json_dish in self.json_content['menu']:
-            dish = Dish(json_dish['name'], json_dish['preparationTime'], json_dish['eatingTime'], json_dish['profit'])
+            dish = Dish(
+                json_dish['name'],
+                json_dish['preparationTime'],
+                json_dish['eatingTime'],
+                json_dish['profit']
+            )
             self.dishes.append(dish)

@@ -6,6 +6,7 @@ from mesa import Agent, Model
 
 from enums.customer_agent_state import CustomerAgentState
 from models.config.config import Config
+from models.menu import Menu
 
 # Configure logging
 logging.basicConfig(
@@ -25,8 +26,8 @@ class CustomerAgent(Agent):
         # Pass parameters to parent class
         super().__init__(model)
 
-        # Get global config from model
-        menu = self.model.menu
+        # Get menu from model
+        menu: Menu = self.model.menu
 
         # Create random number of people (at least 1)
         self.num_people = random.randint(
@@ -42,11 +43,11 @@ class CustomerAgent(Agent):
         self.init_time = self.time_left
 
         # Randomly select food from menu
-        self.menu_item = menu["menu"][random.randint(0, len(menu["menu"]) - 1)]
+        self.menu_item = menu.dishes[random.randint(0, len(menu.dishes) - 1)]
         # Retrieve eating time for selected menu item
-        self.eating_time = self.menu_item["eatingTime"]
+        self.eating_time = self.menu_item.eating_time
         # Retrieve eating time for selected menu item. Time is updated by service agent
-        self.food_preparation_time = self.menu_item["preparationTime"]
+        self.food_preparation_time = self.menu_item.preparation_time
 
         # Attribute to save the time of food arrival. Value is set by service agent
         self.food_arrival_time = 0
@@ -100,7 +101,7 @@ class CustomerAgent(Agent):
                 self.rating_min,
                 min(
                     self.rating_max,
-                    self.rating_max - waiting_penalty - order_error_penalty + rating_variability
+                    int(self.rating_max - waiting_penalty - order_error_penalty + rating_variability)
                 )
             ), 2
         )
