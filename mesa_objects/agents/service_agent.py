@@ -1,10 +1,11 @@
-import math
 import random
 
+import math
 from mesa import Agent, Model
 
 from enums.customer_agent_state import CustomerAgentState
 from mesa_objects.agents import customer_agent
+from mesa_objects.agents.customer_agent import CustomerAgent
 from models.config.config import Config
 
 
@@ -15,7 +16,7 @@ class ServiceAgent(Agent):
         super().__init__(model)
 
         # Initialize the queue for customers. Queue is limited by capacity
-        self.customer_queue: list[customer_agent.CustomerAgent] = []
+        self.customer_queue: list[CustomerAgent] = []
 
     def step(self):
         # Remove all customers that are done eating
@@ -32,10 +33,10 @@ class ServiceAgent(Agent):
 
         # Get the customer with the smallest time_left
         if waiting_customers:
-            customer = waiting_customers[0]
+            customer: CustomerAgent = waiting_customers[0]
 
             # Check if the customer needs to be rejected
-            if customer.menu_item["preparationTime"] + customer.menu_item["eatingTime"] \
+            if customer.menu_item.preparation_time + customer.menu_item.eating_time \
                     > customer.time_left:
                 customer.state = CustomerAgentState.REJECTED
 
@@ -54,7 +55,7 @@ class ServiceAgent(Agent):
 
         # Get the customer with the smallest time_left
         if waiting_customers:
-            customer = waiting_customers[0]
+            customer: CustomerAgent = waiting_customers[0]
 
             # Only the specified amount of food can be processed at once.
             # The delay depends on the amount of customers
