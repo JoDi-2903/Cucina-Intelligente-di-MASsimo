@@ -44,7 +44,7 @@ x = opt_model.add_variables(service_agents, parallel_preparation, max_customers_
 
 # Get a list of all possible permutations of the variables for the loop
 permutations = list(product(service_agents, parallel_preparation, max_customers_per_agent))
-# TODO: ist max_customers_per_agent wirklich die richtige Variable? Nochmal prüfen
+# TODO: sind max_customers_per_agent und parallel_preparation wirklich die richtigen Variable? Nochmal prüfen und ggf. entfernen
 
 # print(permutations)
 
