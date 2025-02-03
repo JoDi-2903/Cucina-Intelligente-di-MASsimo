@@ -29,6 +29,8 @@ class RestaurantModel(mesa.Model):
         """Advance the model by one step."""
         self.agents.shuffle_do("step")
 
+        # TODO: spawn new customers -> remove single iterations in main.py
+
     def get_total_waiting_time(self):
         """ Compute the total waiting time for all customers in the model """
         return sum(agent.get_waiting_time() for agent in \

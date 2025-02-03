@@ -22,6 +22,7 @@ def model_run(config: str, service_agents: int, parallel_preparation: int, max_c
     while restaurant.running and restaurant.steps < int(config["Run"]["step_amount"]):
         restaurant.step()
 
+    # TODO: Anstatt der Waiting Time die Überschreitung der Gesamtzeit (Zubereitungszeit + Essenszeit als ideal. Im Vergleich zur realen Zeit) berechnen -> Delay reduzieren
     return restaurant.get_total_waiting_time()
 
 
@@ -43,6 +44,7 @@ x = opt_model.add_variables(service_agents, parallel_preparation, max_customers_
 
 # Get a list of all possible permutations of the variables for the loop
 permutations = list(product(service_agents, parallel_preparation, max_customers_per_agent))
+# TODO: ist max_customers_per_agent wirklich die richtige Variable? Nochmal prüfen
 
 # print(permutations)
 

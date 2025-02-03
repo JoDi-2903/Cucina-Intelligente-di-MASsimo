@@ -42,8 +42,7 @@ class ServiceAgent(mesa.Agent):
 
         # Filter and sort customers waiting for food
         waiting_customers = sorted(
-            (a for a in self.model.agents_by_type[customer_agent.CustomerAgent]
-             if a.state == customer_agent.CustomerAgentState.WAITING_FOR_FOOD),
+            (a for a in self.customer_queue if a.state == customer_agent.CustomerAgentState.WAITING_FOR_FOOD),
             key=lambda c: c.time_left
         )
 
