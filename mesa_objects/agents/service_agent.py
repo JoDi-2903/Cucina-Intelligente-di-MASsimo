@@ -25,6 +25,7 @@ class ServiceAgent(Agent):
                 self.customer_queue.remove(c)
 
         # Filter and sort new customers by time_left
+        # TODO: Sortierung ändern (Profit, bisherige Wartezeit, Gesamtzeit, Anzahl der Personen)
         waiting_customers = sorted(
             (a for a in self.model.agents_by_type[customer_agent.CustomerAgent]
              if a.state == CustomerAgentState.WAIT_FOR_SERVICE_AGENT),
@@ -47,9 +48,9 @@ class ServiceAgent(Agent):
                 customer.state = CustomerAgentState.WAITING_FOR_FOOD
 
         # Filter and sort customers waiting for food
+        # TODO: Sortierung ändern (Profit, bisherige Wartezeit, Gesamtzeit, Anzahl der Personen)
         waiting_customers = sorted(
-            (a for a in self.model.agents_by_type[customer_agent.CustomerAgent]
-             if a.state == CustomerAgentState.WAITING_FOR_FOOD),
+            (a for a in self.customer_queue if a.state == customer_agent.CustomerAgentState.WAITING_FOR_FOOD),
             key=lambda c: c.time_left
         )
 

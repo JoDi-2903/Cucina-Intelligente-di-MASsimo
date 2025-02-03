@@ -18,10 +18,17 @@ def model_run(service_agents: int, parallel_preparation: int, max_customers_per_
     # Create the Mesa Model
     restaurant = RestaurantModel(service_agents, parallel_preparation, max_customers_per_agent)
 
+
+    # Set the number of service agents and parallel preparation according to the optimization
+    restaurant.config["num_service_agents"] = service_agents
+    restaurant.config["parallel_preparation"] = parallel_preparation
+    restaurant.config["max_customers_per_agent"] = max_customers_per_agent
+
     # Run the model with the updated configuration
     while restaurant.running and restaurant.steps < Config().run.step_amount:
         restaurant.step()
 
+    # TODO: Anstatt der Waiting Time die Überschreitung der Gesamtzeit (Zubereitungszeit + Essenszeit als ideal. Im Vergleich zur realen Zeit) berechnen -> Delay reduzieren
     return restaurant.get_total_waiting_time()
 
 
@@ -40,6 +47,7 @@ if __name__ == '__main__':
 
     # Get a list of all possible permutations of the variables for the loop
     permutations = list(product(service_agents, parallel_preparation, max_customers_per_agent))
+    # TODO: sind max_customers_per_agent und parallel_preparation wirklich die richtigen Variable? Nochmal prüfen und ggf. entfernen
 
     # Variable to store the best objective value and corresponding parameters
     best_obj_value = float('inf')
