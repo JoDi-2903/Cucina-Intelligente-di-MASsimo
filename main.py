@@ -14,15 +14,12 @@ def model_run(service_agents: int, parallel_preparation: int, max_customers_per_
     :param parallel_preparation: Number of parallel preparations
     :param max_customers_per_agent: Maximum number of customers per agent
     """
+    # Set the number of service agents and parallel preparation according to the optimization
+    Config().service.service_agents = service_agents
 
+    # TODO: Instead of creating a new model every time, we should only update the configuration and run the model again
     # Create the Mesa Model
     restaurant = RestaurantModel(service_agents, parallel_preparation, max_customers_per_agent)
-
-
-    # Set the number of service agents and parallel preparation according to the optimization
-    restaurant.config["num_service_agents"] = service_agents
-    restaurant.config["parallel_preparation"] = parallel_preparation
-    restaurant.config["max_customers_per_agent"] = max_customers_per_agent
 
     # Run the model with the updated configuration
     while restaurant.running and restaurant.steps < Config().run.step_amount:

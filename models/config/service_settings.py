@@ -9,15 +9,11 @@ class ServiceSettings:
         :param config: The configuration to initialize the object with.
         """
         if config is not None:
-            self.__service_agents: int = config["service_agents"]
+            self.service_agents: int = config["service_agents"]
             self.__service_agent_capacity: int = config["service_agent_capacity"]
         else:
-            self.__service_agents: int = 5
+            self.service_agents: int = 5
             self.__service_agent_capacity: int = 5
-
-    @property
-    def service_agents(self) -> int:
-        return self.__service_agents
 
     @property
     def service_agent_capacity(self) -> int:
