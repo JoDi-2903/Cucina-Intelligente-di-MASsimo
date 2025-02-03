@@ -9,8 +9,16 @@ class WeightsSettings:
         :param config: The configuration to initialize the object with.
         """
         if config is not None:
-            self.time_exceeding: float = config["time_exceeding"]
-            self.order_error: int = config["order_error"]
+            self.__time_exceeding: float = config["time_exceeding"]
+            self.__order_error: int = config["order_error"]
         else:
-            self.time_exceeding: float = 0.005
-            self.order_error: int = 2
+            self.__time_exceeding: float = 0.005
+            self.__order_error: int = 2
+
+    @property
+    def time_exceeding(self) -> float:
+        return self.__time_exceeding
+
+    @property
+    def order_error(self) -> int:
+        return self.__order_error

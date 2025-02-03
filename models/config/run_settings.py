@@ -9,6 +9,10 @@ class RunSettings:
         :param config: The configuration to initialize the object with.
         """
         if config is not None:
-            self.step_amount: int = config["step_amount"]
+            self.__step_amount: int = config["step_amount"]
         else:
-            self.step_amount: int = 120
+            self.__step_amount: int = 120
+
+    @property
+    def step_amount(self) -> int:
+        return self.__step_amount

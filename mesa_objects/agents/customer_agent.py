@@ -1,11 +1,11 @@
 import logging
 import os
 import random
-from enum import Enum
 
-import mesa
+from mesa import Agent, Model
 
-from config.config import CONFIG
+from enums.customer_agent_state import CustomerAgentState
+from models.config.config import Config
 
 # Configure logging
 logging.basicConfig(
@@ -18,23 +18,10 @@ logging.basicConfig(
 )
 
 
-class CustomerAgentState(Enum):
-    """State for the CustomerAgent class"""
-    WAIT_FOR_SERVICE_AGENT = 0  # gets selected by ServiceAgent
-    WAITING_FOR_FOOD = 1
-    EATING = 2
-    FINISHED_EATING = 3  # rating accordingly + agent set to done
-    REJECTED = 4  # worst rating + agent set to done
-    DONE = 5
-
-    def __str__(self):
-        return self.name
-
-
-class CustomerAgent(mesa.Agent):
+class CustomerAgent(Agent):
     """An agent that represents a table of customers"""
 
-    def __init__(self, model: mesa.Model):
+    def __init__(self, model: Model):
         # Pass parameters to parent class
         super().__init__(model)
 
@@ -44,13 +31,13 @@ class CustomerAgent(mesa.Agent):
         # Create random number of people (at least 1)
         self.num_people = random.randint(
             1,
-            CONFIG.customers.max_customers_per_agent
+            Config().customers.max_customers_per_agent
         )
 
         # Create random number for time left (in minutes)
         self.time_left = random.randint(
-            CONFIG.customers.time_min,
-            CONFIG.customers.time_max
+            Config().customers.time_min,
+            Config().customers.time_max
         )
         self.init_time = self.time_left
 
@@ -65,12 +52,12 @@ class CustomerAgent(mesa.Agent):
         self.food_arrival_time = 0
 
         # Default correctness of the order
-        self.order_correctness = CONFIG.orders.order_correctness
+        self.order_correctness = Config().orders.order_correctness
 
         # Default rating
-        self.rating = CONFIG.rating.rating_default
-        self.rating_min = CONFIG.rating.rating_min
-        self.rating_max = CONFIG.rating.rating_max
+        self.rating = Config().rating.rating_default
+        self.rating_min = Config().rating.rating_min
+        self.rating_max = Config().rating.rating_max
 
         # Track agent's state
         self.state = CustomerAgentState.WAIT_FOR_SERVICE_AGENT
@@ -79,9 +66,9 @@ class CustomerAgent(mesa.Agent):
     def calculate_table_rating(self):
         """Function to calculate the table rating according to waiting time exceeding and a random factor"""
         # Weight for waiting time exceeding
-        alpha = CONFIG.weights.time_exceeding
+        alpha = Config().weights.time_exceeding
         # Weight for order errors
-        beta = CONFIG.weights.order_error
+        beta = Config().weights.order_error
 
         ####### Order Correctness Penalty
 

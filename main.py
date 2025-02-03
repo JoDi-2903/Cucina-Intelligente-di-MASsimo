@@ -3,8 +3,8 @@ from itertools import product
 import pyoptinterface as poi
 from pyoptinterface import highs
 
-from config.config import init_config, CONFIG
-from models.restaurant_model import RestaurantModel
+from mesa_objects.models.restaurant_model import RestaurantModel
+from models.config.config import Config
 
 
 def model_run(service_agents: int, parallel_preparation: int, max_customers_per_agent: int) -> float:
@@ -19,23 +19,20 @@ def model_run(service_agents: int, parallel_preparation: int, max_customers_per_
     restaurant = RestaurantModel(service_agents, parallel_preparation, max_customers_per_agent)
 
     # Run the model with the updated configuration
-    while restaurant.running and restaurant.steps < CONFIG.run.step_amount:
+    while restaurant.running and restaurant.steps < Config().run.step_amount:
         restaurant.step()
 
     return restaurant.get_total_waiting_time()
 
 
 if __name__ == '__main__':
-    # Initialize the configuration of the system
-    init_config()
-
     # Create model that solves optimization problems
     opt_model = highs.Model()
 
     # Define the variables (add 1 to the upper bound to include the upper bound)
     service_agents = list(range(1, 20 + 1))  # There cannot be more than 20 service agents
-    parallel_preparation = list(range(1, CONFIG.orders.parallel_preparation + 1))
-    max_customers_per_agent = list(range(1, CONFIG.customers.max_customers_per_agent + 1))
+    parallel_preparation = list(range(1, Config().orders.parallel_preparation + 1))
+    max_customers_per_agent = list(range(1, Config().customers.max_customers_per_agent + 1))
 
     # Add the variables to the model
     x = opt_model.add_variables(service_agents, parallel_preparation, max_customers_per_agent,

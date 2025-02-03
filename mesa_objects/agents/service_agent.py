@@ -1,16 +1,17 @@
 import math
 import random
 
-import mesa
+from mesa import Agent, Model
 
-from agents import customer_agent
-from config.config import CONFIG
+from enums.customer_agent_state import CustomerAgentState
+from mesa_objects.agents import customer_agent
+from models.config.config import Config
 
 
-class ServiceAgent(mesa.Agent):
+class ServiceAgent(Agent):
     """An agent that represents the service in the restaurant"""
 
-    def __init__(self, model: mesa.Model):
+    def __init__(self, model: Model):
         super().__init__(model)
 
         # Initialize the queue for customers. Queue is limited by capacity
@@ -19,13 +20,13 @@ class ServiceAgent(mesa.Agent):
     def step(self):
         # Remove all customers that are done eating
         for c in self.customer_queue:
-            if c.state == customer_agent.CustomerAgentState.DONE:
+            if c.state == CustomerAgentState.DONE:
                 self.customer_queue.remove(c)
 
         # Filter and sort new customers by time_left
         waiting_customers = sorted(
             (a for a in self.model.agents_by_type[customer_agent.CustomerAgent]
-             if a.state == customer_agent.CustomerAgentState.WAIT_FOR_SERVICE_AGENT),
+             if a.state == CustomerAgentState.WAIT_FOR_SERVICE_AGENT),
             key=lambda c: c.time_left
         )
 
@@ -36,18 +37,18 @@ class ServiceAgent(mesa.Agent):
             # Check if the customer needs to be rejected
             if customer.menu_item["preparationTime"] + customer.menu_item["eatingTime"] \
                     > customer.time_left:
-                customer.state = customer_agent.CustomerAgentState.REJECTED
+                customer.state = CustomerAgentState.REJECTED
 
             # Check if the personal queue is full
-            elif len(self.customer_queue) < CONFIG.service.service_agent_capacity:
+            elif len(self.customer_queue) < Config().service.service_agent_capacity:
                 # Add the customer to the queue and update their state
                 self.customer_queue.append(customer)
-                customer.state = customer_agent.CustomerAgentState.WAITING_FOR_FOOD
+                customer.state = CustomerAgentState.WAITING_FOR_FOOD
 
         # Filter and sort customers waiting for food
         waiting_customers = sorted(
             (a for a in self.model.agents_by_type[customer_agent.CustomerAgent]
-             if a.state == customer_agent.CustomerAgentState.WAITING_FOR_FOOD),
+             if a.state == CustomerAgentState.WAITING_FOR_FOOD),
             key=lambda c: c.time_left
         )
 
@@ -58,12 +59,12 @@ class ServiceAgent(mesa.Agent):
             # Only the specified amount of food can be processed at once.
             # The delay depends on the amount of customers
             preparation_delay = math.ceil(
-                customer.num_people / CONFIG.orders.parallel_preparation
+                customer.num_people / Config().orders.parallel_preparation
             )
 
             # Occasionally introduce a probabilistic delay based on order_correctness
-            random_delay = random.randint(0, CONFIG.orders.delay_max) \
-                if random.random() > CONFIG.orders.delay_randomness \
+            random_delay = random.randint(0, Config().orders.delay_max) \
+                if random.random() > Config().orders.delay_randomness \
                 else 0
 
             # Total delay combines the batch adjustment and random delay (if applicable)
@@ -73,5 +74,5 @@ class ServiceAgent(mesa.Agent):
             if customer.food_preparation_time > 1 + total_delay:
                 customer.food_preparation_time -= 1
             else:
-                customer.state = customer_agent.CustomerAgentState.EATING
+                customer.state = CustomerAgentState.EATING
                 customer.food_arrival_time = customer.time_left

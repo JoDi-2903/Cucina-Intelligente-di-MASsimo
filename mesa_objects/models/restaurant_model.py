@@ -1,20 +1,20 @@
-import json
+from mesa import Model
 
-import mesa
+from mesa_objects.agents import customer_agent
+from mesa_objects.agents.customer_agent import CustomerAgent
+from mesa_objects.agents.service_agent import ServiceAgent
+from models.config.config import Config
+from models.menu import Menu
 
-from agents import customer_agent, service_agent
-from config.config import CONFIG
 
-
-class RestaurantModel(mesa.Model):
+class RestaurantModel(Model):
     """A model with some number of agents."""
 
     def __init__(self, num_service_agents: int, parallel_preparation: int, max_customers_per_agent: int):
         super().__init__()
 
-        # Read menu from file
-        with open(file="data/menu.json", mode="r", encoding="utf8") as file:
-            self.menu = json.load(file)
+        # Create the menu
+        self.menu = Menu()
 
         # Set the number of service agents and parallel preparation according to the optimization
         self.num_service_agents = num_service_agents
@@ -22,13 +22,13 @@ class RestaurantModel(mesa.Model):
         self.max_customers_per_agent = max_customers_per_agent
 
         # Initialize agents
-        customer_agents = customer_agent.CustomerAgent.create_agents(
+        customer_agents = CustomerAgent.create_agents(
             model=self,
-            n=CONFIG.customers.customer_agents
+            n=Config().customers.customer_agents
         )
-        service_agents = service_agent.ServiceAgent.create_agents(
+        service_agents = ServiceAgent.create_agents(
             model=self,
-            n=CONFIG.service.service_agents
+            n=Config().service.service_agents
         )
 
     def step(self):
