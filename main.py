@@ -7,7 +7,7 @@ from mesa_objects.models.restaurant_model import RestaurantModel
 from models.config.config import Config
 
 
-def model_run(service_agents: int, parallel_preparation: int, max_customers_per_agent: int) -> float:
+def model_run(service_agents: int) -> float:
     """
     Objective function to minimize the total waiting time in the restaurant
     :param service_agents: Number of service agents
@@ -19,14 +19,18 @@ def model_run(service_agents: int, parallel_preparation: int, max_customers_per_
 
     # TODO: Instead of creating a new model every time, we should only update the configuration and run the model again
     # Create the Mesa Model
-    restaurant = RestaurantModel(service_agents, parallel_preparation, max_customers_per_agent)
+    restaurant = RestaurantModel(service_agents)
 
     # Run the model with the updated configuration
     while restaurant.running and restaurant.steps < Config().run.step_amount:
         restaurant.step()
 
-    # TODO: Anstatt der Waiting Time die Überschreitung der Gesamtzeit (Zubereitungszeit + Essenszeit als ideal. Im Vergleich zur realen Zeit) berechnen -> Delay reduzieren
-    return restaurant.get_total_waiting_time()
+    sum_real_waiting_time = restaurant.get_total_waiting_time()
+    sum_ideal_waiting_time = restaurant.get_total_ideal_time()
+    
+    # Difference is the delay - should always be positive because the idel time does not contain the delay for larger groups. Real >! Ideal
+    # The objective is to minimize the delay
+    return sum_real_waiting_time - sum_ideal_waiting_time
 
 
 if __name__ == '__main__':
@@ -35,26 +39,23 @@ if __name__ == '__main__':
 
     # Define the variables (add 1 to the upper bound to include the upper bound)
     service_agents = list(range(1, 20 + 1))  # There cannot be more than 20 service agents
-    parallel_preparation = list(range(1, Config().orders.parallel_preparation + 1))
-    max_customers_per_agent = list(range(1, Config().customers.max_customers_per_agent + 1))
+
 
     # Add the variables to the model
-    x = opt_model.add_variables(service_agents, parallel_preparation, max_customers_per_agent,
-                                domain=poi.VariableDomain.Continuous, lb=1)
+    x = opt_model.add_variables(service_agents,domain=poi.VariableDomain.Continuous, lb=1)
 
     # Get a list of all possible permutations of the variables for the loop
-    permutations = list(product(service_agents, parallel_preparation, max_customers_per_agent))
-    # TODO: sind max_customers_per_agent und parallel_preparation wirklich die richtigen Variable? Nochmal prüfen und ggf. entfernen
+    # permutations = list(product(service_agents, parallel_preparation, max_customers_per_agent))
 
     # Variable to store the best objective value and corresponding parameters
     best_obj_value = float('inf')
     best_params = None
 
     # Iterative optimization over all permutations
-    for sa, pp, cpa in permutations:
+    for sa in service_agents:
 
         # Set the objective function
-        opt_model.set_objective(model_run(sa, pp, cpa), poi.ObjectiveSense.Minimize)
+        opt_model.set_objective(model_run(sa), poi.ObjectiveSense.Minimize)
 
         # Optimize the model
         opt_model.optimize()
@@ -62,10 +63,10 @@ if __name__ == '__main__':
         # Check if the current objective value is better than the best one found so far
         if opt_model.get_obj_value() < best_obj_value:
             best_obj_value = opt_model.get_obj_value()
-            best_params = (sa, pp, cpa)
+            best_params = sa
 
         # Print the results
-        print(f"\t({sa}, {pp}, {cpa}) -> Costs: {opt_model.get_obj_value()}")
+        print(f"\t({sa}) -> Costs: {opt_model.get_obj_value()}")
 
     """
     # Print the results
@@ -78,6 +79,6 @@ if __name__ == '__main__':
     # Output the best objective value and corresponding parameters
     print(f"Best objective value: {best_obj_value}")
     print(
-        f"Best parameters: Service Agents = {best_params[0]}, Parallel Preparation = {best_params[1]}, Max Customers per Agent = {best_params[2]}")
+        f"Best parameters: Service Agents = {best_params}")
 
     # TODO: Was macht der Optimizer gerade überhaupt?! Wir brauchen mehr Constraints bzw weitere Zielfunktion!

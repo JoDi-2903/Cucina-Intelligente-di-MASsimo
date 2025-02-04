@@ -143,8 +143,12 @@ class CustomerAgent(Agent):
         # print(self)
 
     def get_waiting_time(self):
-        """ Calculate waiting time of agent"""
-        return self.init_time - self.food_arrival_time
+        """ Calculate waiting time of agent. Consists of time that the customer really waited for the food plus the time that is needed for eating """
+        return self.init_time - self.food_arrival_time + self.eating_time
+
+    def get_ideal_time(self):
+        """ Calculate ideal time of selected food. Consists of food preparation time plus the time that is needed for eating. Delays because of the number of people are not considered """
+        return self.food_preparation_time + self.eating_time
 
     def __str__(self):
         return f"CustomerAgent {self.unique_id} with {self.num_people} people in state {self.state}. Time left: {self.time_left}. Current rating: {self.rating}. Selected menu item: {self.menu_item}"
