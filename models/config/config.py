@@ -15,12 +15,12 @@ class Config(metaclass=SingletonMeta):
     This class stores the configurations of the system.
     """
 
-    def _initialize(self):
+    def __init__(self):
         """
         Initialize the config object with the
         """
         # Try to read the config file.
-        json_content: dict or None = self.__read_config_file()
+        json_content: dict | None = self.__read_config_file()
 
         # If the file was not found, use the default values.
         if json_content is None:
@@ -41,8 +41,8 @@ class Config(metaclass=SingletonMeta):
             self.__run = RunSettings(json_content["Run"])
 
     @staticmethod
-    def __read_config_file() -> dict or None:
-        # Try to load configurations from config file. If there is no file, return to use the default values.
+    def __read_config_file() -> dict | None:
+        """ Try to load configurations from config file. If there is no file, return to use the default values. """
         try:
             with open(os.path.join("data", "config.json"), mode="r", encoding="utf-8") as f:
                 return json.load(f)

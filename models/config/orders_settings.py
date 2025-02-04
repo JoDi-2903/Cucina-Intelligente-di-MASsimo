@@ -3,7 +3,7 @@ class OrdersSettings:
     Class to store the configuration of the orders in the restaurant.
     """
 
-    def __init__(self, config: dict[str, int or float] = None):
+    def __init__(self, config: dict[str, int | float] = None):
         """
         Initialize the order object with the passed configuration or default values.
         :param config: The configuration to initialize the object with.

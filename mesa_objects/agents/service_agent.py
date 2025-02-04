@@ -18,18 +18,26 @@ class ServiceAgent(Agent):
         # Initialize the queue for customers. Queue is limited by capacity
         self.customer_queue: list[CustomerAgent] = []
 
+    def weighted_sort(self, customer: CustomerAgent):
+        """ Custom sort key for sorting customers by weighted criteria """
+        return (
+            (customer.menu_item.profit * customer.num_people) * Config().weights.rating_profit,
+            customer.get_waiting_time() * Config().weights.rating_waiting_time,
+            customer.time_left * Config().weights.rating_total_time,
+            customer.num_people * Config().weights.rating_num_people
+        )
+
     def step(self):
         # Remove all customers that are done eating
         for c in self.customer_queue:
             if c.state == CustomerAgentState.DONE:
                 self.customer_queue.remove(c)
 
-        # Filter and sort new customers by time_left
-        # TODO: Sortierung ändern (Profit, bisherige Wartezeit, Gesamtzeit, Anzahl der Personen)
+        # Filter and sort new customers by weighted sort
         waiting_customers = sorted(
             (a for a in self.model.agents_by_type[customer_agent.CustomerAgent]
              if a.state == CustomerAgentState.WAIT_FOR_SERVICE_AGENT),
-            key=lambda c: c.time_left
+            key=self.weighted_sort
         )
 
         # Get the customer with the smallest time_left
@@ -47,11 +55,10 @@ class ServiceAgent(Agent):
                 self.customer_queue.append(customer)
                 customer.state = CustomerAgentState.WAITING_FOR_FOOD
 
-        # Filter and sort customers waiting for food
-        # TODO: Sortierung ändern (Profit, bisherige Wartezeit, Gesamtzeit, Anzahl der Personen)
+        # Filter and sort customers waiting for food by weighted sort
         waiting_customers = sorted(
             (a for a in self.customer_queue if a.state == customer_agent.CustomerAgentState.WAITING_FOR_FOOD),
-            key=lambda c: c.time_left
+            key=self.weighted_sort
         )
 
         # Get the customer with the smallest time_left
