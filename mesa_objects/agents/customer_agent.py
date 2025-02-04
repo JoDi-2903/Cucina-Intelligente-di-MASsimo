@@ -43,11 +43,11 @@ class CustomerAgent(Agent):
         self.init_time = self.time_left
 
         # Randomly select food from menu
-        self.menu_item = menu.dishes[random.randint(0, len(menu.dishes) - 1)]
-        # Retrieve eating time for selected menu item
-        self.eating_time = self.menu_item.eating_time
-        # Retrieve eating time for selected menu item. Time is updated by service agent
-        self.food_preparation_time = self.menu_item.preparation_time
+        self.dish = menu.dishes[random.randint(0, len(menu.dishes) - 1)]
+        # Retrieve eating time for selected dish
+        self.eating_time = self.dish.eating_time
+        # Retrieve eating time for selected dish. Time is updated by service agent
+        self.food_preparation_time = self.dish.preparation_time
 
         # Attribute to save the time of food arrival. Value is set by service agent
         self.food_arrival_time = 0
@@ -151,4 +151,4 @@ class CustomerAgent(Agent):
         return self.food_preparation_time + self.eating_time
 
     def __str__(self):
-        return f"CustomerAgent {self.unique_id} with {self.num_people} people in state {self.state}. Time left: {self.time_left}. Current rating: {self.rating}. Selected menu item: {self.menu_item}"
+        return f"CustomerAgent {self.unique_id} with {self.num_people} people in state {self.state}. Time left: {self.time_left}. Current rating: {self.rating}. Selected dish: {self.dish}"

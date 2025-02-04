@@ -27,7 +27,7 @@ def model_run(service_agents: int) -> float:
 
     sum_real_waiting_time = restaurant.get_total_waiting_time()
     sum_ideal_waiting_time = restaurant.get_total_ideal_time()
-    
+
     # Difference is the delay - should always be positive because the idel time does not contain the delay for larger groups. Real >! Ideal
     # The objective is to minimize the delay
     return sum_real_waiting_time - sum_ideal_waiting_time

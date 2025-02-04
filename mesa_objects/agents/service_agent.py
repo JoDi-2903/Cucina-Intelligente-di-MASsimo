@@ -21,7 +21,7 @@ class ServiceAgent(Agent):
     def weighted_sort(self, customer: CustomerAgent):
         """ Custom sort key for sorting customers by weighted criteria """
         return (
-            (customer.menu_item.profit * customer.num_people) * Config().weights.rating_profit,
+            (customer.dish.profit * customer.num_people) * Config().weights.rating_profit,
             customer.get_waiting_time() * Config().weights.rating_waiting_time,
             customer.time_left * Config().weights.rating_total_time,
             customer.num_people * Config().weights.rating_num_people
@@ -45,7 +45,7 @@ class ServiceAgent(Agent):
             customer: CustomerAgent = waiting_customers[0]
 
             # Check if the customer needs to be rejected
-            if customer.menu_item.preparation_time + customer.menu_item.eating_time \
+            if customer.dish.preparation_time + customer.dish.eating_time \
                     > customer.time_left:
                 customer.state = CustomerAgentState.REJECTED
 
