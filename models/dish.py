@@ -15,3 +15,6 @@ class Dish:
         self.preparation_time: int = preparation_time
         self.eating_time: int = eating_time
         self.profit: float = profit
+
+    def __str__(self):
+        return self.name

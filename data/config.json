@@ -1,6 +1,6 @@
 {
   "Rating": {
-    "rating_default": 5,
+    "rating_default": 4,
     "rating_min": 0,
     "rating_max": 5
   },
@@ -19,7 +19,7 @@
     "rating_num_people":  0.3
   },
   "Customers": {
-    "customer_agents": 100,
+    "max_customer_agents_per_step": 10,
     "max_customers_per_agent": 15,
     "time_min": 20,
     "time_max": 100

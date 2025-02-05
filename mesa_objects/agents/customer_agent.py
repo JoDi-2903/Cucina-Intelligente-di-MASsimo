@@ -1,5 +1,3 @@
-import logging
-import os
 import random
 
 from mesa import Agent, Model
@@ -8,16 +6,9 @@ from enums.customer_agent_state import CustomerAgentState
 from models.config.config import Config
 from models.menu import Menu
 
-# Configure logging
-logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.DEBUG,
-    handlers=[
-        logging.StreamHandler(),  # Log to console
-        logging.FileHandler(os.path.join("log", "customer_agent.log"))  # Log to file
-    ]
-)
+from models.config.logging_config import customer_logger
 
+logger = customer_logger
 
 class CustomerAgent(Agent):
     """An agent that represents a table of customers"""
@@ -46,7 +37,7 @@ class CustomerAgent(Agent):
         self.dish = menu.dishes[random.randint(0, len(menu.dishes) - 1)]
         # Retrieve eating time for selected dish
         self.eating_time = self.dish.eating_time
-        # Retrieve eating time for selected dish. Time is updated by service agent
+        # Retrieve food preparation time for selected dish. Time is updated by service agent
         self.food_preparation_time = self.dish.preparation_time
 
         # Attribute to save the time of food arrival. Value is set by service agent
@@ -62,7 +53,8 @@ class CustomerAgent(Agent):
 
         # Track agent's state
         self.state = CustomerAgentState.WAIT_FOR_SERVICE_AGENT
-        # print(self)
+
+        logger.info(self)
 
     def calculate_table_rating(self):
         """Function to calculate the table rating according to waiting time exceeding and a random factor"""
@@ -105,8 +97,8 @@ class CustomerAgent(Agent):
                 )
             ), 2
         )
-        logging.debug(
-            f"num people {self.num_people}, alpha {alpha}, beta {beta}, random error {random_error}, exceedance ratio {exceedance_ratio}, waiting penalty {waiting_penalty}, order error penalty {order_error_penalty}, rating variabilty {rating_variability}")
+        logger.debug(
+            f"Customer {self.unique_id} rating {self.rating:.2f}. num people {self.num_people}, alpha {alpha:.2f}, beta {beta:.2f}, random error {random_error:.2f}, exceedance ratio {exceedance_ratio:.2f}, waiting penalty {waiting_penalty:.2f}, order error penalty {order_error_penalty:.2f}, rating variabilty {rating_variability:.2f}")
 
     def get_global_rating_contribution(self):
         """Return the contribution to the global restaurant rating"""
@@ -120,8 +112,7 @@ class CustomerAgent(Agent):
         # If customer is rejected, set rating to the worst and set agent to done
         if self.state == CustomerAgentState.REJECTED:
             self.rating = self.rating_min
-            # print(self)
-            logging.info(self)
+            logger.info(self)
             self.state = CustomerAgentState.DONE
             return
 
@@ -133,14 +124,20 @@ class CustomerAgent(Agent):
             else:
                 self.state = CustomerAgentState.FINISHED_EATING
                 self.calculate_table_rating()
-                # print(self)
-                logging.info(self)
+                logger.info(self)
                 self.state = CustomerAgentState.DONE
                 return
 
         # Always reduce time left by 1
         self.time_left -= 1
-        # print(self)
+
+        # Reduce rating if time is exceeded
+        if self.time_left < 0:
+            self.rating = self.rating_min
+        elif self.init_time - self.time_left > 10:
+            self.rating = max(self.rating_min, self.rating - 0.05)
+
+        # logger.debug(self)
 
     def get_waiting_time(self):
         """ Calculate waiting time of agent. Consists of time that the customer really waited for the food plus the time that is needed for eating """
@@ -151,4 +148,4 @@ class CustomerAgent(Agent):
         return self.food_preparation_time + self.eating_time
 
     def __str__(self):
-        return f"CustomerAgent {self.unique_id} with {self.num_people} people in state {self.state}. Time left: {self.time_left}. Current rating: {self.rating}. Selected dish: {self.dish}"
+        return f"CustomerAgent {self.unique_id} with {self.num_people} people in state {self.state}. Time left: {self.time_left}. Current rating: {self.rating:.2f}. Selected dish: {self.dish}"

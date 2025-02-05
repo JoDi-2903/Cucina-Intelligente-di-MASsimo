@@ -1,5 +1,3 @@
-from itertools import product
-
 import pyoptinterface as poi
 from pyoptinterface import highs
 
@@ -19,7 +17,7 @@ def model_run(service_agents: int) -> float:
 
     # TODO: Instead of creating a new model every time, we should only update the configuration and run the model again
     # Create the Mesa Model
-    restaurant = RestaurantModel(service_agents)
+    restaurant = RestaurantModel()
 
     # Run the model with the updated configuration
     while restaurant.running and restaurant.steps < Config().run.step_amount:

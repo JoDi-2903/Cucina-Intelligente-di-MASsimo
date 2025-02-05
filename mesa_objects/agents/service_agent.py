@@ -7,7 +7,9 @@ from enums.customer_agent_state import CustomerAgentState
 from mesa_objects.agents import customer_agent
 from mesa_objects.agents.customer_agent import CustomerAgent
 from models.config.config import Config
+from models.config.logging_config import service_logger
 
+logger = service_logger
 
 class ServiceAgent(Agent):
     """An agent that represents the service in the restaurant"""
@@ -55,6 +57,8 @@ class ServiceAgent(Agent):
                 self.customer_queue.append(customer)
                 customer.state = CustomerAgentState.WAITING_FOR_FOOD
 
+            logger.info(f"Service agent {self.unique_id} is serving customer {customer.unique_id}. Customer is currently {customer.state}")
+
         # Filter and sort customers waiting for food by weighted sort
         waiting_customers = sorted(
             (a for a in self.customer_queue if a.state == customer_agent.CustomerAgentState.WAITING_FOR_FOOD),
@@ -85,3 +89,5 @@ class ServiceAgent(Agent):
             else:
                 customer.state = CustomerAgentState.EATING
                 customer.food_arrival_time = customer.time_left
+
+            logger.info(f"Service agent {self.unique_id} is serving customer {customer.unique_id}. Customer is currently {customer.state}.")
