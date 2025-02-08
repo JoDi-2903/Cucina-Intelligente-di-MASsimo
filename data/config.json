@@ -30,6 +30,6 @@
     "service_agent_salary_per_tick": 0.5
   },
   "Run": {
-    "step_amount": 120
+    "step_amount": 1000
   }
 }

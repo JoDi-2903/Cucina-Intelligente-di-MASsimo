@@ -91,3 +91,10 @@ class RestaurantModel(Model):
         """ Compute the total rating percentage for all customers in the model """
         return ((self.get_total_rating() - Config().rating.rating_min) /
                 (Config().rating.rating_max - Config().rating.rating_min))
+
+    def evaluate(self) -> tuple[int, float]:
+        """ Evaluate the model for PyOptInterface objective function """
+        manager = self.agents_by_type[ManagerAgent][0]
+
+        logger.info(f"Step {self.steps}: Evaluating model. Total waiting time: {self.get_total_waiting_time()}, profit: {manager.profit}")
+        return self.get_total_waiting_time(), manager.profit
