@@ -5,6 +5,7 @@ from mesa import Model
 from mesa_objects.agents import customer_agent
 from mesa_objects.agents.customer_agent import CustomerAgent
 from mesa_objects.agents.service_agent import ServiceAgent
+from mesa_objects.agents.manager_agent import ManagerAgent
 from models.config.config import Config
 from models.menu import Menu
 from models.config.logging_config import restaurant_logger
@@ -31,7 +32,12 @@ class RestaurantModel(Model):
             n=Config().service.service_agents
         )
 
-        logger.info(f"Created model with {Config().customers.max_customer_agents_per_step} customer agents and {Config().service.service_agents} service agents")
+        ManagerAgent.create_agents(
+            model=self,
+            n=1
+        )
+
+        logger.info(f"Created model with {Config().customers.max_customer_agents_per_step} customer agents, {Config().service.service_agents} service agents and 1 manager agent")
 
 
     def step(self):
@@ -58,7 +64,7 @@ class RestaurantModel(Model):
             n=int(amount)
         )
 
-        logger.info(f"Spawned {int(amount)} new customer agents. Current rating: {self.get_total_rating():.2f} ({self.get_total_rating_percentage():.2%})")
+        logger.info(f"Step {self.steps}: Spawned {int(amount)} new customer agents. Current rating: {self.get_total_rating():.2f} ({self.get_total_rating_percentage():.2%})")
 
 
     # TODO: calculate time only for active agents or for all agents?

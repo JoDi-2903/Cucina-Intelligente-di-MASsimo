@@ -57,7 +57,7 @@ class ServiceAgent(Agent):
                 self.customer_queue.append(customer)
                 customer.state = CustomerAgentState.WAITING_FOR_FOOD
 
-            logger.info(f"Service agent {self.unique_id} is serving customer {customer.unique_id}. Customer is currently {customer.state}")
+            logger.info(f"Step {self.model.steps}: Service agent {self.unique_id} is serving customer {customer.unique_id}. Customer is currently {customer.state}")
 
         # Filter and sort customers waiting for food by weighted sort
         waiting_customers = sorted(
@@ -90,4 +90,4 @@ class ServiceAgent(Agent):
                 customer.state = CustomerAgentState.EATING
                 customer.food_arrival_time = customer.time_left
 
-            logger.info(f"Service agent {self.unique_id} is serving customer {customer.unique_id}. Customer is currently {customer.state}.")
+            logger.info(f"Step {self.model.steps}: Service agent {self.unique_id} is serving customer {customer.unique_id}. Customer is currently {customer.state}.")

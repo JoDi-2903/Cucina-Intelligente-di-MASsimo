@@ -109,6 +109,11 @@ class CustomerAgent(Agent):
         if self.state == CustomerAgentState.DONE:
             return
 
+        # If agent is done, don't do anything and don't decrease time_left
+        if self.state == CustomerAgentState.FINISHED_EATING:
+            self.state = CustomerAgentState.DONE
+            return
+
         # If customer is rejected, set rating to the worst and set agent to done
         if self.state == CustomerAgentState.REJECTED:
             self.rating = self.rating_min
@@ -125,7 +130,6 @@ class CustomerAgent(Agent):
                 self.state = CustomerAgentState.FINISHED_EATING
                 self.calculate_table_rating()
                 logger.info(self)
-                self.state = CustomerAgentState.DONE
                 return
 
         # Always reduce time left by 1
@@ -148,4 +152,4 @@ class CustomerAgent(Agent):
         return self.food_preparation_time + self.eating_time
 
     def __str__(self):
-        return f"CustomerAgent {self.unique_id} with {self.num_people} people in state {self.state}. Time left: {self.time_left}. Current rating: {self.rating:.2f}. Selected dish: {self.dish}"
+        return f"Step {self.model.steps}: CustomerAgent {self.unique_id} with {self.num_people} people in state {self.state}. Time left: {self.time_left}. Current rating: {self.rating:.2f}. Selected dish: {self.dish}"

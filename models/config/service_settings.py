@@ -11,10 +11,16 @@ class ServiceSettings:
         if config is not None:
             self.service_agents: int = config["service_agents"]
             self.__service_agent_capacity: int = config["service_agent_capacity"]
+            self.__service_agent_salary_per_tick: float = config["service_agent_salary_per_tick"]
         else:
             self.service_agents: int = 5
             self.__service_agent_capacity: int = 5
+            self.__service_agent_salary_per_tick: float = 0.5
 
     @property
     def service_agent_capacity(self) -> int:
         return self.__service_agent_capacity
+
+    @property
+    def service_agent_salary_per_tick(self) -> float:
+        return self.__service_agent_salary_per_tick
