@@ -13,9 +13,7 @@ class ServiceSettings:
             self.__service_agent_capacity: int = config["service_agent_capacity"]
             self.__service_agent_salary_per_tick: float = config["service_agent_salary_per_tick"]
         else:
-            self.service_agents: int = 5
-            self.__service_agent_capacity: int = 5
-            self.__service_agent_salary_per_tick: float = 0.5
+            raise ValueError("No default values for service settings available.")
 
     @property
     def service_agent_capacity(self) -> int:
