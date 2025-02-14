@@ -11,7 +11,7 @@ class RunSettings:
         if config is not None:
             self.__step_amount: int = config["step_amount"]
         else:
-            self.__step_amount: int = 120
+            raise ValueError("No default values for run settings available.")
 
     @property
     def step_amount(self) -> int:

@@ -13,9 +13,7 @@ class RatingSettings:
             self.__rating_min: int = config["rating_min"]
             self.__rating_max: int = config["rating_max"]
         else:
-            self.__rating_default: int = 5
-            self.__rating_min: int = 0
-            self.__rating_max: int = 5
+            raise ValueError("No default values for rating settings available.")
 
     @property
     def rating_default(self) -> int:

@@ -20,35 +20,24 @@ class Config(metaclass=SingletonMeta):
         Initialize the config object with the
         """
         # Try to read the config file.
-        json_content: dict | None = self.__read_config_file()
+        json_content: dict = self.__read_config_file()
 
-        # If the file was not found, use the default values.
-        if json_content is None:
-            self.__rating = RatingSettings()
-            self.__orders = OrdersSettings()
-            self.__weights = WeightsSettings()
-            self.__customers = CustomersSettings()
-            self.__service = ServiceSettings()
-            self.__run = RunSettings()
-
-        # Else, initialize the settings with the values from the file.
-        else:
-            self.__rating = RatingSettings(json_content["Rating"])
-            self.__orders = OrdersSettings(json_content["Orders"])
-            self.__weights = WeightsSettings(json_content["Weights"])
-            self.__customers = CustomersSettings(json_content["Customers"])
-            self.__service = ServiceSettings(json_content["Service"])
-            self.__run = RunSettings(json_content["Run"])
+        # Initialize the settings with the values from the file.
+        self.__rating = RatingSettings(json_content["Rating"])
+        self.__orders = OrdersSettings(json_content["Orders"])
+        self.__weights = WeightsSettings(json_content["Weights"])
+        self.__customers = CustomersSettings(json_content["Customers"])
+        self.__service = ServiceSettings(json_content["Service"])
+        self.__run = RunSettings(json_content["Run"])
 
     @staticmethod
-    def __read_config_file() -> dict | None:
-        """ Try to load configurations from config file. If there is no file, return to use the default values. """
+    def __read_config_file() -> dict:
+        """ Try to load configurations from config file. If there is no file, raise an error. """
         try:
             with open(os.path.join("data", "config.json"), mode="r", encoding="utf-8") as f:
                 return json.load(f)
-        except FileNotFoundError:
-            print("Config file not found. Fallback to default values.")
-            return
+        except FileNotFoundError as e:
+            raise FileNotFoundError("Config file `config.json` not found.") from e
 
     @property
     def rating(self) -> RatingSettings:

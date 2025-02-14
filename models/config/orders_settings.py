@@ -14,10 +14,7 @@ class OrdersSettings:
             self.__delay_randomness: float = config["delay_randomness"]
             self.__delay_max: int = config["delay_max"]
         else:
-            self.__order_correctness: float = 0.9
-            self.__parallel_preparation: int = 5
-            self.__delay_randomness: float = 0.8
-            self.__delay_max: int = 10
+            raise ValueError("No default values for orders settings available.")
 
     @property
     def order_correctness(self) -> float:

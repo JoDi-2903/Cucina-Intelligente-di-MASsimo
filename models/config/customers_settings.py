@@ -15,10 +15,7 @@ class CustomersSettings:
             self.__time_min: int = config["time_min"]
             self.__time_max: int = config["time_max"]
         else:
-            self.__max_new_customer_agents_per_step: int = 10
-            self.__max_customers_per_agent: int = 15
-            self.__time_min: int = 20
-            self.__time_max: int = 100
+            raise ValueError("No default values for customers settings available.")
 
     @property
     def max_simultaneous_customers_in_restaurant(self) -> int:
