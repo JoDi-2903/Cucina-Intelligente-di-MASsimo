@@ -4,14 +4,16 @@ from mesa import Agent, Model
 
 from enums.customer_agent_state import CustomerAgentState
 from models.config.config import Config
-from models.menu import Menu
-
 from models.config.logging_config import customer_logger
+from models.menu import Menu
 
 logger = customer_logger
 
 class CustomerAgent(Agent):
     """An agent that represents a table of customers"""
+
+    # Track how many CustomerAgents were created per step
+    customers_added_per_step: dict[int, int] = {}
 
     def __init__(self, model: Model):
         # Pass parameters to parent class
@@ -55,6 +57,13 @@ class CustomerAgent(Agent):
         self.state = CustomerAgentState.WAIT_FOR_SERVICE_AGENT
 
         logger.info(self)
+
+    @classmethod
+    def create_agents(cls, model: Model, n: int, *args, **kwargs):
+        new_agents = super().create_agents(model, n, *args, **kwargs)
+        step = model.steps
+        cls.customers_added_per_step[step] = cls.customers_added_per_step.get(step, 0) + n
+        return new_agents
 
     def calculate_table_rating(self):
         """Function to calculate the table rating according to waiting time exceeding and a random factor"""
@@ -109,7 +118,7 @@ class CustomerAgent(Agent):
         if self.state == CustomerAgentState.DONE:
             return
 
-        # If agent is done, don't do anything and don't decrease time_left
+        # If agent finished eating, don't do anything and don't decrease time_left
         if self.state == CustomerAgentState.FINISHED_EATING:
             self.state = CustomerAgentState.DONE
             return
