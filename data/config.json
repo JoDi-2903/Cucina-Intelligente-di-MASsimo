@@ -19,7 +19,8 @@
     "rating_num_people":  0.3
   },
   "Customers": {
-    "max_customer_agents_per_step": 10,
+    "max_simultaneous_customers_in_restaurant": 128,
+    "max_new_customer_agents_per_step": 10,
     "max_customers_per_agent": 15,
     "time_min": 20,
     "time_max": 100
