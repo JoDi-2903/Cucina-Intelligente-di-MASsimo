@@ -87,7 +87,7 @@ class RestaurantModel(Model):
         # Here, we define a cycle (e.g., one day) using a period of 100 steps.
         # The sine function produces a value between -1 and 1; scaling the result gives a multiplier
         # that boosts the spawn rate during "rush" periods and decreases it during quieter times.
-        period_multiplier = 1 + 0.2 * math.sin(2 * math.pi * (elapsed_steps / Config().run.full_day_cycle_period))
+        period_multiplier = 1 + 0.5 * math.sin(2 * math.pi * (elapsed_steps / Config().run.full_day_cycle_period))
 
         # 3. Calculate the historical average of customers spawned from previous steps.
         # If no history exists, use half of the maximum as a default.
