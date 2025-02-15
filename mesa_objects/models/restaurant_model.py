@@ -17,6 +17,9 @@ logger = restaurant_logger
 class RestaurantModel(Model):
     """A model with some number of agents."""
 
+    # Store overall percentage rating over time for evaluation purposes
+    rating_over_steps: dict[int, float] = {}
+
     def __init__(self):
         super().__init__()
 
@@ -148,8 +151,9 @@ class RestaurantModel(Model):
         Returns:
             A value between 0 and 1, which represents the relative position of the overall rating within the possible rating range.
         """
-        return ((self.get_total_rating() - Config().rating.rating_min) /
-                (Config().rating.rating_max - Config().rating.rating_min))
+        total_rating = ((self.get_total_rating() - Config().rating.rating_min) / (Config().rating.rating_max - Config().rating.rating_min))
+        self.rating_over_steps[self.steps] = total_rating
+        return total_rating
 
     def evaluate(self) -> tuple[int, float]:
         """ Evaluate the model for PyOptInterface objective function """

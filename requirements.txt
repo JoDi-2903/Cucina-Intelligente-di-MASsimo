@@ -1,2 +1,3 @@
 pyoptinterface[highs]
 mesa[rec]
+tensorflow
