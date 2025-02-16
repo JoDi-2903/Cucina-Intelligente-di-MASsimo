@@ -1,7 +1,9 @@
 import pyoptinterface as poi
 from pyoptinterface import highs
 
+from mesa_objects.agents.customer_agent import CustomerAgent
 from mesa_objects.models.restaurant_model import RestaurantModel
+from ml.lstm_model import LSTMModel
 from models.config.config import Config
 
 
@@ -28,11 +30,15 @@ def model_run(restaurant: RestaurantModel, service_agents: int) -> float:
 
 
 if __name__ == '__main__':
+    # Create machine learning model
+    lstm_model = LSTMModel()
+    
     # Create model that solves optimization problems
     opt_model = highs.Model()
 
     # Create the Mesa Model
     restaurant = RestaurantModel()
+    restaurant.lstm_model = lstm_model
 
     # Define the variables (add 1 to the upper bound to include the upper bound)
     service_agents = list(range(1, 20 + 1))  # There cannot be more than 20 service agents
