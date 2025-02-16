@@ -18,7 +18,7 @@ class LSTMModel:
         The model receives two features per timestep (visitor count and satisfaction score).
        
         Two internal histories are maintained:
-           - self.history: list of visitor counts
+           - self.customer_count_history: dictionary with keys as timestep indices and values as visitor counts
            - self.rating_history: dictionary with keys as timestep indices and values as ratings
         """
         self.window_size = window_size
@@ -98,10 +98,13 @@ class LSTMModel:
           - customer_count: The observed visitor count
           - satisfaction_rating: The observed satisfaction rating
 
-        It appends the visitor count to the history list and stores the rating in a dictionary
-        keyed by the same timestep. Once enough data points (window_size + 1) exist, a training
-        batch is constructed using the most recent window_size entries for both counts and ratings.
+        The mothod stores both counts and ratings in dictionaries keyed by last_step. 
+        Once enough data points (window_size + 1) exist, a training batch is constructed using the most recent window_size entries for both counts and ratings.
         The model is trained on this single batch.
+
+        Note: Online learning in machine learning refers to a training paradigm where the model learns incrementally from data as it becomes available, 
+            rather than relying on a pre-collected and fixed dataset (as in offline or batch learning). In the context of Long Short-Term Memory (LSTM) networks,
+            online learning becomes particularly relevant for applications involving streaming or sequential data, such as time series forecasting.
         """
         # Store observations in dictionaries
         self.customer_count_history[last_step] = customer_count
