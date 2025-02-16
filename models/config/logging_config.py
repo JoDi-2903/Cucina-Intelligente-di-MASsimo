@@ -3,7 +3,7 @@ import os
 from datetime import datetime as dt
 
 # Set the SINGLE_FILE flag to True if you want to log all loggers to a single file
-SINGLE_FILE = True
+SINGLE_FILE = False
 
 # Ensure the log directory exists
 log_directory = os.path.join("log")
@@ -20,8 +20,8 @@ def setup_logger(name):
     # Create a file handler
     file_handler = logging.FileHandler(
         os.path.join(log_directory,
-                     f"{dt.now().strftime("%Y%m%d_%H%M%S")}.log" if SINGLE_FILE
-                     else f"{dt.now().strftime("%Y%m%d_%H%M%S")}_{name}.log")
+                     f"{dt.now().strftime('%Y%m%d_%H%M%S')}.log" if SINGLE_FILE
+                     else f"{dt.now().strftime('%Y%m%d_%H%M%S')}_{name}.log")
     )
     file_handler.setLevel(logging.DEBUG)
 

@@ -25,14 +25,18 @@ class ManagerAgent(Agent):
                 rating_history=restaurant_model.RestaurantModel.rating_over_steps,
                 n=3
             )
+            # TODO: Implement a more sophisticated algorithm to determine the number of service agents
 
         # Get the current service agents and the current profit
         current_service_agents = list(self.model.agents_by_type[service_agent.ServiceAgent])
         current_profit = self.calculate_profit()
 
-        # If the profit is lower than the current profit, remove a service agent
+        # If the profit is lower than the current profit, remove a service agent.
+        # The condition for removing a service agent is that there are more than one service agents and that the number of customers is less than the number of service agents times the service agent capacity times 2. Each service agent can temporarily serve twice the amount of customers.
         if current_profit < self.profit:
-            if len(current_service_agents) > 1:
+            if (len(current_service_agents) > 1 and
+                len(self.model.agents_by_type[customer_agent.CustomerAgent]) <= 
+                (len(current_service_agents) - 1) * Config().service.service_agent_capacity * 2):
                 agent_to_remove = self.random.choice(current_service_agents)
                 agent_to_remove_customers = agent_to_remove.customer_queue
 
