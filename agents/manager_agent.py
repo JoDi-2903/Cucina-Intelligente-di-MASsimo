@@ -1,8 +1,8 @@
 from mesa import Agent, Model
 
 from enums.customer_agent_state import CustomerAgentState
-from mesa_objects.agents import customer_agent, service_agent
-from mesa_objects.models import restaurant_model
+from agents import customer_agent, service_agent
+from models import restaurant_model
 from models.config.config import Config
 from models.config.logging_config import manager_logger
 

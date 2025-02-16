@@ -4,10 +4,10 @@ from statistics import fmean
 
 from mesa import Model
 
-from mesa_objects.agents import customer_agent
-from mesa_objects.agents.customer_agent import CustomerAgent
-from mesa_objects.agents.manager_agent import ManagerAgent
-from mesa_objects.agents.service_agent import ServiceAgent
+from enums.customer_agent_state import CustomerAgentState
+from agents.customer_agent import CustomerAgent
+from agents.manager_agent import ManagerAgent
+from agents.service_agent import ServiceAgent
 from ml.lstm_model import LSTMModel
 from models.config.config import Config
 from models.config.logging_config import restaurant_logger
@@ -85,7 +85,7 @@ class RestaurantModel(Model):
         # Count current active customers (not DONE).
         current_customers: int = sum(
             1 for agent in self.agents_by_type[CustomerAgent]
-            if agent.state != customer_agent.CustomerAgentState.DONE
+            if agent.state != CustomerAgentState.DONE
         )
 
         # Retrieve the historical data for customers added per step.
@@ -139,19 +139,19 @@ class RestaurantModel(Model):
     def get_total_waiting_time(self) -> int:
         """ Compute the total waiting time for all customers in the model """
         return sum(agent.get_waiting_time() for agent in \
-                   self.agents_by_type[customer_agent.CustomerAgent] \
-                   if agent.state != customer_agent.CustomerAgentState.REJECTED)
+                   self.agents_by_type[CustomerAgent] \
+                   if agent.state != CustomerAgentState.REJECTED)
 
     def get_total_ideal_time(self) -> int:
         """ Compute the total ideal time for all customers in the model """
         return sum(agent.get_ideal_time() for agent in \
-                   self.agents_by_type[customer_agent.CustomerAgent] \
-                   if agent.state != customer_agent.CustomerAgentState.REJECTED)
+                   self.agents_by_type[CustomerAgent] \
+                   if agent.state != CustomerAgentState.REJECTED)
 
     def get_total_rating(self) -> float | None:
         """ Compute the total rating for all customers in the model """
         return fmean(agent.rating for agent in \
-                     self.agents_by_type[customer_agent.CustomerAgent] \
+                     self.agents_by_type[CustomerAgent] \
                      if agent.rating is not None)
 
     def get_total_rating_percentage(self) -> float:

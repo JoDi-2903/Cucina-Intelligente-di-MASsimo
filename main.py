@@ -2,8 +2,8 @@ import pyoptinterface as poi
 import numpy as np
 from pyoptinterface import highs
 
-from mesa_objects.agents.customer_agent import CustomerAgent
-from mesa_objects.models.restaurant_model import RestaurantModel
+from agents.customer_agent import CustomerAgent
+from models.restaurant_model import RestaurantModel
 from ml.lstm_model import LSTMModel
 from models.config.config import Config
 

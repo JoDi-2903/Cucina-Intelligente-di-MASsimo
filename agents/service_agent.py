@@ -4,8 +4,7 @@ import math
 from mesa import Agent, Model
 
 from enums.customer_agent_state import CustomerAgentState
-from mesa_objects.agents import customer_agent
-from mesa_objects.agents.customer_agent import CustomerAgent
+from agents.customer_agent import CustomerAgent
 from models.config.config import Config
 from models.config.logging_config import service_logger
 
@@ -37,7 +36,7 @@ class ServiceAgent(Agent):
 
         # Filter and sort new customers by weighted sort
         waiting_customers = sorted(
-            (a for a in self.model.agents_by_type[customer_agent.CustomerAgent]
+            (a for a in self.model.agents_by_type[CustomerAgent]
              if a.state == CustomerAgentState.WAIT_FOR_SERVICE_AGENT),
             key=self.weighted_sort
         )
@@ -61,7 +60,7 @@ class ServiceAgent(Agent):
 
         # Filter and sort customers waiting for food by weighted sort
         waiting_customers = sorted(
-            (a for a in self.customer_queue if a.state == customer_agent.CustomerAgentState.WAITING_FOR_FOOD),
+            (a for a in self.customer_queue if a.state == CustomerAgentState.WAITING_FOR_FOOD),
             key=self.weighted_sort
         )
 
