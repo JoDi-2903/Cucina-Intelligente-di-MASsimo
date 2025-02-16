@@ -7,7 +7,7 @@ from ml.lstm_model import LSTMModel
 from models.config.config import Config
 
 
-def objective_function(x) -> tuple[int, float]:
+def objective_function(x: np.ndarray) -> tuple[int, float]:
     """
     Objective function to minimize the total waiting time in the restaurant
     :param service_agents: Number of service agents
@@ -42,13 +42,17 @@ if __name__ == "__main__":
 
     total_waiting_time = 0
     total_profit = 0
+    
+    model_vars = {}
 
     # Add the variables to the model
     for i in range(SIMULATION_STEPS):
-        x = opt_model.add_variable(domain=poi.VariableDomain.Continuous,
-                                   lb=int(lb[i]),
-                                   ub=int(ub[i]),
-                                   name=f"x{i}")
+        model_vars[i] = opt_model.add_variable(domain=poi.VariableDomain.Continuous,
+                                               lb=int(lb[i]),
+                                               ub=int(ub[i]),
+                                               name=f"x{i}")
+
+    # print(model_vars)
 
     # Minimize the total waiting time
     opt_model.set_objective(objective_function(x0)[0], poi.ObjectiveSense.Minimize)
@@ -68,4 +72,7 @@ if __name__ == "__main__":
     print(f"Total waiting time: {total_waiting_time}, Total profit: {total_profit}")
 
     # Get the optimal solution
-    # x_opt = [x.get_value() for x in opt_model.get_variables()]
+    # print([x.get_value() for x in opt_model.get_variables()])
+
+    for k, v in model_vars.items():
+        print(f"x{k}: {opt_model.get_variable_attribute(v, poi.VariableAttribute.Value)}")
