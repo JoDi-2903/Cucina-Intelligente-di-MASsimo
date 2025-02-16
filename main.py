@@ -2,11 +2,8 @@ import pyoptinterface as poi
 import numpy as np
 from pyoptinterface import highs
 
-from enums.customer_agent_state import CustomerAgentState
-from mesa_objects.agents.customer_agent import CustomerAgent
-from mesa_objects.agents.manager_agent import ManagerAgent
-from mesa_objects.agents.service_agent import ServiceAgent
 from mesa_objects.models.restaurant_model import RestaurantModel
+from ml.lstm_model import LSTMModel
 from models.config.config import Config
 
 
@@ -15,9 +12,12 @@ def objective_function(x) -> tuple[int, float]:
     Objective function to minimize the total waiting time in the restaurant
     :param service_agents: Number of service agents
     """
+    # Create machine learning model
+    lstm_model = LSTMModel()
 
     # Create the Mesa Model
     restaurant = RestaurantModel()
+    restaurant.lstm_model = lstm_model
 
     for i in x:
         # Set the number of service agents and parallel preparation according to the optimization

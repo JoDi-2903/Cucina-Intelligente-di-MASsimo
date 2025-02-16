@@ -16,13 +16,7 @@ class WeightsSettings:
             self.__rating_total_time: float = config["rating_total_time"]
             self.__rating_num_people: float = config["rating_num_people"]
         else:
-            self.__time_exceeding: float = 0.005
-            self.__order_error: int = 2
-            self.__rating_profit: float = 1.0
-            self.__rating_waiting_time: float = 0.7
-            self.__rating_total_time: float = 0.5
-            self.__rating_num_people: float = 0.3
-            # TODO: do we really have to add the default values again? Why not just use the default values in the config...?
+            raise ValueError("No default values for weights settings available.")
 
     @property
     def time_exceeding(self) -> float:

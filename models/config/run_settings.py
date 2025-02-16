@@ -10,9 +10,14 @@ class RunSettings:
         """
         if config is not None:
             self.__step_amount: int = config["step_amount"]
+            self.__full_day_cycle_period: int = config["full_day_cycle_period"]
         else:
-            self.__step_amount: int = 120
+            raise ValueError("No default values for run settings available.")
 
     @property
     def step_amount(self) -> int:
         return self.__step_amount
+
+    @property
+    def full_day_cycle_period(self) -> int:
+        return self.__full_day_cycle_period
