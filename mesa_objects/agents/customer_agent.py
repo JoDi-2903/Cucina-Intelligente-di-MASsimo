@@ -61,8 +61,6 @@ class CustomerAgent(Agent):
     @classmethod
     def create_agents(cls, model: Model, n: int, *args, **kwargs):
         new_agents = super().create_agents(model, n, *args, **kwargs)
-        step = model.steps
-        cls.customers_added_per_step[step] = cls.customers_added_per_step.get(step, 0) + n
         return new_agents
 
     def calculate_table_rating(self):

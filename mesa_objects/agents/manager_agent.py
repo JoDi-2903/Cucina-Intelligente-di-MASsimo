@@ -1,6 +1,8 @@
 from mesa import Agent, Model
+
 from enums.customer_agent_state import CustomerAgentState
 from mesa_objects.agents import customer_agent, service_agent
+from mesa_objects.models import restaurant_model
 from models.config.config import Config
 from models.config.logging_config import manager_logger
 
@@ -16,6 +18,13 @@ class ManagerAgent(Agent):
 
     def control_service_agents(self):
         """ Control the number of service agents based on the profit """
+        # Forecast the visitor count for the next n timesteps after some experience (one completed work day) has been gained
+        if self.model.steps > Config().run.full_day_cycle_period:
+            forecasted_visitors = self.model.lstm_model.forecast(
+                time_series=restaurant_model.RestaurantModel.customers_added_per_step,
+                rating_history=restaurant_model.RestaurantModel.rating_over_steps,
+                n=3
+            )
 
         # Get the current service agents and the current profit
         current_service_agents = list(self.model.agents_by_type[service_agent.ServiceAgent])

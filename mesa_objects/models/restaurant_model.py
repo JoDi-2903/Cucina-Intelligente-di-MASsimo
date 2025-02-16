@@ -8,6 +8,7 @@ from mesa_objects.agents import customer_agent
 from mesa_objects.agents.customer_agent import CustomerAgent
 from mesa_objects.agents.manager_agent import ManagerAgent
 from mesa_objects.agents.service_agent import ServiceAgent
+from ml.lstm_model import LSTMModel
 from models.config.config import Config
 from models.config.logging_config import restaurant_logger
 from models.menu import Menu
@@ -17,8 +18,9 @@ logger = restaurant_logger
 class RestaurantModel(Model):
     """A model with some number of agents."""
 
-    # Store overall percentage rating over time for evaluation purposes
+    # Store overall rating and number of created CustomerAgents per step over time
     rating_over_steps: dict[int, float] = {}
+    customers_added_per_step: dict[int, int] = {}
 
     def __init__(self):
         super().__init__()
@@ -42,16 +44,24 @@ class RestaurantModel(Model):
             n=1
         )
 
+        self.rating_over_steps[self.steps] = Config().rating.rating_default
+        self.customers_added_per_step[self.steps] = Config().customers.max_new_customer_agents_per_step
         logger.info(f"Created model with {Config().customers.max_new_customer_agents_per_step} customer agents, {Config().service.service_agents} service agents and 1 manager agent")
 
 
     def step(self):
         """Advance the model by one step."""
+        # save global rating of current step to history
+        self.rating_over_steps[self.steps] = self.get_total_rating()
+
         # spawn new customers
         self.spawn_customers()
 
         # step all agents
         self.agents.shuffle_do("step")
+
+        # Update the time series prediction model (online training) based on the 'real' data of the former step
+        self.lstm_model.update(last_step=self.steps-1, customer_count=self.customers_added_per_step[self.steps-1], satisfaction_rating=self.rating_over_steps[self.steps-1])
 
 
     def spawn_customers(self):
@@ -65,8 +75,7 @@ class RestaurantModel(Model):
             - A small random variation (±10% of the smoothed estimate) simulates unpredictable fluctuations.
             - The calculated number is then clamped so that both max_new_customer_agents_per_step and max_simultaneous_customers_in_restaurant are not exceeded.
         """
-        # Get the current simulation step and restaurant rating.
-        elapsed_steps: int = self.steps
+        # Get the current restaurant rating.
         total_rating_in_percent: float = self.get_total_rating_percentage()  # e.g., 0.85 for 85%
 
         # Retrieve configuration limits.
@@ -80,7 +89,7 @@ class RestaurantModel(Model):
         )
 
         # Retrieve the historical data for customers added per step.
-        customers_history: dict[int, int] = CustomerAgent.customers_added_per_step
+        customers_history: dict[int, int] = self.customers_added_per_step
 
         # 1. Calculate baseline spawn count based solely on the current satisfaction rating.
         # A higher rating leads to a larger baseline number relative to the maximum allowed.
@@ -90,7 +99,7 @@ class RestaurantModel(Model):
         # Here, we define a cycle (e.g., one day) using a period of 100 steps.
         # The sine function produces a value between -1 and 1; scaling the result gives a multiplier
         # that boosts the spawn rate during "rush" periods and decreases it during quieter times.
-        period_multiplier = 1 + 0.5 * math.sin(2 * math.pi * (elapsed_steps / Config().run.full_day_cycle_period))
+        period_multiplier = 1 + 0.5 * math.sin(2 * math.pi * (self.steps / Config().run.full_day_cycle_period))
 
         # 3. Calculate the historical average of customers spawned from previous steps.
         # If no history exists, use half of the maximum as a default.
@@ -119,6 +128,7 @@ class RestaurantModel(Model):
 
         # 9. Finally, create the new customer agents.
         CustomerAgent.create_agents(model=self, n=amount)
+        self.customers_added_per_step[self.steps] = amount
 
         logger.info(
             f"Step {self.steps}: Spawned {amount} new customer agents. "
@@ -152,7 +162,6 @@ class RestaurantModel(Model):
             A value between 0 and 1, which represents the relative position of the overall rating within the possible rating range.
         """
         total_rating = ((self.get_total_rating() - Config().rating.rating_min) / (Config().rating.rating_max - Config().rating.rating_min))
-        self.rating_over_steps[self.steps] = total_rating
         return total_rating
 
     def evaluate(self) -> tuple[int, float]:
