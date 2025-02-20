@@ -150,12 +150,12 @@ class CustomerAgent(Agent):
 
         # logger.debug(self)
 
-    def get_waiting_time(self):
-        """ Calculate waiting time of agent. Consists of time that the customer really waited for the food plus the time that is needed for eating """
-        return self.init_time - self.food_arrival_time + self.eating_time
+    def get_total_time(self):
+        """ Calculate the total time the customer has spent in the restaurant. Increases if the customer has not finished eating. If they leave, the time is fixed. """
+        return self.init_time - self.time_left
 
     def get_ideal_time(self):
-        """ Calculate ideal time of selected food. Consists of food preparation time plus the time that is needed for eating. Delays because of the number of people are not considered """
+        """ Calculate ideal time for the customer. Consists of food preparation time plus the time that is needed for eating. This is the minimum time the customer could possibly spend in the restaurant. """
         return self.food_preparation_time + self.eating_time
 
     def __str__(self):

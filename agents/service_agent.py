@@ -1,6 +1,3 @@
-import random
-
-import math
 from mesa import Agent, Model
 
 from enums.customer_agent_state import CustomerAgentState
@@ -19,11 +16,22 @@ class ServiceAgent(Agent):
         # Initialize the queue for customers. Queue is limited by capacity
         self.customer_queue: list[CustomerAgent] = []
 
-    def weighted_sort(self, customer: CustomerAgent):
-        """ Custom sort key for sorting customers by weighted criteria """
-        return (customer.dish.profit * customer.num_people) * Config().weights.rating_profit + \
-            customer.get_waiting_time() * Config().weights.rating_waiting_time + \
-            customer.time_left * Config().weights.rating_total_time
+    def weighted_sort_placing(self, customer: CustomerAgent):
+        """ Custom sort key for sorting new customers by weighted criteria profit, waiting time and time left """
+        return (
+            (customer.dish.profit * customer.num_people) * Config().weights.rating_profit +
+            customer.get_total_time() * Config().weights.rating_time_spent +
+            customer.time_left * Config().weights.rating_time_left
+        )
+
+    def weighted_sort_serving(self, customer: CustomerAgent):
+        """ Custom sort key for sorting already seated customers by weighted criteria profit, waiting time, time left and food preparation time """
+        return (
+            (customer.dish.profit * customer.num_people) * Config().weights.rating_profit +
+            customer.get_total_time() * Config().weights.rating_time_spent +
+            customer.time_left * Config().weights.rating_time_left +
+            customer.food_preparation_time * Config().weights.rating_time_food_preparation
+        )
 
 
     def step(self):
@@ -36,7 +44,7 @@ class ServiceAgent(Agent):
         waiting_customers = sorted(
             (a for a in self.model.agents_by_type[CustomerAgent]
              if a.state == CustomerAgentState.WAIT_FOR_SERVICE_AGENT),
-            key=self.weighted_sort
+            key=self.weighted_sort_placing
         )
 
         # Get the customer with the smallest time_left
@@ -44,8 +52,7 @@ class ServiceAgent(Agent):
             customer: CustomerAgent = waiting_customers[0]
 
             # Check if the customer needs to be rejected
-            if customer.dish.preparation_time + customer.dish.eating_time \
-                    > customer.time_left:
+            if customer.dish.preparation_time + customer.dish.eating_time > customer.time_left:
                 customer.state = CustomerAgentState.REJECTED
 
             # Check if the personal queue is full
@@ -54,13 +61,13 @@ class ServiceAgent(Agent):
                 self.customer_queue.append(customer)
                 customer.state = CustomerAgentState.WAITING_FOR_FOOD
 
-            logger.info(f"Step {self.model.steps}: Service agent {self.unique_id} is serving customer {customer.unique_id}. Customer is currently {customer.state}")
+            logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s",
+                        self.model.steps, self.unique_id, customer.unique_id, customer.state)
 
         # Filter and sort customers waiting for food by weighted sort
-        # TODO JK: update weighted sort to also consider the food preparation time
         waiting_customers = sorted(
             (a for a in self.customer_queue if a.state == CustomerAgentState.WAITING_FOR_FOOD),
-            key=self.weighted_sort
+            key=self.weighted_sort_serving
         )
 
         # Get the customer with the smallest time_left
@@ -88,4 +95,5 @@ class ServiceAgent(Agent):
                 customer.state = CustomerAgentState.EATING
                 customer.food_arrival_time = customer.time_left
 
-            logger.info(f"Step {self.model.steps}: Service agent {self.unique_id} is serving customer {customer.unique_id}. Customer is currently {customer.state}.")
+            logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s.",
+                        self.model.steps, self.unique_id, customer.unique_id, customer.state)

@@ -1,8 +1,9 @@
 import numpy as np
 from mesa import Agent, Model
 
-from agents import service_agent, customer_agent
+from agents import service_agent
 from agents.service_agent import ServiceAgent
+from agents.customer_agent import CustomerAgent
 from enums.customer_agent_state import CustomerAgentState
 from models import restaurant_model
 from models.config.config import Config
@@ -34,7 +35,7 @@ class ManagerAgent(Agent):
         # Calculate the total revenue and payment
         total_revenue = sum(
             customer_agent.dish.profit * customer_agent.num_people
-            for customer_agent in self.model.agents_by_type[customer_agent.CustomerAgent]
+            for customer_agent in self.model.agents_by_type[CustomerAgent]
             if customer_agent.state == CustomerAgentState.FINISHED_EATING
         )
 

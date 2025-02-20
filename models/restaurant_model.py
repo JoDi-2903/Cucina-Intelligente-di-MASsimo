@@ -23,6 +23,8 @@ class RestaurantModel(Model):
     # Store overall rating and number of created CustomerAgents per step over time
     rating_over_steps: dict[int, float] = {}
     customers_added_per_step: dict[int, int] = {}
+    cumulated_time_spent_at_step: dict[int, int] = {}
+    profit_per_step: dict[int, float] = {}
 
     def __init__(self, lstm_model: LSTMModel):
         super().__init__()
@@ -132,28 +134,22 @@ class RestaurantModel(Model):
         CustomerAgent.create_agents(model=self, n=amount)
         self.customers_added_per_step[self.steps] = amount
 
-        logger.info(
-            f"Step {self.steps}: Spawned {amount} new customer agents. "
-            f"Current rating: {self.get_total_rating():.2f} ({self.get_total_rating_percentage():.2%})"
-        )
+        logger.info("Step %d: Spawned %d new customer agents. Current rating: %.2f (%.2f%%)",
+                    self.steps, amount, self.get_total_rating(), self.get_total_rating_percentage() * 100)
 
-    # TODO: calculate time only for active agents or for all agents?
-    def get_total_waiting_time(self) -> int:
-        """ Compute the total waiting time for all customers in the model """
-        return sum(agent.get_waiting_time() for agent in
-                   self.agents_by_type[CustomerAgent]
-                   if agent.state != CustomerAgentState.REJECTED)
+    def get_total_time_spent(self) -> int:
+        """ Compute the total time spent for all customers in the model """
+        return sum(agent.get_total_time() for agent in
+                   self.agents_by_type[CustomerAgent])
 
-    def get_total_ideal_time(self) -> int:
-        """ Compute the total ideal time for all customers in the model """
-        return sum(agent.get_ideal_time() for agent in
-                   self.agents_by_type[CustomerAgent]
-                   if agent.state != CustomerAgentState.REJECTED)
+    # def get_total_ideal_time(self) -> int:
+    #     """ Compute the total ideal time for all customers in the model """
+    #     return sum(agent.get_ideal_time() for agent in
+    #                self.agents_by_type[CustomerAgent])
 
     def get_total_rating(self) -> float | None:
         """ Compute the total rating for all customers in the model """
-        return fmean(agent.rating for agent in \
-                     self.agents_by_type[CustomerAgent] \
+        return fmean(agent.rating for agent in self.agents_by_type[CustomerAgent]
                      if agent.rating is not None)
 
     def get_total_rating_percentage(self) -> float:
@@ -170,7 +166,18 @@ class RestaurantModel(Model):
     def evaluate(self) -> tuple[int, float]:
         """ Evaluate the model for PyOptInterface objective function """
         manager = self.agents_by_type[ManagerAgent][0]
+        total_waiting_time = self.get_total_time_spent()
 
-        logger.info(
-            f"Step {self.steps}: Evaluating model. Total waiting time: {self.get_total_waiting_time()}, profit: {manager.profit}")
-        return self.get_total_waiting_time(), manager.profit
+        self.profit_per_step[self.steps] = manager.profit
+        self.cumulated_time_spent_at_step[self.steps] = total_waiting_time
+
+        logger.info("Step %d: Evaluating model. Total time spent: %d (change: %d), profit: %f",
+                    self.steps,
+                    total_waiting_time,
+                    total_waiting_time - (self.cumulated_time_spent_at_step[self.steps - 1] if self.steps > 1 else 0),
+                    manager.profit
+        )
+
+        print(f"Step {self.steps}: Evaluating model. Total time spent: {total_waiting_time} (change: {total_waiting_time - (self.cumulated_time_spent_at_step[self.steps - 1] if self.steps > 1 else 0)}), profit: {manager.profit}")
+
+        return total_waiting_time, manager.profit

@@ -14,8 +14,9 @@
     "time_exceeding": 0.05,
     "order_error": 2,
     "rating_profit":  0.2,
-    "rating_waiting_time": 0.5,
-    "rating_total_time":  0.3
+    "rating_time_spent": 1.0,
+    "rating_time_left":  0.7,
+    "rating_time_food_preparation": 0.4
   },
   "Customers": {
     "max_simultaneous_customers_in_restaurant": 128,

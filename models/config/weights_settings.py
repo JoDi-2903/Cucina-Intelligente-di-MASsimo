@@ -12,8 +12,9 @@ class WeightsSettings:
             self.__time_exceeding: float = config["time_exceeding"]
             self.__order_error: int = config["order_error"]
             self.__rating_profit: float = config["rating_profit"]
-            self.__rating_waiting_time: float = config["rating_waiting_time"]
-            self.__rating_total_time: float = config["rating_total_time"]
+            self.__rating_time_spent: float = config["rating_time_spent"]
+            self.__rating_time_left: float = config["rating_time_left"]
+            self.__rating_time_food_preparation: float = config["rating_time_food_preparation"]
         else:
             raise ValueError("No default values for weights settings available.")
 
@@ -30,10 +31,13 @@ class WeightsSettings:
         return self.__rating_profit
 
     @property
-    def rating_waiting_time(self) -> float:
-        return self.__rating_waiting_time
+    def rating_time_spent(self) -> float:
+        return self.__rating_time_spent
 
     @property
-    def rating_total_time(self) -> float:
-        return self.__rating_total_time
+    def rating_time_left(self) -> float:
+        return self.__rating_time_left
 
+    @property
+    def rating_time_food_preparation(self) -> float:
+        return self.__rating_time_food_preparation
