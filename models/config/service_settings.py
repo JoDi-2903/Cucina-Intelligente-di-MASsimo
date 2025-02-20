@@ -12,6 +12,8 @@ class ServiceSettings:
             self.service_agents: int = config["service_agents"]
             self.__service_agent_capacity: int = config["service_agent_capacity"]
             self.__service_agent_salary_per_tick: float = config["service_agent_salary_per_tick"]
+            self.__service_agent_capacity_min: int = config["service_agent_capacity_min"]
+            self.__service_agent_capacity_max: int = config["service_agent_capacity_max"]
         else:
             raise ValueError("No default values for service settings available.")
 
@@ -22,3 +24,11 @@ class ServiceSettings:
     @property
     def service_agent_salary_per_tick(self) -> float:
         return self.__service_agent_salary_per_tick
+
+    @property
+    def service_agent_capacity_min(self) -> int:
+        return self.__service_agent_capacity_min
+    
+    @property
+    def service_agent_capacity_max(self) -> int:
+        return self.__service_agent_capacity_max

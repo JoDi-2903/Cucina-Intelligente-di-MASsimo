@@ -1,7 +1,9 @@
+from typing import Optional
+
 from mesa import Agent, Model
 
-from enums.customer_agent_state import CustomerAgentState
 from agents.customer_agent import CustomerAgent
+from enums.customer_agent_state import CustomerAgentState
 from models.config.config import Config
 from models.config.logging_config import service_logger
 
@@ -10,8 +12,19 @@ logger = service_logger
 class ServiceAgent(Agent):
     """An agent that represents the service in the restaurant"""
 
-    def __init__(self, model: Model):
+    def __init__(self, model: Model, customer_capacity: Optional[int] = None, salary_per_tick: Optional[float] = None):
+        """
+        Create a new service agent.
+
+        Parameters:
+            model: The model the agent belongs to.
+            customer_capacity: The number of customers that can be served in parallel in one step.
+            salary_per_tick: The salary of the service agent per tick.
+        
+        """
         super().__init__(model)
+        self.salary_per_tick: float = salary_per_tick if salary_per_tick is not None else Config().service.service_agent_salary_per_tick
+        self.customer_capacity: int = customer_capacity if customer_capacity is not None else Config().service.service_agent_capacity
 
         # Initialize the queue for customers. Queue is limited by capacity
         self.customer_queue: list[CustomerAgent] = []
