@@ -1,7 +1,7 @@
+import math
 import random
 from statistics import fmean
 
-import math
 from mesa import Model
 from pyoptinterface import highs
 
@@ -20,8 +20,9 @@ logger = restaurant_logger
 class RestaurantModel(Model):
     """A model with some number of agents."""
 
-    # Store overall rating and number of created CustomerAgents per step over time
+    # Store overall history of important values per step over time
     rating_over_steps: dict[int, float] = {}
+    profit_over_steps: dict[int, float] = {}
     customers_added_per_step: dict[int, int] = {}
     cumulated_time_spent_at_step: dict[int, int] = {}
     profit_per_step: dict[int, float] = {}
