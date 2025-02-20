@@ -11,7 +11,7 @@ class RunSettings:
         if config is not None:
             self.__step_amount: int = config["step_amount"]
             self.__full_day_cycle_period: int = config["full_day_cycle_period"]
-            self.__lstm_window_size: int = config["lstm_window_size"]
+            self.__retrain_interval: int = config["retrain_interval"]
         else:
             raise ValueError("No default values for run settings available.")
 
@@ -24,5 +24,5 @@ class RunSettings:
         return self.__full_day_cycle_period
 
     @property
-    def lstm_window_size(self) -> int:
-        return self.__lstm_window_size
+    def retrain_interval(self) -> int:
+        return self.__retrain_interval

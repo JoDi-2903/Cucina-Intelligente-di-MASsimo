@@ -1,19 +1,21 @@
-import math
 import random
 from statistics import fmean
 
+import math
 from mesa import Model
+from pyoptinterface import highs
 
-from enums.customer_agent_state import CustomerAgentState
 from agents.customer_agent import CustomerAgent
 from agents.manager_agent import ManagerAgent
 from agents.service_agent import ServiceAgent
+from enums.customer_agent_state import CustomerAgentState
 from ml.lstm_model import LSTMModel
 from models.config.config import Config
 from models.config.logging_config import restaurant_logger
 from models.menu import Menu
 
 logger = restaurant_logger
+
 
 class RestaurantModel(Model):
     """A model with some number of agents."""
@@ -25,10 +27,8 @@ class RestaurantModel(Model):
     def __init__(self, lstm_model: LSTMModel):
         super().__init__()
 
-        # Create the LSTM model
+        # Initialize LSTM model, menu and optimization models
         self.lstm_model = lstm_model
-
-        # Create the menu
         self.menu = Menu()
 
         # Initialize agents
@@ -36,12 +36,10 @@ class RestaurantModel(Model):
             model=self,
             n=Config().customers.max_new_customer_agents_per_step
         )
-
         ServiceAgent.create_agents(
             model=self,
             n=Config().service.service_agents
         )
-
         ManagerAgent.create_agents(
             model=self,
             n=1
@@ -49,8 +47,9 @@ class RestaurantModel(Model):
 
         self.rating_over_steps[self.steps] = Config().rating.rating_default
         self.customers_added_per_step[self.steps] = Config().customers.max_new_customer_agents_per_step
-        logger.info(f"Created model with {Config().customers.max_new_customer_agents_per_step} customer agents, {Config().service.service_agents} service agents and 1 manager agent")
-
+        logger.info(
+            f"Created model with {Config().customers.max_new_customer_agents_per_step} customer agents, {Config().service.service_agents} service agents and 1 manager agent"
+        )
 
     def step(self):
         """Advance the model by one step."""
@@ -141,14 +140,14 @@ class RestaurantModel(Model):
     # TODO: calculate time only for active agents or for all agents?
     def get_total_waiting_time(self) -> int:
         """ Compute the total waiting time for all customers in the model """
-        return sum(agent.get_waiting_time() for agent in \
-                   self.agents_by_type[CustomerAgent] \
+        return sum(agent.get_waiting_time() for agent in
+                   self.agents_by_type[CustomerAgent]
                    if agent.state != CustomerAgentState.REJECTED)
 
     def get_total_ideal_time(self) -> int:
         """ Compute the total ideal time for all customers in the model """
-        return sum(agent.get_ideal_time() for agent in \
-                   self.agents_by_type[CustomerAgent] \
+        return sum(agent.get_ideal_time() for agent in
+                   self.agents_by_type[CustomerAgent]
                    if agent.state != CustomerAgentState.REJECTED)
 
     def get_total_rating(self) -> float | None:
@@ -164,12 +163,14 @@ class RestaurantModel(Model):
         Returns:
             A value between 0 and 1, which represents the relative position of the overall rating within the possible rating range.
         """
-        total_rating = ((self.get_total_rating() - Config().rating.rating_min) / (Config().rating.rating_max - Config().rating.rating_min))
+        total_rating = ((self.get_total_rating() - Config().rating.rating_min) / (
+                Config().rating.rating_max - Config().rating.rating_min))
         return total_rating
 
     def evaluate(self) -> tuple[int, float]:
         """ Evaluate the model for PyOptInterface objective function """
         manager = self.agents_by_type[ManagerAgent][0]
 
-        logger.info(f"Step {self.steps}: Evaluating model. Total waiting time: {self.get_total_waiting_time()}, profit: {manager.profit}")
+        logger.info(
+            f"Step {self.steps}: Evaluating model. Total waiting time: {self.get_total_waiting_time()}, profit: {manager.profit}")
         return self.get_total_waiting_time(), manager.profit

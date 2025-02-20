@@ -1,34 +1,34 @@
-import pyoptinterface as poi
 import numpy as np
+import pyoptinterface as poi
 from pyoptinterface import highs
 
-from agents.customer_agent import CustomerAgent
-from models.restaurant_model import RestaurantModel
 from ml.lstm_model import LSTMModel
 from models.config.config import Config
+from models.restaurant_model import RestaurantModel
 
 
 def objective_function(x: np.ndarray) -> tuple[int, float]:
     """
     Objective function to minimize the total waiting time in the restaurant
-    :param service_agents: Number of service agents
+    :param x: Number of service agents
     """
     # Create machine learning model
     lstm_model = LSTMModel()
 
     # Create the Mesa Model
-    restaurant = RestaurantModel(lstm_model=lstm_model)
+    restaurant = RestaurantModel(lstm_model)
 
-    for i in x:
+    wait_time, profit = 0, 0
+    for num_service_agents in x:
         # Set the number of service agents and parallel preparation according to the optimization
-        Config().service.service_agents = int(i)
+        Config().service.service_agents = int(num_service_agents)
 
         # Run the model with the updated configuration
         while restaurant.running and restaurant.steps < Config().run.step_amount:
             restaurant.step()
             wait_time, profit = restaurant.evaluate()
 
-    return (wait_time, profit)
+    return wait_time, profit
 
 
 if __name__ == "__main__":
@@ -36,21 +36,23 @@ if __name__ == "__main__":
     opt_model = highs.Model()
 
     SIMULATION_STEPS = 50
-    x0 = np.ones(SIMULATION_STEPS) * 5  # Start mit 5 Agenten pro Zeitschritt
-    lb = np.ones(SIMULATION_STEPS) * 1  # Mindestens 1 Agent
-    ub = np.ones(SIMULATION_STEPS) * 20  # Maximal 20 Agenten
+    x0 = np.ones(SIMULATION_STEPS) * 5  # Start with 5 agents per timestep
+    lb = np.ones(SIMULATION_STEPS) * 1  # minimum 1 agent
+    ub = np.ones(SIMULATION_STEPS) * 20  # maximum 20 agents
 
     total_waiting_time = 0
     total_profit = 0
-    
+
     model_vars = {}
 
     # Add the variables to the model
     for i in range(SIMULATION_STEPS):
-        model_vars[i] = opt_model.add_variable(domain=poi.VariableDomain.Continuous,
-                                               lb=int(lb[i]),
-                                               ub=int(ub[i]),
-                                               name=f"x{i}")
+        model_vars[i] = opt_model.add_variable(
+            domain=poi.VariableDomain.Continuous,
+            lb=int(lb[i]),
+            ub=int(ub[i]),
+            name=f"x{i}"
+        )
 
     # print(model_vars)
 
@@ -60,7 +62,6 @@ if __name__ == "__main__":
 
     # Get the optimal solution
     total_waiting_time = opt_model.get_obj_value()
-
 
     # Maximize the profit
     opt_model.set_objective(objective_function(x0)[1], poi.ObjectiveSense.Maximize)

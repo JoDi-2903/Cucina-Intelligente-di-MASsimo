@@ -7,6 +7,7 @@ from models.config.logging_config import machine_learning_logger
 
 logger = machine_learning_logger
 
+
 class LSTMModel:
     def __init__(self):
         """
@@ -18,7 +19,7 @@ class LSTMModel:
            - self.customer_count_history: dictionary with keys as timestep indices and values as visitor counts
            - self.rating_history: dictionary with keys as timestep indices and values as ratings
         """
-        self.window_size = Config().run.lstm_window_size
+        self.window_size = Config().run.retrain_interval
         self.feature_dim = 2  # Two features: visitor count and rating
         self.customer_count_history: dict[int, int] = {}  # Dict to store visitor counts over time
         self.rating_history: dict[int, float] = {}  # Dict to store past ratings

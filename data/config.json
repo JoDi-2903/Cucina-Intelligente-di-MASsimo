@@ -13,10 +13,10 @@
   "Weights": {
     "time_exceeding": 0.05,
     "order_error": 2,
-    "rating_profit":  1.0,
-    "rating_waiting_time":  0.7,
-    "rating_total_time":  0.5,
-    "rating_num_people":  0.3
+    "rating_profit": 1.0,
+    "rating_waiting_time": 0.7,
+    "rating_total_time": 0.5,
+    "rating_num_people": 0.3
   },
   "Customers": {
     "max_simultaneous_customers_in_restaurant": 128,
@@ -33,6 +33,6 @@
   "Run": {
     "step_amount": 1000,
     "full_day_cycle_period": 100,
-    "lstm_window_size": 10
+    "retrain_interval": 10
   }
 }
