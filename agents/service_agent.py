@@ -21,11 +21,10 @@ class ServiceAgent(Agent):
 
     def weighted_sort(self, customer: CustomerAgent):
         """ Custom sort key for sorting customers by weighted criteria """
-        return (
+        return sum(
             (customer.dish.profit * customer.num_people) * Config().weights.rating_profit,
             customer.get_waiting_time() * Config().weights.rating_waiting_time,
-            customer.time_left * Config().weights.rating_total_time,
-            customer.num_people * Config().weights.rating_num_people
+            customer.time_left * Config().weights.rating_total_time
         )
 
     def step(self):
@@ -59,6 +58,7 @@ class ServiceAgent(Agent):
             logger.info(f"Step {self.model.steps}: Service agent {self.unique_id} is serving customer {customer.unique_id}. Customer is currently {customer.state}")
 
         # Filter and sort customers waiting for food by weighted sort
+        # TODO JK: update weighted sort to also consider the food preparation time
         waiting_customers = sorted(
             (a for a in self.customer_queue if a.state == CustomerAgentState.WAITING_FOR_FOOD),
             key=self.weighted_sort
@@ -68,22 +68,22 @@ class ServiceAgent(Agent):
         if waiting_customers:
             customer: CustomerAgent = waiting_customers[0]
 
-            # Only the specified amount of food can be processed at once.
-            # The delay depends on the amount of customers
-            preparation_delay = math.ceil(
-                customer.num_people / Config().orders.parallel_preparation
-            )
+            # # Only the specified amount of food can be processed at once.
+            # # The delay depends on the amount of customers
+            # preparation_delay = math.ceil(
+            #     customer.num_people / Config().orders.parallel_preparation
+            # )
 
-            # Occasionally introduce a probabilistic delay based on order_correctness
-            random_delay = random.randint(0, Config().orders.delay_max) \
-                if random.random() > Config().orders.delay_randomness \
-                else 0
+            # # Occasionally introduce a probabilistic delay based on order_correctness
+            # random_delay = random.randint(0, Config().orders.delay_max) \
+            #     if random.random() > Config().orders.delay_randomness \
+            #     else 0
 
-            # Total delay combines the batch adjustment and random delay (if applicable)
-            total_delay = preparation_delay + random_delay
+            # # Total delay combines the batch adjustment and random delay (if applicable)
+            # total_delay = preparation_delay + random_delay
 
             # Prepare the food
-            if customer.food_preparation_time > 1 + total_delay:
+            if customer.food_preparation_time > 1:
                 customer.food_preparation_time -= 1
             else:
                 customer.state = CustomerAgentState.EATING

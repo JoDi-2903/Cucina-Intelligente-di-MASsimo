@@ -77,3 +77,6 @@ if __name__ == "__main__":
 
     for k, v in model_vars.items():
         print(f"x{k}: {opt_model.get_variable_attribute(v, poi.VariableAttribute.Value)}")
+
+# TODO JK: 1 Run 
+# TODO DN: GUI mit live Diagrammen - Mesa Grid (max. Anzahl Kunden, Heatmap mäßig anzeigen) - Statistiken!

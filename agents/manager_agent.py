@@ -21,7 +21,7 @@ class ManagerAgent(Agent):
         Control the number of service agents and update the profit of the restaurant.
         """
         # If the retrain interval is reached, update the number of service agents
-        if self.model.steps > Config().run.retrain_interval:
+        if self.model.steps > Config().run.full_day_cycle_period:
             self.__update_service_agents()
 
         # Get the current service agents and the current profit
@@ -66,6 +66,34 @@ class ManagerAgent(Agent):
 
         # Add or remove service agents based on the predicted visitor count
         current_service_agents = len(self.model.agents_by_type[ServiceAgent])
+
+        # TODO JD: Optimierung Schichtplanung: Inhalt dieser Funktion durch pyoptinterface optimieren
+            # evtl. "Kündigungsfrist" oder "Anfahrtszeit" für Service Agents
+
+        # Entscheidungsvariablen:
+        # service_agent_daily_working_hours: upper bound (Arbeitsschutz), lower bound
+        # parallel_preparation: je mehr gleichzeitig, desto teurer
+            # Kosten pro Tick: service_agent_salary_per_tick * parallel_preparation
+        # evtl. Qualityfaktor für teureres Essen -> Rating & Profit
+        # evtl. Optimierungsmodell entscheidet gewichtet über die zu verwendende Zielfunktion
+
+        # Zielfunktionen:
+            # 1. Maximierung des Profits: Profit für die letzten full_day_cycle Steps ablegen
+            # 2. Maximierung der Zufriedenheit: restaurant.rating_over_steps
+        
+        # Constraints:
+            # Maximale Anzahl an Service Agents
+            # Maximale Anzahl an Kunden pro Service Agent -> existiert schon
+            # Maximale Anzahl an Arbeitsstunden pro Service Agent
+
+        # Optimierungsmodell direkt im Manager Agent implementieren und nach full_day_cycle Steps ausführen
+        # Das Ergebnis der Optimierung wird dann global gesetzt
+
+        # Wir haben einen festen Mitarbeiterstamm. Diese Mitarbeiter haben Arbeitszeiten, die sie nicht überschreiten dürfen. Es gibt Mitarbeiter mit weniger Arbeitszeit und Mitarbeiter mit mehr Arbeitszeit. Das Problem ist jetzt, die Mitarbeiter für den nächsten Tag so einzuteilen, dass der Profit maximiert wird. Die Mitarbeiter werden im Laufe des Tages nicht verändert. Der Faktor parallel_preparation kann unterschiedlich je Mitarbeiter sein; je höher, desto höher das Gehalt des Mitarbeiters.
+
+        # Manager speichert jeden Schritt den aktuellen Profit und legt ihn im Restaurant ab
+
+
         if num_service_agents > current_service_agents:
             service_agent.ServiceAgent.create_agents(
                 model=self.model,

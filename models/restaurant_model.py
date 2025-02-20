@@ -60,7 +60,7 @@ class RestaurantModel(Model):
         self.spawn_customers()
 
         # step all agents
-        self.agents.shuffle_do("step")
+        self.agents.do("step")
 
         # Update the time series prediction model (online training) based on the 'real' data of the former step
         self.lstm_model.update(last_step=self.steps-1, customer_count=self.customers_added_per_step[self.steps-1], satisfaction_rating=self.rating_over_steps[self.steps-1])
