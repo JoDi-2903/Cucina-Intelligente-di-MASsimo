@@ -1,7 +1,7 @@
 import numpy as np
 from mesa import Agent, Model
 
-from agents import customer_agent, service_agent
+from agents import service_agent, customer_agent
 from agents.service_agent import ServiceAgent
 from enums.customer_agent_state import CustomerAgentState
 from models import restaurant_model
@@ -42,7 +42,8 @@ class ManagerAgent(Agent):
                          len(self.model.agents_by_type[service_agent.ServiceAgent]))
 
         logger.info(
-            f"Step {self.model.steps}: Revenue: {total_revenue:.2f}, Payment: {total_payment:.2f}, Profit: {total_revenue - total_payment:.2f}. Total profit: {self.profit + total_revenue - total_payment:.2f}"
+            "Step %d: Revenue: %.2f, Payment: %.2f, Profit: %.2f. Total profit: %.2f",
+            self.model.steps, total_revenue, total_payment, total_revenue - total_payment, self.profit + total_revenue - total_payment
         )
 
         return total_revenue - total_payment
@@ -97,28 +98,35 @@ class ManagerAgent(Agent):
         if num_service_agents > current_service_agents:
             service_agent.ServiceAgent.create_agents(
                 model=self.model,
-                n=int(num_service_agents - current_service_agents)
+                n=(num_service_agents - current_service_agents)
             )
-            logger.info(f"Added new service agent. Working agent amount: {current_service_agents + 1}")
+            logger.info("Added new service agent. Working agent amount: %d", current_service_agents + 1)
         elif num_service_agents < current_service_agents:
-            for _ in range(int(current_service_agents - num_service_agents)):
+            remove_amount = current_service_agents - num_service_agents
+
+            # Ensure that at least one service agent remains
+            if remove_amount > num_service_agents:
+                remove_amount -= 1
+
+            for _ in range(remove_amount):
                 self.__remove_service_agent()
 
     def __remove_service_agent(self):
         """
-        Remove a service agent and reassign the customers to the customer queue of the remaining service agents.
+        Remove a services agent and reassign the customers to the customer queue of the remaining service agents.
         """
         # Pick a random service agent to remove and get the customers from the agent to reassign them
         agent_to_remove = self.random.choice(list(self.model.agents_by_type[ServiceAgent]))
         remaining_customers = agent_to_remove.customer_queue
 
         logger.info(
-            f"Removing service agent {agent_to_remove.unique_id}. Working agent amount: {len(self.model.agents_by_type[ServiceAgent]) - 1}"
+            "Removing service agent %d. Working agent amount: %d",
+            agent_to_remove.unique_id,
+            len(self.model.agents_by_type[ServiceAgent]) - 1
         )
 
-        # Remove the agent from the model and the list of service agents
+        # Remove the agent from the model
         agent_to_remove.remove()
-        self.model.agents_by_type[ServiceAgent].remove(agent_to_remove)
 
         # Reassign the customers equally to the remaining service agents
         for i, customer in enumerate(remaining_customers):

@@ -14,7 +14,6 @@ class WeightsSettings:
             self.__rating_profit: float = config["rating_profit"]
             self.__rating_waiting_time: float = config["rating_waiting_time"]
             self.__rating_total_time: float = config["rating_total_time"]
-            self.__rating_num_people: float = config["rating_num_people"]
         else:
             raise ValueError("No default values for weights settings available.")
 
@@ -38,6 +37,3 @@ class WeightsSettings:
     def rating_total_time(self) -> float:
         return self.__rating_total_time
 
-    @property
-    def rating_num_people(self) -> float:
-        return self.__rating_num_people

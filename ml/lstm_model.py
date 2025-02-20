@@ -109,7 +109,7 @@ class LSTMModel:
         self.rating_history[last_step] = satisfaction_rating
 
         # Check if it is time for a new training, based on the interval specified in config
-        if last_step % Config().run.lstm_window_size != 0:
+        if last_step % Config().run.retrain_interval != 0:
             return
 
         # Check how many timesteps we have in total

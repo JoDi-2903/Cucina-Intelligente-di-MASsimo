@@ -21,11 +21,10 @@ class ServiceAgent(Agent):
 
     def weighted_sort(self, customer: CustomerAgent):
         """ Custom sort key for sorting customers by weighted criteria """
-        return sum(
-            (customer.dish.profit * customer.num_people) * Config().weights.rating_profit,
-            customer.get_waiting_time() * Config().weights.rating_waiting_time,
+        return (customer.dish.profit * customer.num_people) * Config().weights.rating_profit + \
+            customer.get_waiting_time() * Config().weights.rating_waiting_time + \
             customer.time_left * Config().weights.rating_total_time
-        )
+
 
     def step(self):
         # Remove all customers that are done eating
