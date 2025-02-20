@@ -107,6 +107,10 @@ class LSTMModel:
         self.customer_count_history[last_step] = customer_count
         self.rating_history[last_step] = satisfaction_rating
 
+        # Check if it is time for a new training, based on the interval specified in config
+        if last_step % Config().run.lstm_window_size != 0:
+            return
+
         # Check how many timesteps we have in total
         all_steps = sorted(self.customer_count_history.keys())
         if len(all_steps) < self.window_size + 1:
