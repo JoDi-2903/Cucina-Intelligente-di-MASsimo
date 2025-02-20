@@ -22,8 +22,11 @@ class RestaurantModel(Model):
     rating_over_steps: dict[int, float] = {}
     customers_added_per_step: dict[int, int] = {}
 
-    def __init__(self):
+    def __init__(self, lstm_model: LSTMModel):
         super().__init__()
+
+        # Create the LSTM model
+        self.lstm_model = lstm_model
 
         # Create the menu
         self.menu = Menu()
@@ -61,7 +64,8 @@ class RestaurantModel(Model):
         self.agents.shuffle_do("step")
 
         # Update the time series prediction model (online training) based on the 'real' data of the former step
-        self.lstm_model.update(last_step=self.steps-1, customer_count=self.customers_added_per_step[self.steps-1], satisfaction_rating=self.rating_over_steps[self.steps-1])
+        if self.steps % Config().run.lstm_window_size == 0:
+            self.lstm_model.update(last_step=self.steps-1, customer_count=self.customers_added_per_step[self.steps-1], satisfaction_rating=self.rating_over_steps[self.steps-1])
 
 
     def spawn_customers(self):

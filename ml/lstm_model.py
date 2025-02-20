@@ -1,18 +1,16 @@
 import numpy as np
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.models import Sequential
+from models.config.config import Config
 
 from models.config.logging_config import machine_learning_logger
 
 logger = machine_learning_logger
 
 class LSTMModel:
-    def __init__(self, window_size=10):
+    def __init__(self):
         """
         Initialization method for the LSTM model.
-
-        Parameters:
-        - window_size: Number of past timesteps used as input.
         
         The model receives two features per timestep (visitor count and satisfaction score).
        
@@ -20,14 +18,14 @@ class LSTMModel:
            - self.customer_count_history: dictionary with keys as timestep indices and values as visitor counts
            - self.rating_history: dictionary with keys as timestep indices and values as ratings
         """
-        self.window_size = window_size
+        self.window_size = Config().run.lstm_window_size
         self.feature_dim = 2  # Two features: visitor count and rating
         self.customer_count_history: dict[int, int] = {}  # Dict to store visitor counts over time
         self.rating_history: dict[int, float] = {}  # Dict to store past ratings
 
         # Build a larger LSTM model with two LSTM layers and dropout for regularization
         self.model = Sequential([
-            LSTM(64, return_sequences=True, input_shape=(window_size, self.feature_dim)),
+            LSTM(64, return_sequences=True, input_shape=(self.window_size, self.feature_dim)),
             Dropout(0.2),
             LSTM(32),
             Dense(16, activation='relu'),

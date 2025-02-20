@@ -32,6 +32,7 @@
   },
   "Run": {
     "step_amount": 1000,
-    "full_day_cycle_period": 100
+    "full_day_cycle_period": 100,
+    "lstm_window_size": 10
   }
 }

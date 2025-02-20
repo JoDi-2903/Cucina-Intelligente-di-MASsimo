@@ -17,8 +17,7 @@ def objective_function(x: np.ndarray) -> tuple[int, float]:
     lstm_model = LSTMModel()
 
     # Create the Mesa Model
-    restaurant = RestaurantModel()
-    restaurant.lstm_model = lstm_model
+    restaurant = RestaurantModel(lstm_model=lstm_model)
 
     for i in x:
         # Set the number of service agents and parallel preparation according to the optimization
