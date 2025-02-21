@@ -43,7 +43,7 @@ class CustomerAgent(Agent):
         self.food_preparation_time = self.dish.preparation_time
 
         # Attribute to save the time of food arrival. Value is set by service agent
-        self.food_arrival_time = 0
+        self.waiting_time = 0
 
         # Default correctness of the order
         self.order_correctness = Config().orders.order_correctness

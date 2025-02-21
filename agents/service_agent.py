@@ -93,7 +93,7 @@ class ServiceAgent(Agent):
                 customer.food_preparation_time -= 1
             else:
                 customer.state = CustomerAgentState.EATING
-                customer.food_arrival_time = customer.time_left
+                customer.waiting_time = customer.init_time - customer.time_left
 
             logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s.",
                         self.model.steps, self.unique_id, customer.unique_id, customer.state)
