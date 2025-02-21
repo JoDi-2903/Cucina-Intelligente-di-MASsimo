@@ -9,11 +9,9 @@ Nachfolgend wird das Optimierungsproblems der Schichtplanung mathematisch mit al
 Sei:
 \begin{itemize}
     \item $ x_{a,t} \in \{0, 1\} $\\
-          Eine binäre Variable, die angibt, ob der Service-Agent $ a $ im Zeitfenster $ t $ arbeitet (1 = arbeitet, 0 = arbeitet nicht).
+          Eine binäre Variable, die angibt, ob der Service-Agent $ a $ im Zeitfenster $ t = \{ 0, \dots, 23\} $ arbeitet (1 = arbeitet, 0 = arbeitet nicht).
     \item $ y_{a,s} \in \{0, 1\} $\\
           Eine binäre Variable, die angibt, ob der Service-Agent $ a $ der Schicht $ s $ zugewiesen wurde (1 = zugewiesen, 0 = nicht zugewiesen).
-    \item $ z_{a,s} \in T $\\
-          Eine kontinuierliche Variable, die die Länge der Schicht $ s $ für den Service-Agenten $ a $ in Zeitschritten $ t \in T $ darstellt.
 \end{itemize}
 
 \subsection*{Parameter}
@@ -39,7 +37,7 @@ Sei:
 
 \subsection*{Zielfunktion}
 Das Ziel ist es, den Gewinn des Restaurants zu maximieren, indem die Kundennachfrage erfüllt und gleichzeitig die Personalkosten minimiert werden. Die Zielfunktion lautet:
-$$\text{Maximiere } f(x) = \sum_{t \in T} \min\left(\sum_{a \in A} p_a x_{a,t}, v_t\right) - \sum_{t \in T} \sum_{a \in A} c_a x_{a,t}$$
+$$\text{Minimiere } f(x) = \sum_{t \in T} \sum_{a \in A} c_a x_{a,t}$$
 Dabei:
 \begin{itemize}
     \item Der erste Term repräsentiert den Gesamterlös basierend auf der Anzahl der bedienten Kunden. Dieser wird durch die prognostizierte Besuchernachfrage ($v_t$) und die Gesamtkapazität der arbeitenden Agenten ($p_a x_{a,t}$) begrenzt.
@@ -54,21 +52,15 @@ Dabei:
     \item \textbf{Maximale Arbeitszeit pro Agent}\\
           Jeder Agent darf maximal $M_a = 48$ Zeitschritte pro Tag arbeiten:
           $$\sum_{t \in T} x_{a,t} \leq M_a, \quad \forall a \in A$$
-    \item \textbf{Schichtlänge}\\
-          Jede Schicht muss zwischen mindestens 6 und maximal 36 Zeitschritten liegen. Es werden Hilfsvariablen ($y_{a,s}$) verwendet, um die Schichten zu identifizieren, und deren Längen ($z_{a,s}$) zu berechnen:
+    \item \textbf{Mapping der Service Agents auf Schichten}\\
+          Wenn ein Agent in einer Schicht arbeitet, muss die binäre Variable $x$ den selben Wert haben wie die Schicht.
           \begin{itemize}
-              \item Wenn ein Agent kontinuierlich über aufeinanderfolgende Zeitschritte arbeitet, bildet dies eine Schicht.
-              \item Nebenbedingung zur Schichtlänge: $$6y_{a,s} \leq z_{a,s} = |\{t: x_{a,t}=1, t\text{ gehört zur Schicht }s\}| \leq 36y_{a,s},\quad\forall a\in A,\forall s$$
+              \item Gurobi Syntax: $ y_{a,s} = 1 \Rightarrow x_{a,t} = 1, \quad \forall t \in S $
+              \item PyOptInterface Syntax: $ y_{a,s} \leq x_{a,t}, \quad \forall t \in S $
           \end{itemize}
     \item \textbf{Maximale Anzahl an Schichten}\\
           Jeder Agent darf maximal $S_a = 3$ Schichten pro Tag übernehmen:
-          $$\sum_{s=1}^{S_a} y_{a,s} \leq S_a,\quad\forall a\in A$$
-    \item \textbf{Mindestpausenzeit zwischen zwei Schichten}\\
-          Zwischen zwei aufeinanderfolgenden Schichten eines Agents muss eine Pause von mindestens $P_a = 6$ Zeitschritten liegen:
-          $$t_{\text{Ende},s} + P_a \leq t_{\text{Start},s+1},\quad\forall s,\forall a$$
-    \item \textbf{Schichtbeginn und -ende nur zu vollen Stunden}\\
-          Jede Schicht muss zu einem vollen Stundenbeginn starten und enden (alle sechs Schritte):
-          $$t_{\text{Start},s}, t_{\text{Ende},s} \mod 6 = 0,\quad\forall s,\forall a$$
+          $$\sum_{s \in S} y_{a,s} \leq S_a,\quad\forall a\in A$$
     \item \textbf{Binäre Entscheidungsvariablen}\\
           Die Variablen müssen binär sein:
           $$x_{a,t}, y_{a,s} \in \{0,1\},\quad\forall a,t,s$$
