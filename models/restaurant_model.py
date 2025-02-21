@@ -25,7 +25,6 @@ class RestaurantModel(Model):
     profit_over_steps: dict[int, float] = {}
     customers_added_per_step: dict[int, int] = {}
     cumulated_time_spent_at_step: dict[int, int] = {}
-    profit_per_step: dict[int, float] = {}
 
     def __init__(self, lstm_model: LSTMModel):
         super().__init__()
@@ -39,10 +38,7 @@ class RestaurantModel(Model):
             model=self,
             n=Config().customers.max_new_customer_agents_per_step
         )
-        ServiceAgent.create_agents(
-            model=self,
-            n=Config().service.service_agents
-        )
+        # Note: ServiceAgents get employed by ManagerAgent
         ManagerAgent.create_agents(
             model=self,
             n=1
@@ -166,19 +162,19 @@ class RestaurantModel(Model):
 
     def evaluate(self) -> tuple[int, float]:
         """ Evaluate the model for PyOptInterface objective function """
-        manager = self.agents_by_type[ManagerAgent][0]
         total_waiting_time = self.get_total_time_spent()
 
-        self.profit_per_step[self.steps] = manager.profit
         self.cumulated_time_spent_at_step[self.steps] = total_waiting_time
 
         logger.info("Step %d: Evaluating model. Total time spent: %d (change: %d), profit: %f",
                     self.steps,
                     total_waiting_time,
                     total_waiting_time - (self.cumulated_time_spent_at_step[self.steps - 1] if self.steps > 1 else 0),
-                    manager.profit
+                    self.profit_over_steps[self.steps]
         )
 
-        print(f"Step {self.steps}: Evaluating model. Total time spent: {total_waiting_time} (change: {total_waiting_time - (self.cumulated_time_spent_at_step[self.steps - 1] if self.steps > 1 else 0)}), profit: {manager.profit}")
+        print(f"Step {self.steps}: Evaluating model. Total time spent: {total_waiting_time} (change: {total_waiting_time - (self.cumulated_time_spent_at_step[self.steps - 1] if self.steps > 1 else 0)}), profit: {self.profit_over_steps[self.steps]}")
+        if self.steps % Config().run.full_day_cycle_period == 0:
+            print(f"DAY {self.steps // Config().run.full_day_cycle_period}".center(100, "-"))
 
-        return total_waiting_time, manager.profit
+        return total_waiting_time, self.profit_over_steps[self.steps]
