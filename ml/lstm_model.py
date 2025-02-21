@@ -1,8 +1,8 @@
 import numpy as np
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.models import Sequential
-from models.config.config import Config
 
+from models.config.config import Config
 from models.config.logging_config import machine_learning_logger
 
 logger = machine_learning_logger
@@ -35,43 +35,33 @@ class LSTMModel:
         self.model.compile(optimizer='adam', loss='mean_squared_error')
         logger.info("LSTM model initialized.")
 
-    def forecast(self, time_series: dict[int, int], rating_history: dict[int, float], n: int) -> list[int]:
+    def forecast(self, customer_added_history: list[int], rating_history: list[float], n: int) -> list[int]:
         """
-        Forecast the visitor count for the next n timesteps.
-
-        Parameters:
-          - time_series: Dictionary with past visitor counts, e.g., {t1: count1, t2: count2, ...}
-          - rating_history: Dictionary with past ratings, e.g., {t1: rating1, t2: rating2, ...}
-          - n: Number of timesteps to forecast
-
-        Returns:
-          - List with n predicted visitor counts (e.g., [4, 5, 3, 4, ...])
-
-        Note: For the forecast beyond the known history, the rating is held constant to the last observed rating.
+        Forecast the visitor count for the next n time steps.
+        For the forecast beyond the known history, the rating is held constant to the last observed rating.
+        :param customer_added_history: List of past visitor counts (e.g., [t1: count1, t2: count2, ...])
+        :param rating_history: List of past ratings (e.g., [t1: rating1, t2: rating2, ...])
+        :param n: Number of time steps to forecast
+        :return: List with n predicted visitor counts (e.g., [4, 5, 3, 4, ...])
         """
-        # Sort the visitor counts and extract corresponding ratings based on the sorted time keys.
-        sorted_keys = sorted(time_series.keys())
-        visitor_counts = [time_series[k] for k in sorted_keys]
-        ratings = [rating_history[k] for k in sorted_keys]
-
         # If fewer than window_size values are available, pad both visitor counts and ratings with the first observed values.
-        if len(visitor_counts) < self.window_size:
-            pad_length = self.window_size - len(visitor_counts)
-            pad_visitor = [visitor_counts] * pad_length
-            pad_rating = [ratings] * pad_length
-            visitor_counts = pad_visitor + visitor_counts
-            ratings = pad_rating + ratings
+        if len(customer_added_history) < self.window_size:
+            pad_length = self.window_size - len(customer_added_history)
+            pad_visitor = [customer_added_history] * pad_length
+            pad_rating = [rating_history] * pad_length
+            customer_added_history = pad_visitor + customer_added_history
+            rating_history = pad_rating + rating_history
         else:
             # Only take the most recent window_size values
-            visitor_counts = visitor_counts[-self.window_size:]
-            ratings = ratings[-self.window_size:]
+            customer_added_history = customer_added_history[-self.window_size:]
+            rating_history = rating_history[-self.window_size:]
 
         # Create the input for the model: shape (1, window_size, 2)
         # Each timestep contains [visitor count, corresponding rating]
-        current_input = np.array([[[v, r] for v, r in zip(visitor_counts, ratings)]])
+        current_input = np.array([[[v, r] for v, r in zip(customer_added_history, rating_history)]])
 
         predictions = []
-        # For future timesteps, we will use the last known rating as the constant feature for rating.
+        # For future time steps, we will use the last known rating as the constant feature for rating.
         constant_rating = current_input[0, -1, 1]
 
         # Iterative prediction: After each forecast step, update the input sequence with the predicted visitor count.
@@ -96,7 +86,7 @@ class LSTMModel:
           - customer_count: The observed visitor count
           - satisfaction_rating: The observed satisfaction rating
 
-        The mothod stores both counts and ratings in dictionaries keyed by last_step. 
+        The method stores both counts and ratings in dictionaries keyed by last_step.
         Once enough data points (window_size + 1) exist, a training batch is constructed using the most recent window_size entries for both counts and ratings.
         The model is trained on this single batch.
 

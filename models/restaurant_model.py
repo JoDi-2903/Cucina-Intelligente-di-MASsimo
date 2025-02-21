@@ -1,7 +1,7 @@
+import math
 import random
 from statistics import fmean
 
-import math
 from mesa import Model
 
 from agents.customer_agent import CustomerAgent
@@ -51,8 +51,13 @@ class RestaurantModel(Model):
         self.agents.do("step")
 
         # Update the time series prediction model (online training) based on the 'real' data of the former step
-        self.lstm_model.update(last_step=self.steps - 1, customer_count=self.customers_added_history[self.steps - 1],
-                               satisfaction_rating=self.rating_history[self.steps - 1])
+        satisfaction_rating = (self.history.rating_history[self.steps - 1] if len(self.history.rating_history) > 1
+                               else Config().rating.rating_default)
+        self.lstm_model.update(
+            last_step=self.steps - 1,
+            customer_count=self.history.customers_added_history[self.steps - 1],
+            satisfaction_rating=satisfaction_rating
+        )
 
         # Update the history data for visualization
         self.__update_histories()
@@ -62,9 +67,9 @@ class RestaurantModel(Model):
             "Step %d: Evaluating model. Total time spent: %d (change: %d), profit: %f",
             self.steps,
             self.history.total_time_spent_history[-1],
-            self.history.total_time_spent_history[-1] - (
-                self.history.total_time_spent_history[self.steps - 1] if self.steps > 1 else 0),
-            self.history.profit_history[self.steps]
+            self.history.total_time_spent_history[-1] - (self.history.total_time_spent_history[self.steps - 1]
+                                                         if len(self.history.total_time_spent_history) > 1 else 0),
+            self.history.profit_history[self.steps - 1]
         )
 
     def spawn_customers(self):
@@ -91,9 +96,6 @@ class RestaurantModel(Model):
             if agent.state != CustomerAgentState.DONE
         )
 
-        # Retrieve the historical data for customers added per step.
-        customers_history: dict[int, int] = self.customers_added_history
-
         # 1. Calculate baseline spawn count based solely on the current satisfaction rating.
         # A higher rating leads to a larger baseline number relative to the maximum allowed.
         baseline_spawn = total_rating_in_percent * max_new_customers
@@ -106,8 +108,8 @@ class RestaurantModel(Model):
 
         # 3. Calculate the historical average of customers spawned from previous steps.
         # If no history exists, use half of the maximum as a default.
-        if customers_history:
-            historical_avg = sum(customers_history.values()) / len(customers_history)
+        if self.history.customers_added_history:
+            historical_avg = sum(self.history.customers_added_history) / len(self.history.customers_added_history)
         else:
             historical_avg = max_new_customers / 2
 
@@ -131,7 +133,7 @@ class RestaurantModel(Model):
 
         # 9. Finally, create the new customer agents.
         CustomerAgent.create_agents(model=self, n=amount)
-        self.customers_added_history[self.steps] = amount
+        self.history.add_customers_added(amount)
 
         logger.info("Step %d: Spawned %d new customer agents. Current rating: %.2f (%.2f%%)",
                     self.steps, amount, self.get_total_rating(), self.get_total_rating_percentage() * 100)

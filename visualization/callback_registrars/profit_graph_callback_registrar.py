@@ -3,8 +3,6 @@ from dash import Dash, Output, Input
 
 from meta_classes.callback_registrar import CallbackRegistrarMeta
 
-_steps: list[int] = []
-
 
 class ProfitGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
     @staticmethod
@@ -17,10 +15,10 @@ class ProfitGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
             """Update the profit graph that shows the profit growth over time and the profit itself."""
             # Lazy import to avoid partial initialization
             from main import restaurant
-            profit_history: list[float] = list(restaurant.profit_history.values())
+            h = restaurant.history
             profit_growth_history = [
-                (0 if len(profit_history) == 0 else profit_history[i-1]) + profit_history[i]
-                for i in range(1, len(profit_history))
+                (0 if len(h.profit_history) == 0 else h.profit_history[i - 1]) +
+                h.profit_history[i] for i in range(1, len(h.profit_history))
             ]
 
             # Create a new figure
@@ -28,7 +26,7 @@ class ProfitGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
 
             # Add trace for profit growth
             figure.add_trace(go.Scatter(
-                x=restaurant.steps_history,
+                x=h.steps_history,
                 y=profit_growth_history,
                 mode='lines+markers',
                 name="Profit growth",
@@ -37,8 +35,8 @@ class ProfitGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
 
             # Add trace for profit
             figure.add_trace(go.Scatter(
-                x=restaurant.steps_history,
-                y=profit_history,
+                x=h.steps_history,
+                y=h.profit_history,
                 mode='lines+markers',
                 name="Profit",
                 line=dict(color='orange')

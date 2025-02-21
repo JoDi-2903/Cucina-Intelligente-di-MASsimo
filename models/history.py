@@ -9,7 +9,7 @@ class History:
         self.__steps_history: list[int] = []
 
         # History of rating and profit
-        self.__rating_history: list[float] = []
+        self.__rating_history: list[float] = [Config().rating.rating_default]
         self.__profit_history: list[float] = []
 
         # History of time spent by a customer

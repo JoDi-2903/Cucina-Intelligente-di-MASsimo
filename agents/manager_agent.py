@@ -7,7 +7,6 @@ from agents import service_agent
 from agents.customer_agent import CustomerAgent
 from agents.service_agent import ServiceAgent
 from enums.customer_agent_state import CustomerAgentState
-from models import restaurant_model
 from models.config.config import Config
 from models.config.logging_config import manager_logger
 
@@ -30,7 +29,7 @@ class ManagerAgent(Agent):
             self.update_service_agent_employee_pool()
 
         # Calculate and save the current profit over each step
-        self.model.profit_history[self.model.steps] = self.calculate_profit()
+        self.model.history.add_profit(self.calculate_profit())
 
         # If the end of the working day is reached, run optimization model
         if self.model.steps % Config().run.full_day_cycle_period == 0:
@@ -244,8 +243,8 @@ class ManagerAgent(Agent):
         """
         # Decision variables
         predicted_visitors: list[int] = self.model.lstm_model.forecast(
-            time_series=restaurant_model.RestaurantModel.customers_added_history,
-            rating_history=restaurant_model.RestaurantModel.rating_history,
+            customer_added_history=self.model.history.customers_added_history,
+            rating_history=self.model.history.rating_history,
             n=Config().run.full_day_cycle_period,
         )
         available_service_agents = list(self.model.agents_by_type[ServiceAgent])

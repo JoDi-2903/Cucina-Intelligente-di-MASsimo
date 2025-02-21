@@ -15,14 +15,15 @@ class AgentsGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
             """Update the agents graph that shows the number of agents over time."""
             # Lazy import to avoid partial initialization
             from main import restaurant
+            h = restaurant.history
 
             # Create a new figure
             figure = go.Figure()
 
             # Add a trace for the number of all agents
             figure.add_trace(go.Scatter(
-                x=restaurant.steps_history,
-                y=restaurant.num_agents_history,
+                x=h.steps_history,
+                y=h.num_agents_history,
                 mode='lines+markers',
                 name="Number of all agents",
                 line=dict(color='grey')
@@ -30,8 +31,8 @@ class AgentsGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
 
             # Add a trace for the number of customer agents
             figure.add_trace(go.Scatter(
-                x=restaurant.steps_history,
-                y=restaurant.num_customer_agents_history,
+                x=h.steps_history,
+                y=h.num_customer_agents_history,
                 mode='lines+markers',
                 name="Number of customer agents",
                 line=dict(color='blue')
@@ -39,8 +40,8 @@ class AgentsGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
 
             # Add a trace for the number of service agents
             figure.add_trace(go.Scatter(
-                x=restaurant.steps_history,
-                y=restaurant.num_service_agents_history,
+                x=h.steps_history,
+                y=h.num_service_agents_history,
                 mode='lines+markers',
                 name="Number of service agents",
                 line=dict(color='orange')
@@ -48,8 +49,8 @@ class AgentsGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
 
             # Add a trace for the number of manager
             figure.add_trace(go.Scatter(
-                x=restaurant.steps_history,
-                y=restaurant.num_manager_agents_history,
+                x=h.steps_history,
+                y=h.num_manager_agents_history,
                 mode='lines+markers',
                 name="Number of manager agents",
                 line=dict(color='green')
