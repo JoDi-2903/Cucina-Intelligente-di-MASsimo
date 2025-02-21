@@ -19,7 +19,6 @@ def run_restaurant():
     """Run the restaurant model and emit updates to the dashboard."""
     while restaurant.running and restaurant.steps < Config().run.step_amount:
         restaurant.step()
-        wait_time, profit = restaurant.evaluate()
 
 
 if __name__ == "__main__":

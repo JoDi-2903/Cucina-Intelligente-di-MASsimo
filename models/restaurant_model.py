@@ -11,6 +11,7 @@ from enums.customer_agent_state import CustomerAgentState
 from ml.lstm_model import LSTMModel
 from models.config.config import Config
 from models.config.logging_config import restaurant_logger
+from models.history import History
 from models.menu import Menu
 
 logger = restaurant_logger
@@ -19,25 +20,13 @@ logger = restaurant_logger
 class RestaurantModel(Model):
     """A model with some number of agents."""
 
-    # Store overall history of important values per step over time
-    steps_history: list[int] = []  # For visualization purposes
-    rating_history: dict[int, float] = {}
-    profit_history: dict[int, float] = {}
-    customers_added_history: dict[int, int] = {}
-    cumulated_time_spent_history: dict[int, int] = {}
-    total_time_spent_history: list[int] = []
-    total_waiting_time_history: list[int] = []
-    num_agents_history: list[int] = []
-    num_customer_agents_history: list[int] = []
-    num_service_agents_history: list[int] = []
-    num_manager_agents_history: list[int] = []
-
     def __init__(self, lstm_model: LSTMModel):
         super().__init__()
 
-        # Initialize LSTM model, menu and optimization models
+        # Initialize LSTM model, menu and history
         self.lstm_model = lstm_model
         self.menu = Menu()
+        self.history = History()
 
         # Initialize agents
         CustomerAgent.create_agents(
@@ -50,18 +39,12 @@ class RestaurantModel(Model):
             n=1
         )
 
-        self.rating_history[self.steps] = Config().rating.rating_default
-        self.customers_added_history[self.steps] = Config().customers.max_new_customer_agents_per_step
         logger.info(
-            f"Created model with {Config().customers.max_new_customer_agents_per_step} customer agents, {Config().service.service_agents} service agents and 1 manager agent"
-        )
+            f"Created model with {Config().customers.max_new_customer_agents_per_step} customer agents, {Config().service.service_agents} service agents and 1 manager agent")
 
     def step(self):
         """Advance the model by one step."""
-        # save global rating of current step to history
-        self.rating_history[self.steps] = self.get_total_rating()
-
-        # spawn new customers
+        # Spawn new customers
         self.spawn_customers()
 
         # step all agents
@@ -73,6 +56,16 @@ class RestaurantModel(Model):
 
         # Update the history data for visualization
         self.__update_histories()
+
+        # Log the results of the current step
+        logger.info(
+            "Step %d: Evaluating model. Total time spent: %d (change: %d), profit: %f",
+            self.steps,
+            self.history.total_time_spent_history[-1],
+            self.history.total_time_spent_history[-1] - (
+                self.history.total_time_spent_history[self.steps - 1] if self.steps > 1 else 0),
+            self.history.profit_history[self.steps]
+        )
 
     def spawn_customers(self):
         """
@@ -143,6 +136,41 @@ class RestaurantModel(Model):
         logger.info("Step %d: Spawned %d new customer agents. Current rating: %.2f (%.2f%%)",
                     self.steps, amount, self.get_total_rating(), self.get_total_rating_percentage() * 100)
 
+    def get_total_rating_percentage(self) -> float:
+        """
+        Compute the total rating percentage for all customers in the model.
+        :return: A value between 0 and 1, which represents the relative position of the overall rating within the possible rating range.
+        """
+        total_rating = ((self.get_total_rating() - Config().rating.rating_min) / (
+                Config().rating.rating_max - Config().rating.rating_min))
+        return total_rating
+
+    def __update_histories(self):
+        """Update the history lists with the current values."""
+        # Store the current step
+        self.history.add_step(self.steps)
+
+        # Evaluate the current rating of the restaurant
+        self.history.add_rating(self.get_total_rating())
+
+        # Calculate the total time that customers have spent in the restaurant waiting for their food
+        self.history.add_total_time_spent(self.get_total_time_spent())
+        self.history.add_total_waiting_time(self.get_waiting_time_spent())
+
+        # Update the number of agents
+        active_customer_agents = [  # Filter out all customers that are done
+            agent for agent in self.agents_by_type[CustomerAgent]
+            if agent.state != CustomerAgentState.DONE
+        ]
+        self.history.add_num_customer_agents(len(active_customer_agents))
+        self.history.add_num_service_agents(len(self.agents_by_type[ServiceAgent]))
+        self.history.add_num_manager_agents(len(self.agents_by_type[ManagerAgent]))
+        self.history.add_num_agents(
+            self.history.num_customer_agents_history[-1] +
+            self.history.num_service_agents_history[-1] +
+            self.history.num_manager_agents_history[-1]
+        )
+
     def get_total_time_spent(self) -> int:
         """ Compute the total time spent for all customers in the model """
         return sum(agent.get_total_time() for agent in
@@ -153,61 +181,7 @@ class RestaurantModel(Model):
         return sum(agent.waiting_time for agent in
                    self.agents_by_type[CustomerAgent])
 
-    # def get_total_ideal_time(self) -> int:
-    #     """ Compute the total ideal time for all customers in the model """
-    #     return sum(agent.get_ideal_time() for agent in
-    #                self.agents_by_type[CustomerAgent])
-
     def get_total_rating(self) -> float | None:
         """ Compute the total rating for all customers in the model """
         return fmean(agent.rating for agent in self.agents_by_type[CustomerAgent]
                      if agent.rating is not None)
-
-    def get_total_rating_percentage(self) -> float:
-        """
-        Compute the total rating percentage for all customers in the model.
-
-        Returns:
-            A value between 0 and 1, which represents the relative position of the overall rating within the possible rating range.
-        """
-        total_rating = ((self.get_total_rating() - Config().rating.rating_min) / (
-                Config().rating.rating_max - Config().rating.rating_min))
-        return total_rating
-
-    def evaluate(self) -> tuple[int, float]:
-        """ Evaluate the model for PyOptInterface objective function """
-        self.total_time_spent_history.append(self.get_total_time_spent())
-
-        self.cumulated_time_spent_history[self.steps] = self.total_time_spent_history[-1]
-
-        logger.info("Step %d: Evaluating model. Total time spent: %d (change: %d), profit: %f",
-                    self.steps,
-                    self.total_time_spent_history[-1],
-                    self.total_time_spent_history[-1] - (
-                        self.cumulated_time_spent_history[self.steps - 1] if self.steps > 1 else 0),
-                    self.profit_history[self.steps]
-                    )
-
-        print(
-            f"Step {self.steps}: Evaluating model. Total time spent: {self.total_time_spent_history[-1]} (change: {self.total_time_spent_history[-1] - (self.cumulated_time_spent_history[self.steps - 1] if self.steps > 1 else 0)}), profit: {self.profit_history[self.steps]}")
-        if self.steps % Config().run.full_day_cycle_period == 0:
-            print(f"DAY {self.steps // Config().run.full_day_cycle_period}".center(100, "-"))
-
-        return self.total_time_spent_history[-1], self.profit_history[self.steps]
-
-    def __update_histories(self):
-        """Update the history lists with the current values."""
-        self.steps_history.append(self.steps)
-
-        self.total_waiting_time_history.append(self.get_waiting_time_spent())
-
-        active_customer_agents = [agent for agent in self.agents_by_type[CustomerAgent] if
-                                  agent.state != CustomerAgentState.DONE]
-        self.num_customer_agents_history.append(len(active_customer_agents))
-        self.num_service_agents_history.append(len(self.agents_by_type[ServiceAgent]))
-        self.num_manager_agents_history.append(len(self.agents_by_type[ManagerAgent]))
-        self.num_agents_history.append(
-            self.num_customer_agents_history[-1]
-            + self.num_service_agents_history[-1]
-            + self.num_manager_agents_history[-1]
-        )
