@@ -1,9 +1,11 @@
 import numpy as np
+import pyoptinterface as poi
 from mesa import Agent, Model
+from pyoptinterface import highs
 
 from agents import service_agent
-from agents.service_agent import ServiceAgent
 from agents.customer_agent import CustomerAgent
+from agents.service_agent import ServiceAgent
 from enums.customer_agent_state import CustomerAgentState
 from models import restaurant_model
 from models.config.config import Config
@@ -15,18 +17,128 @@ logger = manager_logger
 class ManagerAgent(Agent):
     def __init__(self, model: Model):
         super().__init__(model)
-        self.profit = 0
 
     def step(self):
         """
-        Control the number of service agents and update the profit of the restaurant.
+        Make tweaks to the restaurant's operations to optimize the manager's goal.
         """
-        # If the retrain interval is reached, update the number of service agents
-        if self.model.steps > Config().run.full_day_cycle_period:
-            self.__update_service_agents()
+        # Update the employee pool of service agents
+        if (
+            self.model.steps % (Config().run.full_day_cycle_period * 5) == 0
+            or self.model.steps == 1
+        ):  # Update every 5 full day cycles
+            self.update_service_agent_employee_pool()
 
-        # Get the current service agents and the current profit
-        self.profit = self.calculate_profit()
+        # Calculate and save the current profit over each step
+        self.model.profit_over_steps[self.model.steps] = self.calculate_profit()
+
+        # If the end of the working day is reached, run optimization model
+        if self.model.steps % Config().run.full_day_cycle_period == 0:
+            self._optimize_restaurant_operations()
+
+    def optimize_shift_schedule(
+        self, agents: list, predicted_visitors: list[int]
+    ) -> tuple[dict, float]:
+        # Time parameters
+        n_slots = len(
+            predicted_visitors
+        )  # e.g., 144 time slots for a 24-hour day (10 minutes each)
+        slots_per_hour = 6  # 6 slots per hour (10 minutes each)
+        n_hours = 24
+        shift_duration_hours = 6  # Each shift lasts 6 hours
+        shift_duration_slots = shift_duration_hours * slots_per_hour  # e.g. 36 slots per shift
+        n_shifts = n_hours // shift_duration_hours  # 4 shifts per day
+        shifts = [
+            list(range(s * shift_duration_slots, (s + 1) * shift_duration_slots))
+            for s in range(n_shifts)
+        ]
+
+        # Parameters for each agent
+        max_working_slots = 48  # Maximum working time slots per agent per day
+        max_shifts = 3  # Maximum number of shifts per agent per day
+
+        # Create an optimization model using Highs
+        model = highs.Model()
+
+        # Decision variables dictionaries:
+        # x_vars[(agent, t)] = binary: 1 if agent works at time slot t, 0 otherwise.
+        # y_vars[(agent, s)] = binary: 1 if agent is assigned to shift s, 0 otherwise.
+        x_vars = {}
+        y_vars = {}
+
+        for agent in agents:
+            for t in range(n_slots):
+                var_name = f"x_{agent.unique_id}_{t}"
+                # Create a binary variable by using Integer domain with bounds 0 and 1
+                x_vars[(agent, t)] = model.add_variable(
+                    lb=0, ub=1, domain=poi.VariableDomain.Integer, name=var_name
+                )
+            for s in range(n_shifts):
+                var_name = f"y_{agent.unique_id}_shift_{s}"
+                y_vars[(agent, s)] = model.add_variable(
+                    lb=0, ub=1, domain=poi.VariableDomain.Integer, name=var_name
+                )
+
+        # Objective: Minimize total salary cost over all time slots
+        obj_expr = 0
+        for agent in agents:
+            for t in range(n_slots):
+                obj_expr += agent.salary_per_tick * x_vars[(agent, t)]
+        model.set_objective(obj_expr, poi.ObjectiveSense.Minimize)
+
+        # Constraint 1: Demand fulfillment for each time slot.
+        # The sum of customer capacities of active agents must meet or exceed predicted visitors.
+        for t in range(n_slots):
+            cons_expr = 0
+            for agent in agents:
+                cons_expr += agent.customer_capacity * x_vars[(agent, t)]
+            model.add_linear_constraint(cons_expr, poi.Geq, predicted_visitors[t])
+
+        # Constraint 2: Maximum number of working time slots per agent.
+        # ToDo: Entweder max. Arbeitswerte anpassen oder Schichten kürzer unterglieder (Sub-Mengen und nicht nur 6h-Schichten); aktuell mit max. 8h nur eine Schicht
+        for agent in agents:
+            cons_expr = 0
+            for t in range(n_slots):
+                cons_expr += x_vars[(agent, t)]
+            model.add_linear_constraint(cons_expr, poi.Leq, max_working_slots)
+
+        # Constraint 3: Shift consistency.
+        # If an agent is assigned to a shift (y = 1), then they must work every time slot in that shift.
+        # Enforced by: y_{a,s} - x_{a,t} <= 0 for each t in the shift s.
+        for agent in agents:
+            for s in range(n_shifts):
+                for t in shifts[s]:
+                    model.add_linear_constraint(y_vars[(agent, s)] - x_vars[(agent, t)], poi.Leq, 0)
+
+        # Constraint 4: Maximum number of shifts per agent.
+        for agent in agents:
+            cons_expr = 0
+            for s in range(n_shifts):
+                cons_expr += y_vars[(agent, s)]
+            model.add_linear_constraint(cons_expr, poi.Leq, max_shifts)
+
+        # Solve the optimization model using Highs
+        model.optimize()
+
+        # Retrieve the schedule for each agent across all time slots.
+        agent_schedules = {}
+        for agent in agents:
+            schedule = []
+            for t in range(n_slots):
+                # The model returns values close to 0 or 1.
+                schedule.append(model.get_value(x_vars[(agent, t)]))
+            agent_schedules[agent] = schedule
+
+        optimal_objective = model.get_obj_value()
+
+        # Print the optimal objective and the schedule for each agent
+        print(f"Optimal objective: {optimal_objective}")
+        for t in range(n_slots):
+            print(f"Time {t}".center(20, "-"))
+            for a in agents:
+                print(f"Agent {a.unique_id}: {model.get_variable_attribute(x_vars[(a, t)], poi.VariableAttribute.Value)}")
+
+        return agent_schedules, optimal_objective
 
     def calculate_profit(self) -> float:
         """
@@ -39,97 +151,136 @@ class ManagerAgent(Agent):
             if customer_agent.state == CustomerAgentState.FINISHED_EATING
         )
 
-        total_payment = (Config().service.service_agent_salary_per_tick *
-                         len(self.model.agents_by_type[service_agent.ServiceAgent]))
+        # ToDo: Pay only agents that are assigned to a shift
+        total_payment = Config().service.service_agent_salary_per_tick * len(
+            self.model.agents_by_type[service_agent.ServiceAgent]
+        )
 
         logger.info(
-            "Step %d: Revenue: %.2f, Payment: %.2f, Profit: %.2f. Total profit: %.2f",
-            self.model.steps, total_revenue, total_payment, total_revenue - total_payment, self.profit + total_revenue - total_payment
+            "Step %d: Revenue: %.2f, Payment: %.2f, Profit: %.2f.",
+            self.model.steps,
+            total_revenue,
+            total_payment,
+            total_revenue - total_payment,
         )
 
         return total_revenue - total_payment
 
-    def __update_service_agents(self):
+    def update_service_agent_employee_pool(self) -> None:
         """
-        Predict the visitor count and update the number of service agents based on the prediction.
+        Create (new) employee pool of service agents, if one already exists.
         """
-        # Forecast the visitor counts for the next n iterations
-        predicted_visitor_counts = self.model.lstm_model.forecast(
-            time_series=restaurant_model.RestaurantModel.customers_added_per_step,
-            rating_history=restaurant_model.RestaurantModel.rating_over_steps,
-            n=Config().run.retrain_interval // 2  # Forecast the next n time steps
-        )
+        # Delete all existing service agents
+        if ServiceAgent in self.model.agents_by_type.keys():
+            for agent in self.model.agents_by_type[ServiceAgent]:
+                agent.remove()
 
-        # Calculate the average predicted visitor count
-        predicted_visitor_count = np.mean(predicted_visitor_counts)
+        # Create value lists for customer_capacity and salary_per_tick
+        for i in range(Config().service.service_agents):
+            customer_capacity = np.random.randint(
+                Config().service.service_agent_capacity_min,
+                Config().service.service_agent_capacity_max,
+            )
+            salary_per_tick = customer_capacity * (
+                Config().service.service_agent_salary_per_tick
+                / Config().service.service_agent_capacity
+            )
 
-        # Calculate the number of service agents based on the predicted visitor count
-        num_service_agents = max(1, predicted_visitor_count // Config().service.service_agent_capacity)
-
-        # Add or remove service agents based on the predicted visitor count
-        current_service_agents = len(self.model.agents_by_type[ServiceAgent])
-
-        # TODO JD: Optimierung Schichtplanung: Inhalt dieser Funktion durch pyoptinterface optimieren
-            # evtl. "Kündigungsfrist" oder "Anfahrtszeit" für Service Agents
-
-        # Entscheidungsvariablen:
-        # service_agent_daily_working_hours: upper bound (Arbeitsschutz), lower bound
-        # parallel_preparation: je mehr gleichzeitig, desto teurer
-            # Kosten pro Tick: service_agent_salary_per_tick * parallel_preparation
-        # evtl. Qualityfaktor für teureres Essen -> Rating & Profit
-        # evtl. Optimierungsmodell entscheidet gewichtet über die zu verwendende Zielfunktion
-
-        # Zielfunktionen:
-            # 1. Maximierung des Profits: Profit für die letzten full_day_cycle Steps ablegen
-            # 2. Maximierung der Zufriedenheit: restaurant.rating_over_steps
-        
-        # Constraints:
-            # Maximale Anzahl an Service Agents
-            # Maximale Anzahl an Kunden pro Service Agent -> existiert schon
-            # Maximale Anzahl an Arbeitsstunden pro Service Agent
-
-        # Optimierungsmodell direkt im Manager Agent implementieren und nach full_day_cycle Steps ausführen
-        # Das Ergebnis der Optimierung wird dann global gesetzt
-
-        # Wir haben einen festen Mitarbeiterstamm. Diese Mitarbeiter haben Arbeitszeiten, die sie nicht überschreiten dürfen. Es gibt Mitarbeiter mit weniger Arbeitszeit und Mitarbeiter mit mehr Arbeitszeit. Das Problem ist jetzt, die Mitarbeiter für den nächsten Tag so einzuteilen, dass der Profit maximiert wird. Die Mitarbeiter werden im Laufe des Tages nicht verändert. Der Faktor parallel_preparation kann unterschiedlich je Mitarbeiter sein; je höher, desto höher das Gehalt des Mitarbeiters.
-
-        # Manager speichert jeden Schritt den aktuellen Profit und legt ihn im Restaurant ab
-
-
-        if num_service_agents > current_service_agents:
+            # Create a new service agent with the given values
             service_agent.ServiceAgent.create_agents(
                 model=self.model,
-                n=(num_service_agents - current_service_agents)
+                n=1,
+                customer_capacity=customer_capacity,
+                salary_per_tick=salary_per_tick,
             )
-            logger.info("Added new service agent. Working agent amount: %d", current_service_agents + 1)
-        elif num_service_agents < current_service_agents:
-            remove_amount = current_service_agents - num_service_agents
-
-            # Ensure that at least one service agent remains
-            if remove_amount > num_service_agents:
-                remove_amount -= 1
-
-            for _ in range(remove_amount):
-                self.__remove_service_agent()
-
-    def __remove_service_agent(self):
-        """
-        Remove a services agent and reassign the customers to the customer queue of the remaining service agents.
-        """
-        # Pick a random service agent to remove and get the customers from the agent to reassign them
-        agent_to_remove = self.random.choice(list(self.model.agents_by_type[ServiceAgent]))
-        remaining_customers = agent_to_remove.customer_queue
 
         logger.info(
-            "Removing service agent %d. Working agent amount: %d",
-            agent_to_remove.unique_id,
-            len(self.model.agents_by_type[ServiceAgent]) - 1
+            "Updated employee pool of service agents. Working agent amount: %d",
+            Config().service.service_agents,
         )
 
-        # Remove the agent from the model
-        agent_to_remove.remove()
+    def derive_parameters_from_service_agent_shift_schedule(
+        self, service_agent_shift_schedule: dict[ServiceAgent, list[int]]
+    ) -> tuple[dict[ServiceAgent, int], dict[ServiceAgent, int], int]:
+        """
+        Calculate derived parameters resulting from service_agent_shift_schedule for visualization and debugging purposes.
+        """
+        service_agent_working_hours_count: dict[ServiceAgent, int] = {}
+        service_agent_working_shifts_count: dict[ServiceAgent, int] = {}
+        working_agents_count: int = 0
 
-        # Reassign the customers equally to the remaining service agents
-        for i, customer in enumerate(remaining_customers):
-            assigned_agent = self.model.agents_by_type[ServiceAgent][i % len(self.model.agents_by_type[ServiceAgent])]
-            assigned_agent.customer_queue.append(customer)
+        for agent in service_agent_shift_schedule.keys():
+            schedule = service_agent_shift_schedule.get(agent, [])
+            service_agent_working_hours_count[agent] = sum(schedule)
+
+            shifts = 0
+            previous = 0
+            for hour in schedule:
+                if hour == 1 and previous == 0:
+                    shifts += 1
+                previous = hour
+
+            service_agent_working_shifts_count[agent] = shifts
+            if service_agent_working_hours_count[agent] > 0:
+                working_agents_count += 1
+
+        return (
+            service_agent_working_hours_count,
+            service_agent_working_shifts_count,
+            working_agents_count,
+        )
+
+    def _optimize_restaurant_operations(self):
+        """
+        Create a new shift plan with the optimization model for the next working day.
+
+        Problem description:
+            We have a dedicated team of employees and a series of constraints derived mainly from the Occupational Health and Safety Act.
+            Some employees are scheduled to work fewer hours and shifts, while others work more. It does not have to be balanced or fair,
+            but must contribute to the target function in the best possible way. The challenge is to assign employees for the following day
+            in a way that maximizes overall profit. Employees will not be reassigned or replaced during the course of the day. Additionally,
+            each employee has a unique "parallel_preparation" factor, which represents their efficiency or skill level—the higher this factor,
+            the higher the employee's salary.
+        """
+        # Decision variables
+        predicted_visitors: list[int] = self.model.lstm_model.forecast(
+            time_series=restaurant_model.RestaurantModel.customers_added_per_step,
+            rating_history=restaurant_model.RestaurantModel.rating_over_steps,
+            n=Config().run.full_day_cycle_period,
+        )
+        available_service_agents = list(self.model.agents_by_type[ServiceAgent])
+
+        # Optimize the shift schedule
+        service_agent_shift_schedule: dict[ServiceAgent, list[int]] = {}
+        service_agent_shift_schedule, optimal_obj = self.optimize_shift_schedule(
+            available_service_agents, predicted_visitors
+        )
+
+        logger.info(
+            "Optimized shift schedule computed with optimal objective (total cost): %.2f and shift_schedule: %s",
+            optimal_obj,
+            [(ag.unique_id, sh) for ag, sh in service_agent_shift_schedule.items()],
+        )
+
+        # Update each service agent with their computed schedule
+        for agent in available_service_agents:
+            # Assume each ServiceAgent has a 'shift_schedule' attribute to store its schedule.
+            if agent in service_agent_shift_schedule:
+                agent.shift_schedule = service_agent_shift_schedule[agent]
+            else:
+                agent.shift_schedule = [0] * Config().run.full_day_cycle_period
+
+        # ToDo: Update the logic of the ServiceAgents to actually use the shift plan that the optimizer calculated
+
+        # Calculate derived parameters resulting from service_agent_shift_schedule
+        (
+            service_agent_working_hours_count,
+            service_agent_working_shifts_count,
+            working_agents_count,
+        ) = self.derive_parameters_from_service_agent_shift_schedule(service_agent_shift_schedule)
+        logger.info(
+            "Derived parameters: service_agent_working_hours_count: %s, service_agent_working_shifts_count: %s, working_agents_count: %d",
+            service_agent_working_hours_count,
+            service_agent_working_shifts_count,
+            working_agents_count,
+        )

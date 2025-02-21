@@ -1,0 +1,176 @@
+%% ========================================================================
+%%%% Document settings
+%% ========================================================================
+
+%% How to separate paragraphs: indention ("no") or spacing ("half", "full",
+%% ...).
+\newcommand{\myparskip}{half}
+
+%% Inner binding correction. This value depends on the method which is
+%% being used to bind your printed result. Some techniques do not
+%% require a binding correction at all ("0mm"), other require for
+%% example "5mm". Refer to KOMA script documentation for a detailed
+%% explanation what a binding correction is and how to measure it.
+\newcommand{\myBCOR}{0mm}
+
+%% Either you are creating a document which is printed on both, left pages and right pages (twoside) or you create a document which is printed on right pages only (oneside).
+%% e.g. "true" or "false"
+\newcommand{\mytwoside}{false}
+
+%% Color of the headings and so forth in RGB (red,green,blue) values.
+%% e.g. "30,103,182" (blue/turquois), "0,0,0" (black), ...
+\newcommand{\mydispositioncolor}{0,0,0}%{22,72,154}
+
+%% Line spacing in %/100. For example 1.5 means 150% of the usual line spacing. Please use with caution: 100% ("1.0") is fine because the font was designed for it.
+%% e.g. 1.0, 1.5, 2.0
+\newcommand{\mylinespread}{1.5}
+
+\newcommand{\mycolorlinks}{false}  %% "true" or "false"
+%% Enables or disables colored links (hyperref package).
+% turn on/off colored links (on: better for on-screen reading; 
+                            %off: better for printout versions)
+
+%% See babel documentation for further details.
+%% NOTE: The *last* language is the active one!
+%% "english,ngerman", "ngerman,english", ...
+\newcommand{\mylanguage}{english,ngerman}
+
+%% ========================================================================
+%%%% Document metadata
+%% ========================================================================
+
+%% Student:
+\newcommand{\myauthor}{Jonathan Diebel, Jannis Kaniaros und Dario Nieddu}
+\newcommand{\myhomestreet}{}
+\newcommand{\myhomepostalnumber}{}
+\newcommand{\myhometown}{}
+\newcommand{\myid}{9883850, 5934448, }
+
+%% Titel und PDF-Einstellungen
+\newcommand{\myworktype}{Ausarbeitung}
+\newcommand{\myworktitle}{}
+\newcommand{\mytitle}{Cucina intelligente di Massimo}
+\newcommand{\mysubtitle}{Intelligent Agent Systems}
+\newcommand{\mysubject}{}
+\newcommand{\mykeywords}{}
+
+%% nur bei Bachelorarbeit wichtig: Art des Abschlusses:
+\newcommand{\mydegree}{Master of Science}
+
+%% Dualer Partner
+\newcommand{\mydualpartner}{}
+\newcommand{\mydualpartnerLocation}{}
+\newcommand{\mysupervisor}{}
+
+%% Duale Hochschule
+\newcommand{\myuniversity}{Center for Advanced Studies der\\Dualen Hochschule Baden-Württemberg}
+\newcommand{\mycourse}{T3M40501}
+\newcommand{\mystudy}{}
+\newcommand{\myevaluator}{Prof. Dr. Nathan Sudermann-Merx}
+
+%% Datum
+\newcommand{\mysubmissionday}{31}
+\newcommand{\mysubmissionmonth}{März}
+\newcommand{\mysubmissionyear}{2025}
+
+\newcommand{\myprocessingperiodbegin}{}
+\newcommand{\myprocessingperiodend}{}
+
+%% ========================================================================
+%%%% Other settings
+%% ========================================================================
+
+%% !!FIRST!! Load preamble
+\input{template/preamble}
+
+\input{etc/hyphenation}
+
+%% !!LAST!! Do PDF settings
+\input{template/pdf_settings}
+
+%% ========================================================================
+%%%% begin{document}
+%% ========================================================================
+\begin{document}
+\rmfamily
+\frontmatter
+%% Big roman page numbering
+\pagenumbering{Roman}
+
+%% Titelseite
+%% Verwendung von Studienarbeit-Deckblatt
+\input{template/dhbw_coverpage_study}
+%% Verwendung von Projekt-Deckblatt
+% \input{template/dhbw_coverpage_projectreport}
+%% Verwendung von Bachelor-Deckblatt
+% \input{template/dhbw_coverpage_bachelor}
+
+%% Sperrvermerk
+% \input{template/confidentiality_clause}
+%% Eidesstattliche Erklärung
+% \input{template/declaration_affidavit}
+
+%% Abstract
+% \include{chapters/abstract}
+
+%% Inhaltsverzeichnis
+%% Rename contents
+% \renewcommand{\contentsname}{Table of Contents}
+\tableofcontents
+\newpage
+
+%% Abkürzungen
+\input{etc/acronyms}
+
+%% Abbildungsverzeichnis anzeigen, wenn Abbildungen in Dokument enthalten sind
+\iftotalfigures
+    \cleardoublepage
+    \phantomsection
+    \addcontentsline{toc}{chapter}{\listfigurename}
+    \listoffigures
+\fi
+
+%% Tabellenverzeichnis anzeigen, wenn Tabellen in Dokument enthalten sind
+\iftotaltables
+    \cleardoublepage
+    \phantomsection
+    \addcontentsline{toc}{chapter}{\listtablename}
+    \listoftables
+\fi
+
+%% Code-Verzeichnis anzeigen, wenn Code-Blöcke in Dokument enthalten sind
+\renewcommand\lstlistlistingname{Codeverzeichnis}
+\iftotallstlistings
+    \cleardoublepage
+    \phantomsection
+    \addcontentsline{toc}{chapter}{\lstlistlistingname}
+    \lstlistoflistings
+\fi
+
+%% Gender Disclaimer
+% \input{template/gender_disclaimer.tex}
+
+%% Marks main part using Arabic page numbers and such; Only available in scrbook
+\mainmatter
+
+\pagenumbering{arabic}
+%% Add new chapters here
+\input{chapters/einleitung}
+\input{chapters/design}
+\input{chapters/optimization_model}
+\input{chapters/questions}
+\input{chapters/results}
+
+\backmatter
+%% Big Roman page numbering
+\pagenumbering{Roman}
+\setcounter{page}{12}
+
+%% Literaturverzeichnis
+\printbibliography[notkeyword=online]
+\printbibliography[keyword=online, heading=subbibliography, title={Online-Quellen}]
+
+%% Appendix
+\input{chapters/appendix}
+
+\end{document}

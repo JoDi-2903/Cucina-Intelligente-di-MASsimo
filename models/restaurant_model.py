@@ -1,7 +1,7 @@
+import math
 import random
 from statistics import fmean
 
-import math
 from mesa import Model
 
 from agents.customer_agent import CustomerAgent
@@ -19,11 +19,11 @@ logger = restaurant_logger
 class RestaurantModel(Model):
     """A model with some number of agents."""
 
-    # Store overall rating and number of created CustomerAgents per step over time
+    # Store overall history of important values per step over time
     rating_over_steps: dict[int, float] = {}
+    profit_over_steps: dict[int, float] = {}
     customers_added_per_step: dict[int, int] = {}
     cumulated_time_spent_at_step: dict[int, int] = {}
-    profit_per_step: dict[int, float] = {}
     total_time_spent: list[int] = []
     waiting_time_spent: list[int] = []
 
@@ -39,10 +39,7 @@ class RestaurantModel(Model):
             model=self,
             n=Config().customers.max_new_customer_agents_per_step
         )
-        ServiceAgent.create_agents(
-            model=self,
-            n=Config().service.service_agents
-        )
+        # Note: ServiceAgents get employed by ManagerAgent
         ManagerAgent.create_agents(
             model=self,
             n=1
@@ -66,8 +63,8 @@ class RestaurantModel(Model):
         self.agents.do("step")
 
         # Update the time series prediction model (online training) based on the 'real' data of the former step
-        self.lstm_model.update(last_step=self.steps - 1, customer_count=self.customers_added_per_step[self.steps - 1],
-                               satisfaction_rating=self.rating_over_steps[self.steps - 1])
+        self.lstm_model.update(last_step=self.steps-1, customer_count=self.customers_added_per_step[self.steps-1], satisfaction_rating=self.rating_over_steps[self.steps-1])
+
 
     def spawn_customers(self):
         """
@@ -171,21 +168,20 @@ class RestaurantModel(Model):
 
     def evaluate(self) -> tuple[int, float]:
         """ Evaluate the model for PyOptInterface objective function """
-        manager = self.agents_by_type[ManagerAgent][0]
         self.total_time_spent.append(self.get_total_time_spent())
         self.waiting_time_spent.append(self.get_waiting_time_spent())
 
-        self.profit_per_step[self.steps] = manager.profit
         self.cumulated_time_spent_at_step[self.steps] = self.total_time_spent[-1]
 
         logger.info("Step %d: Evaluating model. Total time spent: %d (change: %d), profit: %f",
                     self.steps,
                     self.total_time_spent[-1],
                     self.total_time_spent[-1] - (self.cumulated_time_spent_at_step[self.steps - 1] if self.steps > 1 else 0),
-                    manager.profit
-                    )
+                    self.profit_over_steps[self.steps]
+        )
 
-        print(
-            f"Step {self.steps}: Evaluating model. Total time spent: {self.total_time_spent[-1]} (change: {self.total_time_spent[-1] - (self.cumulated_time_spent_at_step[self.steps - 1] if self.steps > 1 else 0)}), profit: {manager.profit}")
+        print(f"Step {self.steps}: Evaluating model. Total time spent: {self.total_time_spent[-1]} (change: {self.total_time_spent[-1] - (self.cumulated_time_spent_at_step[self.steps - 1] if self.steps > 1 else 0)}), profit: {self.profit_over_steps[self.steps]}")
+        if self.steps % Config().run.full_day_cycle_period == 0:
+            print(f"DAY {self.steps // Config().run.full_day_cycle_period}".center(100, "-"))
 
-        return self.total_time_spent[-1], manager.profit
+        return self.total_time_spent[-1], self.profit_over_steps[self.steps]

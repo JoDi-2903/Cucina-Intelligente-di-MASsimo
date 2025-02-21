@@ -172,4 +172,3 @@ cython_debug/
 .idea
 
 .ds_store
-.gitignore
