@@ -1,5 +1,4 @@
 import dash_bootstrap_components as dbc
-import dash_extensions as de
 from dash import Dash, html, dcc
 
 from visualization.callback_registrars.agents_graph_callback_registrar import AgentsGraphCallbackRegistrar
@@ -22,12 +21,26 @@ class Dashboard:
 
     def __create_layout(self):
         self.dash_app.layout = html.Div([
-            html.H1("Restaurant metrics dashboard"),
+            html.H1(
+                "Restaurant metrics dashboard",
+                style={
+                    'textAlign': 'center',
+                    'color': 'white',
+                    'padding': '20px'
+                }
+            ),
 
-            html.Div([
-                dcc.Graph(id="profit-graph"),
-                dcc.Graph(id="time-spent-graph")
-            ], style={'display': 'flex'}),
+            html.Div(
+                [
+                    dcc.Graph(id="profit-graph", style={'width': '100%'}),
+                    dcc.Graph(id="time-spent-graph", style={'width': '100%'})
+                ],
+                style={
+                    'display': 'flex',
+                    'width': '100%',
+                    'justify-content': 'space-evenly',
+                }
+            ),
 
             dcc.Graph(id="agents-graph"),
 
@@ -36,7 +49,7 @@ class Dashboard:
                 interval=500,
                 n_intervals=0
             )
-        ], style={'backgroundColor': '#383434'})
+        ], style={'backgroundColor': 'rgba(20, 20, 20, 1)', 'padding': '12px'})
 
     def __register_callbacks(self):
         """Register the callbacks for the dash

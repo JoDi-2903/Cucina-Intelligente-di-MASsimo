@@ -30,7 +30,7 @@ class ManagerAgent(Agent):
             self.update_service_agent_employee_pool()
 
         # Calculate and save the current profit over each step
-        self.model.profit_over_steps[self.model.steps] = self.calculate_profit()
+        self.model.profit_history[self.model.steps] = self.calculate_profit()
 
         # If the end of the working day is reached, run optimization model
         if self.model.steps % Config().run.full_day_cycle_period == 0:
@@ -244,8 +244,8 @@ class ManagerAgent(Agent):
         """
         # Decision variables
         predicted_visitors: list[int] = self.model.lstm_model.forecast(
-            time_series=restaurant_model.RestaurantModel.customers_added_per_step,
-            rating_history=restaurant_model.RestaurantModel.rating_over_steps,
+            time_series=restaurant_model.RestaurantModel.customers_added_history,
+            rating_history=restaurant_model.RestaurantModel.rating_history,
             n=Config().run.full_day_cycle_period,
         )
         available_service_agents = list(self.model.agents_by_type[ServiceAgent])
