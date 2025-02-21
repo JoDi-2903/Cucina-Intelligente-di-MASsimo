@@ -1,7 +1,6 @@
 import dash_bootstrap_components as dbc
 import dash_extensions as de
 from dash import Dash, html, dcc
-from flask import Flask
 
 from visualization.callback_registrars.agents_graph_callback_registrar import AgentsGraphCallbackRegistrar
 from visualization.callback_registrars.profit_graph_callback_registrar import ProfitGraphCallbackRegistrar
@@ -9,11 +8,10 @@ from visualization.callback_registrars.time_spent_graph_callback_registrar impor
 
 
 class Dashboard:
-    def __init__(self, server: Flask):
+    def __init__(self):
         # Initialize dash
-        self.app = Dash(
+        self.dash_app = Dash(
             __name__,
-            server=server,
             routes_pathname_prefix='/',
             external_stylesheets=[dbc.themes.DARKLY]
         )
@@ -23,7 +21,7 @@ class Dashboard:
         self.__register_callbacks()
 
     def __create_layout(self):
-        self.app.layout = html.Div([
+        self.dash_app.layout = html.Div([
             html.H1("Restaurant metrics dashboard"),
 
             html.Div([
@@ -33,16 +31,20 @@ class Dashboard:
 
             dcc.Graph(id="agents-graph"),
 
-            # WebSocket connections for update events
-            de.WebSocket(id='ws', url="ws://127.0.0.1:8080/socket"),
+            dcc.Interval(
+                id='interval-component',
+                interval=500,
+                n_intervals=0
+            )
         ], style={'backgroundColor': '#383434'})
 
     def __register_callbacks(self):
-        """Register the callbacks for the dashboard."""
-        ProfitGraphCallbackRegistrar().register_callbacks(self.app)
-        TimeSpentGraphCallbackRegistrar().register_callbacks(self.app)
-        AgentsGraphCallbackRegistrar().register_callbacks(self.app)
+        """Register the callbacks for the dash
+            dcc.Interval(id='interval-component', interval=5 * 1000, n_intervals=0),board."""
+        ProfitGraphCallbackRegistrar().register_callbacks(self.dash_app)
+        TimeSpentGraphCallbackRegistrar().register_callbacks(self.dash_app)
+        AgentsGraphCallbackRegistrar().register_callbacks(self.dash_app)
 
     def run(self):
         """Run the dashboard server."""
-        self.app.run_server(debug=True, port=8080)
+        self.dash_app.run_server(debug=True)

@@ -1,10 +1,7 @@
-import json
-
 import plotly.graph_objects as go
 from dash import Dash, Output, Input
 
 from meta_classes.callback_registrar import CallbackRegistrarMeta
-from visualization.messages.dashboard_message import DashboardMessage
 
 # Define lists to store the number of agents over time
 _num_agents: list[int] = []
@@ -12,6 +9,7 @@ _num_customer_agents: list[int] = []
 _num_service_agents: list[int] = []
 _num_manager_agents: list[int] = []
 _steps: list[int] = []
+_i = 0
 
 
 class AgentsGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
@@ -19,26 +17,19 @@ class AgentsGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
     def register_callbacks(app: Dash):
         @app.callback(
             Output("agents-graph", "figure"),
-            Input('ws', 'message')
+            Input('interval-component', 'n_intervals')
         )
-        def update_agents_graph(message: str):
+        def update_agents_graph(_):
             """Update the agents graph that shows the number of agents over time."""
-            # Deserialize the JSON message
-            print('agent', message)
-            if message is None:
-                return
-
-            message_dict = json.loads(message)
-            dashboard_message = DashboardMessage(**message_dict)
-
-            # Update the steps
-            _steps.append(dashboard_message.step)
+            global _num_agents, _num_customer_agents, _num_service_agents, _num_manager_agents, _steps, _i
 
             # Get the data
-            _num_agents.append(dashboard_message.agent_message.num_agents)
-            _num_customer_agents.append(dashboard_message.agent_message.num_customer_agents)
-            _num_service_agents.append(dashboard_message.agent_message.num_service_agents)
-            _num_manager_agents.append(dashboard_message.agent_message.num_manager_agents)
+            from main import restaurant
+            _steps.append(_i+1)
+            _num_agents.append(len(restaurant.agents))
+            # num_customer_agents = len(restaurant.agents_by_type[CustomerAgent])
+            # num_service_agents = len(restaurant.agents_by_type[ServiceAgent])
+            # num_manager_agents = len(restaurant.agents_by_type[ManagerAgent])
 
             # Create a new figure
             figure = go.Figure()
