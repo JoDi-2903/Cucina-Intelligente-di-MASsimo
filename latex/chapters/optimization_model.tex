@@ -1,7 +1,7 @@
 %!TEX root = ../main.tex
 
 \chapter{Mathematische Formulierung des Optimierungsproblems}
-Wir haben ein engagiertes Team von Mitarbeitern und eine Reihe von Einschränkungen, die sich vor allem aus dem Arbeitsschutzgesetz ergeben. Einige Mitarbeiter arbeiten weniger Stunden und Schichten, während andere mehr arbeiten. Das muss nicht ausgewogen oder fair sein, sondern muss bestmöglich zur Zielfunktion beitragen. Die Herausforderung besteht darin, die Mitarbeiter für den nächsten Tag so einzusetzen, dass der Gesamtgewinn maximiert wird. Die Mitarbeiter werden im Laufe des Tages weder versetzt noch ausgewechselt. Darüber hinaus hat jeder Mitarbeiter einen einzigartigen \mintinline{text}{customer_capacity}-Faktor, der seine Effizienz oder sein Qualifikationsniveau darstellt -- je höher dieser Faktor, desto höher das Gehalt des Mitarbeiters.
+Wir haben ein engagiertes Team von Mitarbeitern und eine Reihe von Einschränkungen, die sich vor allem aus dem Arbeitsschutzgesetz ergeben. Einige Mitarbeiter arbeiten weniger Stunden und Schichten, während andere mehr arbeiten. Das muss nicht ausgewogen oder fair sein, sondern muss bestmöglich zur Zielfunktion beitragen. Die Herausforderung besteht darin, die Mitarbeiter für den nächsten Tag so einzusetzen, dass der Gesamtgewinn maximiert wird. Die Mitarbeiter werden im Laufe des Tages weder versetzt noch ausgewechselt. Darüber hinaus hat jeder Mitarbeiter einen spezifischen \mintinline{text}{customer_capacity}-Faktor, der seine Effizienz oder sein Qualifikationsniveau darstellt -- je höher dieser Faktor, desto höher das Gehalt des Mitarbeiters.
 
 Nachfolgend wird das Optimierungsproblems der Schichtplanung mathematisch mit allen erforderlichen Entscheidungsvariablen, Parametern, Zielfunktionen und Nebenbedingungen definiert.
 
@@ -13,7 +13,7 @@ Sei:
     \item $ y_{a,s} \in \{0, 1\} $\\
           Eine binäre Variable, die angibt, ob der Service-Agent $ a $ der Schicht $ s $ zugewiesen wurde (1 = zugewiesen, 0 = nicht zugewiesen).
     \item $ z_{a,s} \in T $\\
-          Eine kontinuierliche Variable, die die Länge der Schicht $ s $ für den Service-Agenten $ a $ darstellt.
+          Eine kontinuierliche Variable, die die Länge der Schicht $ s $ für den Service-Agenten $ a $ in Zeitschritten $ t \in T $ darstellt.
 \end{itemize}
 
 \subsection*{Parameter}
@@ -25,14 +25,14 @@ Sei:
           Kapazität des Service-Agenten $ a $. Gibt an, wie viele Kunden er gleichzeitig in einem Zeitschritt bedienen kann.
     \item $ v_t $\\
           Prognostizierte Anzahl an Besuchern im Zeitfenster $ t $.
-    \item $ M_a = 48 $\\
-          Maximale Anzahl an Zeitschritten (10-Minuten-Blöcke), die ein Service-Agent $ a $ pro Tag arbeiten darf (48 Schritte = 8 Stunden).
-    \item $ S_a = 3 $\\
-          Maximale Anzahl an Schichten, die ein Service-Agent $ a $ pro Tag arbeiten darf.
     \item $ L_a = 36 $\\
           Maximale Länge einer einzelnen Schicht für den Service-Agenten $ a $. (36 Schritte = 6 Stunden).
     \item $ P_a = 6 $\\
           Minimale Pausenzeit zwischen zwei Schichten eines Service-Agenten (6 Schritte = 1 Stunde).
+    \item $ M_a = 48 $\\
+          Maximale Anzahl an Zeitschritten (10-Minuten-Blöcke), die ein Service-Agent $ a $ pro Tag arbeiten darf (48 Schritte = 8 Stunden).
+    \item $ S_a = 3 $\\
+          Maximale Anzahl an Schichten, die ein Service-Agent $ a $ pro Tag arbeiten darf.
     \item $ T = \{1, 2, ..., 144\}$\\
           Menge aller Zeitfenster eines Tages, wobei jedes Zeitfenster eine Dauer von 10 Minuten hat (144 Zeitfenster für einen Zeitraum von 24 Stunden).
 \end{itemize}
@@ -66,12 +66,12 @@ Dabei:
     \item \textbf{Mindestpausenzeit zwischen zwei Schichten}\\
           Zwischen zwei aufeinanderfolgenden Schichten eines Agents muss eine Pause von mindestens $P_a = 6$ Zeitschritten liegen:
           $$t_{\text{Ende},s} + P_a \leq t_{\text{Start},s+1},\quad\forall s,\forall a$$
-    \item \textbf{Binäre Entscheidungsvariablen}\\
-          Die Variablen müssen binär sein:
-          $$x_{a,t}, y_{a,s} \in \{0,1\},\quad\forall a,t,s$$
     \item \textbf{Schichtbeginn und -ende nur zu vollen Stunden}\\
           Jede Schicht muss zu einem vollen Stundenbeginn starten und enden (alle sechs Schritte):
           $$t_{\text{Start},s}, t_{\text{Ende},s} \mod 6 = 0,\quad\forall s,\forall a$$
+    \item \textbf{Binäre Entscheidungsvariablen}\\
+          Die Variablen müssen binär sein:
+          $$x_{a,t}, y_{a,s} \in \{0,1\},\quad\forall a,t,s$$
 \end{enumerate}
 
 Diese mathematische Formulierung deckt die Anforderungen des Problems ab und dient als präzise Grundlage für die Implementierung eines Optimierungsmodells zur Schichtplanung in Python.
