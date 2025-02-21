@@ -14,8 +14,8 @@ class ProfitGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
         def update_profit_graph(_):
             """Update the profit graph that shows the profit growth over time and the profit itself."""
             # Lazy import to avoid partial initialization
-            from main import restaurant
-            h = restaurant.history
+            from main import history as h
+
             profit_growth_history = [
                 (0 if len(h.profit_history) == 0 else h.profit_history[i - 1]) +
                 h.profit_history[i] for i in range(1, len(h.profit_history))

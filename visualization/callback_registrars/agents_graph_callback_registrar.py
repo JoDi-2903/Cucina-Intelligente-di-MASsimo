@@ -14,8 +14,7 @@ class AgentsGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
         def update_agents_graph(_):
             """Update the agents graph that shows the number of agents over time."""
             # Lazy import to avoid partial initialization
-            from main import restaurant
-            h = restaurant.history
+            from main import history as h
 
             # Create a new figure
             figure = go.Figure()

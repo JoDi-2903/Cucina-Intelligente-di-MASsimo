@@ -13,8 +13,7 @@ class TimeSpentGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
         )
         def update_time_spent_graph(_):
             # Lazy import to avoid partial initialization
-            from main import restaurant  #
-            h = restaurant.history
+            from main import history as h
             avg_time_spent_history = [
                 time / (h.num_customer_agents_history[i] if h.num_customer_agents_history[i] != 0 else 1)
                 for i, time in enumerate(h.total_time_spent_history)
