@@ -1,0 +1,45 @@
+%!TEX root = ../main.tex
+
+\chapter{Design}
+\label{chap:design}
+
+\section{Agenten}
+\label{sec:agenten}
+
+Im Modell werden drei verschiedene Agenten eingesetzt: \emph{Customer Agents}, \emph{Service Agents} sowie ein \emph{Manager Agent}. Die Agenten sind in einem Multi-Agenten-System organisiert, in dem sie miteinander kommunizieren und sich gegenseitig beeinflussen.
+
+\subsection{Customer Agents}
+\label{subsec:customer_agents}
+Customer Agents beschreiben eine Gruppe von Kunden, die ein Restaurant besuchen und eine Bestellung aufgeben wollen. Die Attribute der Agenten werden größtenteils randomisiert generiert. Dazu zählen die genaue Anzahl der Personen, die maximale Wartezeit sowie das ausgewählte Gericht.
+
+Die Agenten werden über einen internen Status gesteuert, der den aktuellen Zustand des Agenten beschreibt. Die möglichen Zustände sind \emph{Waiting for Service Agent}, \emph{Waiting for food}, \emph{Eating}, \emph{Finished Eating}, \emph{Rejected} und \emph{Done}. Der Status wird durch die verschiedenen Aktionen des Agenten verändert. 
+
+Wichtig im Zuge dieses Konzepts ist, dass die Agenten das Restaurant nicht verlassen, sobald ihre Zeit abgelaufen ist. Stattdessen wird das Essen beendet, dafür sinkt jedoch die Bewertung.
+
+Wenn die Customer Agents ihr Essen beendet haben, geben sie eine Bewertung ab. Diese Bewertung ist eine Funktion mit mehreren Zufallsfaktoren:
+
+\begin{equation*}
+    r = \text{round}\left(\max\left(r_{\text{min}}, \min\left(r_{\text{max}}, r_{\text{max}} - \alpha \cdot \text{exceedance} - \beta \cdot \text{error} + \gamma\right)\right), 2\right)
+\end{equation*}
+
+wobei:
+\begin{itemize}
+    \item $r$ die finale Bewertung ist,
+    \item $r_{\text{min}}$ die minimal mögliche Bewertung ist,
+    \item $r_{\text{max}}$ die maximal mögliche Bewertung ist,
+    \item $\alpha$ die Gewichtung der Wartezeitstrafe ist,
+    \item $exceedance$ der Quotient aus der tatsächlichen Wartezeit und der angegebenen maximalen Zeit ist (nur bei Überschreitung, sonst 0),
+    \item $\beta$ die Gewichtung für fehlerhafte Bestellungen ist,
+    \item $error$ eine zufällige Fehlerquote ist,
+    \item $\gamma$ eine zufällige Bewertungsvariabilität abhängig von der Gruppengröße ist.
+\end{itemize}
+
+Im \emph{PEAS-Framework} lassen sich die Customer Agents wie folgt beschreiben:
+\begin{description}
+    \item[Performance Measure] Einhaltung der maximalen Zeit
+    \item[Environment] Das Restaurant, die Service Agents
+    \item[Actuators] Bestellung aufgeben, Essen bewerten
+    \item[Sensors] Bewertung des Essens, Wartezeit
+\end{description}
+
+Bei den Customer Agents handelt es sich gemäß des \emph{AIMA-Framework}s um \emph{Simple Reflex Agents}, da sie ihre Aktionen basierend auf dem aktuellen Zustand und den wahrgenommenen Informationen ausführen, ohne eine interne Zustandsrepräsentation der Welt zu verwenden. Sie reagieren direkt auf die wahrgenommenen Reize, wie z.B. die erhaltene Bestellung, um ihre nächsten Aktionen zu bestimmen.
