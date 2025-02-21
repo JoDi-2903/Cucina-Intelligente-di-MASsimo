@@ -116,7 +116,7 @@ class ManagerAgent(Agent):
             the higher the employee's salary.
         """
         # Decision variables
-        predicted_visitor_counts = self.model.lstm_model.forecast(
+        predicted_visitor_counts: list[int] = self.model.lstm_model.forecast(
             time_series=restaurant_model.RestaurantModel.customers_added_per_step,
             rating_history=restaurant_model.RestaurantModel.rating_over_steps,
             n=Config().run.full_day_cycle_period
@@ -126,7 +126,7 @@ class ManagerAgent(Agent):
 
 
 
-        # Calculate derived parameters resulting from service_agent_shift_schedule for visualization and debugging purposes
+        # Calculate derived parameters resulting from service_agent_shift_schedule
         service_agent_working_hours_count, service_agent_working_shifts_count, working_agents_count = self.derive_parameters_from_service_agent_shift_schedule(service_agent_shift_schedule)
 
 
@@ -134,13 +134,12 @@ class ManagerAgent(Agent):
         # Optimierungsmodell direkt im Manager Agent implementieren und nach full_day_cycle Steps ausführen
         # Das Ergebnis der Optimierung wird dann global gesetzt und die Service Agents entsprechend eingeteilt
 
-
         # Entscheidungsvariablen:
         # predicted_visitor_counts: Vorhersage der Besucherzahlen pro step für den nächsten Arbeitstag; Dictionary mit step als Key und Besucherzahl als Value
         # available_service_agents: Liste mit allen Service Agents, die am nächsten Arbeitstag arbeiten können; 
         #   jeder Service Agent hat die folgenden Attribute (die wiederrum Entscheidungsvariablen sind):
         #       - salary_per_tick: Gehalt pro Tick
-        #       - parallel_customer_operation: Anzahl der Kunden, die ein Service Agent gleichzeitig bedienen kann
+        #       - customer_capacity: Anzahl der Kunden, die ein Service Agent gleichzeitig bedienen kann
         # service_agent_shift_schedule: Schichtplan eines Service Agents am geplanten Tag; 1 = arbeiten, 0 = frei; Datentyp (Value) als Liste mit 24 Einträgen (für 24 Stunden; 0-23 Uhr);
         #   soll ein Agent aus dem Mitarbeiterpool (Key) arbeiten, wird ein Eintrag in der Liste auf 1 gesetzt, ansonsten auf 0 (es muss ja nicht jeder eingesetzt werden)
         # service_agent_working_hours_count: Arbeitsstunden in steps eines Service Agents am geplanten Tag (ergibt sich aus service_agent_shift_schedule)
@@ -148,15 +147,15 @@ class ManagerAgent(Agent):
         # working_agents_count: Anzahl der Service Agents, die am nächsten Arbeitstag arbeiten sollen (ergibt sich aus service_agent_shift_schedule)
 
         # Zielfunktionen:
-            # 1. Maximierung des Profits: self.model.profit_over_steps
-            # 2. Maximierung der Zufriedenheit: self.model.rating_over_steps
-            # Optimierungsmodell entscheidet gewichtet über die zu verwendende Zielfunktion (Profit ODER Zufriedenheit)
+            # Maximierung des Profits, indem
+            #   - anhand der vorhergesagten Kundenanzahl (predicted_visitor_counts) ausreichend Service Agents für diese Zeiten eingeteilt werden, die auch ausreichend customer_capacity besitzen
+            #   - die Personalausgaben so gering wie möglich gehalten werden, also auch nicht mehr Service Agenten als notwendig in eine Schicht eingeteilt werden
         
         # Constraints:
-            # Maximale Anzahl an Service Agents, die Zeitgleich arbeiten können
-            # Maximale Anzahl an Kunden, die ein Service Agent pro step bedienen kann (abhängig von Fähigkeiten eines Service Agents)
-            # Service Agents bekommen pro step ein Gehalt, dass von ihrer Fähigkeit abhängt (salary_per_tick)
-            # Service Agents bekommen ein höheres Gehalt, wenn sie eine höhere Fähigkeit besitzen und mehr Kunden gleichzeitig bedienen können (parallel_customer_operation)
+            # Maximale Anzahl an Service Agents, die Zeitgleich arbeiten können, entspricht der Anzahl an Mitarbeitern im Pool -> len(available_service_agents)
+            # Maximale Anzahl an Kunden, die ein Service Agent pro step bedienen kann (abhängig von Fähigkeiten eines Service Agents) -> ServiceAgent.customer_capacity
+            # Service Agents bekommen pro step ein Gehalt, dass von ihrer Fähigkeit abhängt -> ServiceAgent.salary_per_tick
+            # Service Agents bekommen ein höheres Gehalt, wenn sie eine höhere Fähigkeit besitzen und mehr Kunden gleichzeitig bedienen können (bereits in ServiceAgent class implementiert, dass ServiceAgent.salary_per_tick auf ServiceAgent.customer_capacity basiert)
             # Eine Schicht muss mindestens 6 steps (1 Stunde) dauern
             # Ein Service Agent kann maximal 3 Schichten pro Tag arbeiten
             # Ein Service Agent kann maximal 36 steps (6 Stunden) am Stück arbeiten, länger darf eine Schicht nicht sein
@@ -164,10 +163,13 @@ class ManagerAgent(Agent):
             # Zwischen zwei Schichten eines Service Agents muss mindestens 6 steps (1 Stunde) Pause liegen
             # Schichten können nur zu vollen Stunden beginnen (alle 6 Steps) beginnen
             # Schichten können nur zu vollen Stunden enden (alle 6 Steps) enden
+            # Ein Service Agent muss nicht jeden Tag arbeiten. Er kann an einem Tag auch zu keiner Schicht eingeteilt werden.
 
         ## Zusatzideen:
         ## parallel_preparation: je mehr Gerichte gleichzeitig zubereitet werden können sollen, desto teurer
         # evtl. Qualityfaktor für teureres Essen -> Rating & Profit
+        # Zielfunktion 2: Maximierung der Zufriedenheit: self.model.rating_over_steps
+        # Optimierungsmodell entscheidet gewichtet über die zu verwendende Zielfunktion (Profit ODER Zufriedenheit)
 
 
 
