@@ -23,16 +23,13 @@ Sei:
           Kapazität des Service-Agenten $ a $. Gibt an, wie viele Kunden er gleichzeitig in einem Zeitschritt bedienen kann.
     \item $ v_t $\\
           Prognostizierte Anzahl an Besuchern im Zeitfenster $ t $.
-    \item $ L_a = 36 $\\
-          Maximale Länge einer einzelnen Schicht für den Service-Agenten $ a $. (36 Schritte = 6 Stunden).
-    \item $ P_a = 6 $\\
-          Minimale Pausenzeit zwischen zwei Schichten eines Service-Agenten (6 Schritte = 1 Stunde).
-    \item $ M_a = 48 $\\
-          Maximale Anzahl an Zeitschritten (10-Minuten-Blöcke), die ein Service-Agent $ a $ pro Tag arbeiten darf (48 Schritte = 8 Stunden).
     \item $ S_a = 3 $\\
           Maximale Anzahl an Schichten, die ein Service-Agent $ a $ pro Tag arbeiten darf.
     \item $ T = \{1, 2, ..., 144\}$\\
           Menge aller Zeitfenster eines Tages, wobei jedes Zeitfenster eine Dauer von 10 Minuten hat (144 Zeitfenster für einen Zeitraum von 24 Stunden).
+    \item $ S = \left\{ \left[0, 1, 2, 3, 4, 5 \right], \left[ 6, 7, 8, 9, 10, 11 \right] , \left[ 12, 13, 14, 15, 16, 17 \right] , \left[ 18, 19, 20, 21, 22, 23 \right] \right\} $\\
+          Stunden der Schichten, wobei jede Schicht 6 Stunden dauert
+    % \item $ S = \left\{ \left[ i, i+1, i+2, i+3, i+4, i+5 \right] \mid i \in \left\{0, 1, 2, \dots, 18\right\} \right\} $
 \end{itemize}
 
 \subsection*{Zielfunktion}
@@ -58,6 +55,7 @@ Dabei:
               \item Gurobi Syntax: $ y_{a,s} = 1 \Rightarrow x_{a,t} = 1, \quad \forall t \in S $
               \item PyOptInterface Syntax: $ y_{a,s} \leq x_{a,t}, \quad \forall t \in S $
           \end{itemize}
+          Die umgekehrte Implikation $ x_{a,t} = 1 , \forall t \in S \implies y_{a,s} = 1 $ ist nur dann schlüssig, wenn die Aktivierung aller Zeitschritte innerhalb einer Schicht notwendigerweise bedeutet, dass die gesamte Schicht aktiviert ist. Da $y_{a,s}$ die Aktivierung der gesamten Schicht beschreibt, ist die umgekehrte Implikation logisch konsistent: Wenn alle Zeitschritte aktiv sind ($x_{a,t} = 1 \forall t$), muss auch die gesamte Schicht aktiv sein ($y_{a,s} = 1$).
     \item \textbf{Maximale Anzahl an Schichten}\\
           Jeder Agent darf maximal $S_a = 3$ Schichten pro Tag übernehmen:
           $$\sum_{s \in S} y_{a,s} \leq S_a,\quad\forall a\in A$$
