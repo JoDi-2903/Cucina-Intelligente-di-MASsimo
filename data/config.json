@@ -19,7 +19,7 @@
     "rating_time_food_preparation": 0.4
   },
   "Customers": {
-    "max_simultaneous_customers_in_restaurant": 128,
+    "max_simultaneous_customers_in_restaurant": 30,
     "max_new_customer_agents_per_step": 10,
     "max_customers_per_agent": 15,
     "time_min": 3,
