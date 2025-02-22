@@ -40,4 +40,4 @@ if __name__ == "__main__":
     # Run the Dash server in the main thread
     dashboard.run(is_running_in_debug_mode())
 
-# TODO: Ausarbeitung + Präsentation
+# TODO: Präsentation
