@@ -4,47 +4,35 @@ from dash import Dash, Output, Input
 from meta_classes.callback_registrar import CallbackRegistrarMeta
 
 
-class ProfitGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
+class RatingGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
     @staticmethod
     def register_callbacks(app: Dash):
         @app.callback(
-            Output("profit-graph", "figure"),
+            Output("rating-graph", "figure"),
             Input('interval-component', 'n_intervals')
         )
-        def update_profit_graph(_):
-            """Update the profit graph that shows the profit growth over time and the profit itself."""
+        def update_rating_graph(_):
+            """Update the rating graph that shows the profit growth over time and the profit itself."""
             # Lazy import to avoid partial initialization
             from main import history as h
-
-            # Calculate the cumulative profit
-            cumulative_profit = [sum(h.profit_history[:i]) for i in range(1, len(h.profit_history) + 1)]
 
             # Create a new figure
             figure = go.Figure()
 
-            # Add trace for profit growth
-            figure.add_trace(go.Scatter(
-                x=h.steps_history,
-                y=cumulative_profit,
-                mode='lines+markers',
-                name="Cumulative profit",
-                line=dict(color='cyan')
-            ))
-
             # Add trace for profit
             figure.add_trace(go.Scatter(
                 x=h.steps_history,
-                y=h.profit_history,
+                y=h.rating_history,
                 mode='lines+markers',
-                name="Profit",
-                line=dict(color='blue')
+                name="Rating",
+                line=dict(color='orange')
             ))
 
             # Update the layout
             figure.update_layout(
-                title="Profit history",
+                title="Rating history",
                 xaxis_title="Time steps",
-                yaxis_title="Profit",
+                yaxis_title="Rating",
                 plot_bgcolor="rgba(30, 30, 30, 1)",
                 paper_bgcolor="rgba(20, 20, 20, 1)",
                 font=dict(color="white"),

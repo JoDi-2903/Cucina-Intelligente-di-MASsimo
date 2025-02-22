@@ -1,7 +1,7 @@
 import numpy as np
 import pyoptinterface as poi
 from mesa import Agent, Model
-from pyoptinterface import highs
+from pyoptinterface import highs, quicksum
 
 from agents import service_agent
 from agents.customer_agent import CustomerAgent
@@ -24,8 +24,8 @@ class ManagerAgent(Agent):
         """
         # Update the employee pool of service agents
         if (
-            self.model.steps % (Config().run.full_day_cycle_period * 5) == 0
-            or self.model.steps == 1
+                self.model.steps % (Config().run.full_day_cycle_period * 5) == 0
+                or self.model.steps == 1
         ):  # Update every 5 full day cycles
             self.update_service_agent_employee_pool()
 
@@ -37,7 +37,7 @@ class ManagerAgent(Agent):
             self._optimize_restaurant_operations()
 
     def optimize_shift_schedule(
-        self, agents: list, predicted_visitors: list[int]
+            self, agents: list, predicted_visitors: list[int]
     ) -> tuple[dict, float]:
         # Time parameters
         n_slots = len(
@@ -136,7 +136,8 @@ class ManagerAgent(Agent):
         for t in range(n_slots):
             print(f"Time {t}".center(20, "-"))
             for a in agents:
-                print(f"Agent {a.unique_id}: {model.get_variable_attribute(x_vars[(a, t)], poi.VariableAttribute.Value)}")
+                print(
+                    f"Agent {a.unique_id}: {model.get_variable_attribute(x_vars[(a, t)], poi.VariableAttribute.Value)}")
 
         return agent_schedules, optimal_objective
 
@@ -152,9 +153,7 @@ class ManagerAgent(Agent):
         )
 
         # ToDo: Pay only agents that are assigned to a shift
-        total_payment = Config().service.service_agent_salary_per_tick * len(
-            self.model.agents_by_type[service_agent.ServiceAgent]
-        )
+        total_payment = sum([agent.salary_per_tick for agent in self.model.agents_by_type[ServiceAgent]])
 
         logger.info(
             "Step %d: Revenue: %.2f, Payment: %.2f, Profit: %.2f.",
@@ -186,8 +185,8 @@ class ManagerAgent(Agent):
                 Config().service.service_agent_capacity_max,
             )
             salary_per_tick = customer_capacity * (
-                Config().service.service_agent_salary_per_tick
-                / Config().service.service_agent_capacity
+                    Config().service.service_agent_salary_per_tick
+                    / Config().service.service_agent_capacity
             )
 
             # Create a new service agent with the given values
@@ -204,7 +203,7 @@ class ManagerAgent(Agent):
         )
 
     def derive_parameters_from_service_agent_shift_schedule(
-        self, service_agent_shift_schedule: dict[ServiceAgent, list[int]]
+            self, service_agent_shift_schedule: dict[ServiceAgent, list[int]]
     ) -> tuple[dict[ServiceAgent, int], dict[ServiceAgent, int], int]:
         """
         Calculate derived parameters resulting from service_agent_shift_schedule for visualization and debugging purposes.
@@ -252,6 +251,7 @@ class ManagerAgent(Agent):
             rating_history=history.rating_history,
             n=Config().run.full_day_cycle_period,
         )
+        history.add_predicted_customer_agents_growth(predicted_visitors)
         available_service_agents = list(self.model.agents_by_type[ServiceAgent])
 
         # Optimize the shift schedule

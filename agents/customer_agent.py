@@ -9,11 +9,9 @@ from models.menu import Menu
 
 logger = customer_logger
 
+
 class CustomerAgent(Agent):
     """An agent that represents a table of customers"""
-
-    # Track how many CustomerAgents were created per step
-    customers_added_per_step: dict[int, int] = {}
 
     def __init__(self, model: Model):
         # Pass parameters to parent class
