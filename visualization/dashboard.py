@@ -52,6 +52,15 @@ class Dashboard:
             dcc.Graph(id="profit-graph"),
             dcc.Graph(id="rating-graph"),
             dcc.Graph(id="agents-graph"),
+            html.Img(
+                id="restaurant-grid-heatmap-image",
+                style={
+                    'display': 'block',
+                    'margin': '0 auto',
+                    'padding': '20px'
+                }
+            ),
+
             dcc.Graph(id="time-spent-graph"),
 
             dcc.Interval(

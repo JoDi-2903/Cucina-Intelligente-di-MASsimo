@@ -24,6 +24,9 @@ class History:
         self.__customers_added_history: list[int] = [Config().customers.max_new_customer_agents_per_step]
         self.__predicted_customers_agents_growth_history: list[int] = []
 
+        # Current heatmap image of the restaurant grid (used for visualization)
+        self.restaurant_grid_heatmap_image: str = ""
+
     def add_step(self, step: int):
         self.__steps_history.append(step)
 

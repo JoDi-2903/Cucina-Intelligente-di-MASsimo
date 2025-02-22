@@ -5,6 +5,7 @@ from meta_classes.singleton import SingletonMeta
 from models.config.customers_settings import CustomersSettings
 from models.config.orders_settings import OrdersSettings
 from models.config.rating_settings import RatingSettings
+from models.config.restaurant_settings import RestaurantSettings
 from models.config.run_settings import RunSettings
 from models.config.service_settings import ServiceSettings
 from models.config.weights_settings import WeightsSettings
@@ -26,6 +27,7 @@ class Config(metaclass=SingletonMeta):
         self.__rating = RatingSettings(json_content["Rating"])
         self.__orders = OrdersSettings(json_content["Orders"])
         self.__weights = WeightsSettings(json_content["Weights"])
+        self.__restaurant = RestaurantSettings(json_content["Restaurant"])
         self.__customers = CustomersSettings(json_content["Customers"])
         self.__service = ServiceSettings(json_content["Service"])
         self.__run = RunSettings(json_content["Run"])
@@ -50,6 +52,10 @@ class Config(metaclass=SingletonMeta):
     @property
     def weights(self) -> WeightsSettings:
         return self.__weights
+
+    @property
+    def restaurant(self) -> RestaurantSettings:
+        return self.__restaurant
 
     @property
     def customers(self) -> CustomersSettings:

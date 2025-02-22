@@ -22,11 +22,11 @@ class RestaurantModel(Model):
     """A model with some number of agents."""
 
     def __init__(self, lstm_model: LSTMModel):
+        # Initialize the model and its properties
         super().__init__()
-
-        # Initialize LSTM model, menu and history
         self.lstm_model = lstm_model
         self.menu = Menu()
+        self.grid = SingleGrid(Config().restaurant.grid_width, Config().restaurant.grid_height, False)
 
         # Initialize agents
         CustomerAgent.create_agents(
@@ -37,13 +37,6 @@ class RestaurantModel(Model):
         ManagerAgent.create_agents(
             model=self,
             n=1
-        )
-
-        # Initialize grid that visualizes the restaurant
-        self.grid = SingleGrid(
-            6,
-            7,
-            torus=False
         )
 
         logger.info(
@@ -98,14 +91,14 @@ class RestaurantModel(Model):
             - A periodic factor via a sine function simulates rush hours (e.g., a surge around lunchtime or dinner) and off-peak times.
             - The historical average of customers spawned (from customers_added_per_step_timeseries) is used for smoothing sudden changes.
             - A small random variation (±10% of the smoothed estimate) simulates unpredictable fluctuations.
-            - The calculated number is then clamped so that both max_new_customer_agents_per_step and max_simultaneous_customers_in_restaurant are not exceeded.
+            - The calculated number is then clamped so that both max_new_customer_agents_per_step and max capacity of customer agents in the restaurant (grid width * height) are not exceeded.
         """
         # Get the current restaurant rating.
         total_rating_in_percent: float = self.get_total_rating_percentage()  # e.g., 0.85 for 85%
 
         # Retrieve configuration limits.
         max_new_customers: int = Config().customers.max_new_customer_agents_per_step
-        max_simultaneous_customers: int = Config().customers.max_simultaneous_customers_in_restaurant
+        max_simultaneous_customers: int = Config().restaurant.grid_width * Config().restaurant.grid_height
 
         # Count current active customers (not DONE).
         current_customers: int = sum(
@@ -190,6 +183,10 @@ class RestaurantModel(Model):
             history.num_service_agents_history[-1] +
             history.num_manager_agents_history[-1]
         )
+
+        # Update the heatmap of the restaurant grid for visualization
+        from utils.restaurant_grid_utils import RestaurantGridUtils  # Avoid circular dependencies
+        RestaurantGridUtils.update_grid_heatmap(self)
 
     def get_total_time_spent(self) -> int:
         """ Compute the total time spent for all customers in the model """

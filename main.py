@@ -26,7 +26,6 @@ def run_restaurant():
     # Iterate over the steps of the restaurant model
     while restaurant.running and restaurant.steps < Config().run.step_amount:
         restaurant.step()
-        RestaurantGridUtils.show_grid(restaurant)
 
 
 def is_running_in_debug_mode():
