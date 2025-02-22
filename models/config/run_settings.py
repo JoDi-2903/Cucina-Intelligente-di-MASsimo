@@ -12,6 +12,7 @@ class RunSettings:
             self.__step_amount: int = config["step_amount"]
             self.__full_day_cycle_period: int = config["full_day_cycle_period"]
             self.__retrain_interval: int = config["retrain_interval"]
+            self.__max_restaurant_table_count: int = config["max_restaurant_table_count"]
         else:
             raise ValueError("No default values for run settings available.")
 
@@ -26,3 +27,7 @@ class RunSettings:
     @property
     def retrain_interval(self) -> int:
         return self.__retrain_interval
+
+    @property
+    def max_restaurant_table_count(self) -> int:
+        return self.__max_restaurant_table_count

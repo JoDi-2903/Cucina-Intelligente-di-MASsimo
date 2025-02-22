@@ -60,6 +60,15 @@ class ServiceAgent(Agent):
             key=self.weighted_sort_placing
         )
 
+        # Turn down customers when all tables in the restaurant are occupied
+        if len(waiting_customers) > Config().run.max_restaurant_table_count:
+            customers_newly_arrived_in_step: list[CustomerAgent] = [a for a in waiting_customers if
+                                                                    a.init_time == a.time_left]
+            turn_down_count = len(waiting_customers) - Config().run.max_restaurant_table_count
+            for c in customers_newly_arrived_in_step[:turn_down_count]:
+                c.state = CustomerAgentState.DONE
+                waiting_customers.remove(c)
+
         # Get the customer with the smallest time_left
         if waiting_customers:
             customer: CustomerAgent = waiting_customers[0]
