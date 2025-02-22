@@ -1,3 +1,4 @@
+import sys
 import threading
 
 from ml.lstm_model import LSTMModel
@@ -24,11 +25,19 @@ def run_restaurant():
         restaurant.step()
 
 
+def is_running_in_debug_mode():
+    """
+    Check if the program is running in debug mode.
+    :return: True if the program is running in debug mode, False otherwise
+    """
+    return hasattr(sys, 'gettrace') and sys.gettrace() is not None
+
+
 if __name__ == "__main__":
     # Start the restaurant in a separate thread
     threading.Thread(target=run_restaurant).start()
 
     # Run the Dash server in the main thread
-    dashboard.run()
+    dashboard.run(is_running_in_debug_mode())
 
 # TODO: Ausarbeitung + Präsentation

@@ -71,6 +71,9 @@ class Dashboard:
         AgentsGraphCallbackRegistrar().register_callbacks(self.dash_app)
         AutoRefreshCallbackRegistrar().register_callbacks(self.dash_app)
 
-    def run(self):
-        """Run the dashboard server."""
-        self.dash_app.run_server(debug=True)
+    def run(self, run_server_in_debug_mode: bool):
+        """
+        Run the dashboard server.
+        :param run_server_in_debug_mode: True if the server should run in debug mode, False otherwise.
+        """
+        self.dash_app.run_server(debug=run_server_in_debug_mode)
