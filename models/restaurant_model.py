@@ -3,6 +3,7 @@ import random
 from statistics import fmean
 
 from mesa import Model
+from mesa.space import SingleGrid
 
 from agents.customer_agent import CustomerAgent
 from agents.manager_agent import ManagerAgent
@@ -38,6 +39,13 @@ class RestaurantModel(Model):
             n=1
         )
 
+        # Initialize grid that visualizes the restaurant
+        self.grid = SingleGrid(
+            6,
+            7,
+            torus=False
+        )
+
         logger.info(
             "Created model with %d customer agents, %d service agents and 1 manager agent",
             Config().customers.max_new_customer_agents_per_step,
@@ -59,7 +67,6 @@ class RestaurantModel(Model):
         if ManagerAgent in self.agents_by_type.keys():
             for agent in self.agents_by_type[ManagerAgent]:
                 agent.step()
-
 
         # Update the time series prediction model (online training) based on the 'real' data of the former step
         satisfaction_rating = (history.rating_history[self.steps - 1] if len(history.rating_history) > 1

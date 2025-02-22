@@ -15,14 +15,19 @@ dashboard = Dashboard()
 
 def run_restaurant():
     """Run the restaurant model and emit updates to the dashboard."""
+    # Lazy import to avoid partial initialization
+    from models.restaurant_model import RestaurantModel
+    from utils.restaurant_grid_utils import RestaurantGridUtils
+
     # Create the restaurant model and the machine learning model
-    from models.restaurant_model import RestaurantModel  # Lazy import to avoid circular dependencies
     lstm_model = LSTMModel()
     restaurant = RestaurantModel(lstm_model)
+    restaurant_grid_utils = RestaurantGridUtils()
 
     # Iterate over the steps of the restaurant model
     while restaurant.running and restaurant.steps < Config().run.step_amount:
         restaurant.step()
+        restaurant_grid_utils.show_grid(restaurant)
 
 
 def is_running_in_debug_mode():
