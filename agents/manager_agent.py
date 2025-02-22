@@ -170,13 +170,17 @@ class ManagerAgent(Agent):
         """
         Create (new) employee pool of service agents, if one already exists.
         """
+        service_agents = []
+
         # Delete all existing service agents
         if ServiceAgent in self.model.agents_by_type.keys():
-            for agent in self.model.agents_by_type[ServiceAgent]:
-                agent.remove()
+            service_agents = list(self.model.agents_by_type[ServiceAgent])
+
+        for agent in service_agents:
+            agent.remove()
 
         # Create value lists for customer_capacity and salary_per_tick
-        for i in range(Config().service.service_agents):
+        for _ in range(Config().service.service_agents):
             customer_capacity = np.random.randint(
                 Config().service.service_agent_capacity_min,
                 Config().service.service_agent_capacity_max,

@@ -5,3 +5,4 @@ numpy~=2.0.2
 plotly~=6.0.0
 dash~=2.18.2
 dash-bootstrap-components~=1.7.1
+dash_daq
