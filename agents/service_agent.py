@@ -30,6 +30,9 @@ class ServiceAgent(Agent):
         # Initialize the queue for customers. Queue is limited by capacity
         self.customer_queue: list[CustomerAgent] = []
 
+        # Initialize the shift schedule dict[step] = bool
+        self.shift_schedule: dict[int, bool] = {}
+
     def weighted_sort_placing(self, customer: CustomerAgent):
         """ Custom sort key for sorting new customers by weighted criteria profit, waiting time and time left """
         return (
@@ -48,6 +51,10 @@ class ServiceAgent(Agent):
         )
 
     def step(self):
+        # Don't do anything if the service agent is not scheduled to work
+        if self.model.steps not in self.shift_schedule.keys() or not self.shift_schedule[self.model.steps]:
+            return
+
         # Remove all customers that are done eating
         for c in self.customer_queue:
             if c.state == CustomerAgentState.DONE:

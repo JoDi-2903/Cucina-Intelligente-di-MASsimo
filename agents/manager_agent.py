@@ -39,6 +39,12 @@ class ManagerAgent(Agent):
     def optimize_shift_schedule(
             self, agents: list, predicted_visitors: list[int]
     ) -> tuple[dict, float]:
+        """
+        Optimize the shift schedule for the service agents to maximize profit.
+        :param agents: List of service agents
+        :param predicted_visitors: Predicted number of visitors for each time slot
+        :return: agent schedules (dict[agent, list(works_at_step_binary)]) and optimal objective value (total cost)
+        """
         # Time parameters
         n_slots = len(
             predicted_visitors
@@ -276,15 +282,16 @@ class ManagerAgent(Agent):
             [(ag.unique_id, sh) for ag, sh in service_agent_shift_schedule.items()],
         )
 
+        next_step = self.model.steps + 1
+
         # Update each service agent with their computed schedule
         for agent in available_service_agents:
             # Assume each ServiceAgent has a 'shift_schedule' attribute to store its schedule.
-            if agent in service_agent_shift_schedule:
-                agent.shift_schedule = service_agent_shift_schedule[agent]
+            if agent in service_agent_shift_schedule.keys():
+                for i in range(Config().run.full_day_cycle_period):
+                    agent.shift_schedule[next_step + i] = service_agent_shift_schedule[agent][i]
             else:
                 agent.shift_schedule = [0] * Config().run.full_day_cycle_period
-
-        # ToDo: Update the logic of the ServiceAgents to actually use the shift plan that the optimizer calculated
 
         # Calculate derived parameters resulting from service_agent_shift_schedule
         (

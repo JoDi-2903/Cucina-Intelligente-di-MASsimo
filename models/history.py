@@ -20,6 +20,7 @@ class History:
         self.__num_agents_history: list[int] = []
         self.__num_customer_agents_history: list[int] = []
         self.__num_service_agents_history: list[int] = []
+        self.__num_active_service_agents_history: list[int] = []
         self.__num_manager_agents_history: list[int] = []
         self.__customers_added_history: list[int] = [Config().customers.max_new_customer_agents_per_step]
         self.__predicted_customers_agents_growth_history: list[int] = []
@@ -53,6 +54,9 @@ class History:
 
     def add_num_service_agents(self, num_service_agents: int):
         self.__num_service_agents_history.append(num_service_agents)
+
+    def add_num_active_service_agents(self, num_active_service_agents: int):
+        self.__num_active_service_agents_history.append(num_active_service_agents)
 
     def add_num_manager_agents(self, num_manager_agents: int):
         self.__num_manager_agents_history.append(num_manager_agents)
@@ -96,6 +100,10 @@ class History:
     @property
     def num_service_agents_history(self) -> list[int]:
         return self.__num_service_agents_history
+
+    @property
+    def num_active_service_agents_history(self) -> list[int]:
+        return self.__num_active_service_agents_history
 
     @property
     def num_manager_agents_history(self) -> list[int]:

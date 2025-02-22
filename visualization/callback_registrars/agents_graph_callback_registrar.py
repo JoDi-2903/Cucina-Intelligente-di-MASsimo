@@ -47,11 +47,20 @@ class AgentsGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
             ))
 
             # Add a trace for the number of service agents
+            # figure.add_trace(go.Scatter(
+            #     x=h.steps_history,
+            #     y=h.num_service_agents_history,
+            #     mode='lines+markers',
+            #     name="Number of service agents",
+            #     line=dict(color='orange')
+            # ))
+
+            # Add a trace for the number of active service agents
             figure.add_trace(go.Scatter(
                 x=h.steps_history,
-                y=h.num_service_agents_history,
+                y=h.num_active_service_agents_history,
                 mode='lines+markers',
-                name="Number of service agents",
+                name="Number of active service agents",
                 line=dict(color='orange')
             ))
 

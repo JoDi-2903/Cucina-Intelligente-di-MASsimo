@@ -49,6 +49,11 @@ class RestaurantModel(Model):
         # Spawn new customers
         self.spawn_customers()
 
+        if self.steps == 1:
+            if ManagerAgent in self.agents_by_type.keys():
+                for agent in self.agents_by_type[ManagerAgent]:
+                    agent.step()
+
         # Step all agents manually, because Manager is scaling the ServiceAgents
         if CustomerAgent in self.agents_by_type.keys():
             for agent in self.agents_by_type[CustomerAgent]:
@@ -177,6 +182,9 @@ class RestaurantModel(Model):
         ]
         history.add_num_customer_agents(len(active_customer_agents))
         history.add_num_service_agents(len(self.agents_by_type[ServiceAgent]))
+        history.add_num_active_service_agents(len([a for a in self.agents_by_type[ServiceAgent]
+                                                   if self.steps in a.shift_schedule.keys()
+                                                     and a.shift_schedule[self.steps] == True]))
         history.add_num_manager_agents(len(self.agents_by_type[ManagerAgent]))
         history.add_num_agents(
             history.num_customer_agents_history[-1] +
