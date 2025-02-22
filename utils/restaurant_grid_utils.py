@@ -8,6 +8,7 @@ _cmap = colors.ListedColormap(["black", "red", "green", "blue"])
 __bounds = [0, 1, 2, 3]
 _norm = colors.BoundaryNorm(__bounds, _cmap.N)
 
+
 class RestaurantGridUtils:
     """Utility class for the restaurant grid."""
 

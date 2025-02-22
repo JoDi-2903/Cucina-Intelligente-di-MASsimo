@@ -1,6 +1,5 @@
 import random
 
-from keras.src.callbacks import Callback
 from mesa import Agent, Model
 
 from enums.customer_agent_state import CustomerAgentState

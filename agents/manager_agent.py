@@ -1,7 +1,7 @@
 import numpy as np
 import pyoptinterface as poi
 from mesa import Agent, Model
-from pyoptinterface import highs, quicksum
+from pyoptinterface import highs
 
 from agents import service_agent
 from agents.customer_agent import CustomerAgent
