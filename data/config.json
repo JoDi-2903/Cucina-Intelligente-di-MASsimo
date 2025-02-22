@@ -19,7 +19,7 @@
     "rating_time_food_preparation": 0.4
   },
   "Customers": {
-    "max_simultaneous_customers_in_restaurant": 128,
+    "max_simultaneous_customers_in_restaurant": 30,
     "max_new_customer_agents_per_step": 10,
     "max_customers_per_agent": 15,
     "time_min": 3,
@@ -35,7 +35,6 @@
   "Run": {
     "step_amount": 1440,
     "full_day_cycle_period": 144,
-    "retrain_interval": 6,
-    "max_restaurant_table_count": 25
+    "retrain_interval": 6
   }
 }
