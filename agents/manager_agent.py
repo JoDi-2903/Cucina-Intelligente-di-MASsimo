@@ -103,12 +103,23 @@ class ManagerAgent(Agent):
             model.add_linear_constraint(cons_expr, poi.Leq, max_working_slots)
 
         # Constraint 3: Shift consistency.
-        # If an agent is assigned to a shift (y = 1), then they must work every time slot in that shift.
-        # Enforced by: y_{a,s} - x_{a,t} <= 0 for each t in the shift s.
+        # If an agent is assigned to a shift y_{a,s} == 1, then they must work every time slot x_{a,t} == 1 in that shift.
+        # Enforced for each t in the shift s by: 
+            # c1: y_{a,s} - x_{a,t} <= 0 AND 
+            # c2: x_{a,t} - y_{a,s} <= 0 
+            # s t  desired  c1  c2  c1 & c2
+            # 0 0  1        1   1   1
+            # 0 1  0        1   0   0
+            # 1 0  0        0   1   0
+            # 1 1  1        1   1   1
+
+        # c1: s-t <= 0
+        # c2: t-s <= 0 
         for agent in agents:
             for s in range(n_shifts):
                 for t in shifts[s]:
                     model.add_linear_constraint(y_vars[(agent, s)] - x_vars[(agent, t)], poi.Leq, 0)
+                    model.add_linear_constraint(x_vars[(agent, t)] - y_vars[(agent, s)], poi.Leq, 0)
 
         # Constraint 4: Maximum number of shifts per agent.
         for agent in agents:
@@ -133,11 +144,10 @@ class ManagerAgent(Agent):
 
         # Print the optimal objective and the schedule for each agent
         print(f"Optimal objective: {optimal_objective}")
-        for t in range(n_slots):
-            print(f"Time {t}".center(20, "-"))
-            for a in agents:
-                print(
-                    f"Agent {a.unique_id}: {model.get_variable_attribute(x_vars[(a, t)], poi.VariableAttribute.Value)}")
+        for a in agents:
+            print(f"Agent {a.unique_id}".center(20, "-"))
+            for t in range(n_slots):
+                print(f"Time {t}: {model.get_variable_attribute(x_vars[(a, t)], poi.VariableAttribute.Value)}")
 
         return agent_schedules, optimal_objective
 
