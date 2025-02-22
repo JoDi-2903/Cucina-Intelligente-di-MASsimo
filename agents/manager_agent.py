@@ -249,6 +249,7 @@ class ManagerAgent(Agent):
             rating_history=history.rating_history,
             n=Config().run.full_day_cycle_period,
         )
+        history.add_lstm_predicted_customers_added(predicted_visitors)
         available_service_agents = list(self.model.agents_by_type[ServiceAgent])
 
         # Optimize the shift schedule
