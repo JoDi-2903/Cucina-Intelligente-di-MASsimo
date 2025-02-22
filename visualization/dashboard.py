@@ -5,6 +5,7 @@ from dash import Dash, html, dcc
 from visualization.callback_registrars.agents_graph_callback_registrar import AgentsGraphCallbackRegistrar
 from visualization.callback_registrars.auto_refresh_callback_registrar import AutoRefreshCallbackRegistrar
 from visualization.callback_registrars.profit_graph_callback_registrar import ProfitGraphCallbackRegistrar
+from visualization.callback_registrars.rating_graph_callback_registrar import RatingGraphCallbackRegistrar
 from visualization.callback_registrars.time_spent_graph_callback_registrar import TimeSpentGraphCallbackRegistrar
 
 
@@ -48,19 +49,10 @@ class Dashboard:
                 'width': '100%'
             }),
 
-            html.Div(
-                [
-                    dcc.Graph(id="profit-graph", style={'width': '100%'}),
-                    dcc.Graph(id="time-spent-graph", style={'width': '100%'})
-                ],
-                style={
-                    'display': 'flex',
-                    'width': '100%',
-                    'justify-content': 'space-evenly',
-                }
-            ),
-
+            dcc.Graph(id="profit-graph"),
+            dcc.Graph(id="rating-graph"),
             dcc.Graph(id="agents-graph"),
+            dcc.Graph(id="time-spent-graph"),
 
             dcc.Interval(
                 id='interval-component',
@@ -74,6 +66,7 @@ class Dashboard:
         """Register the callbacks for the dash
             dcc.Interval(id='interval-component', interval=5 * 1000, n_intervals=0),board."""
         ProfitGraphCallbackRegistrar().register_callbacks(self.dash_app)
+        RatingGraphCallbackRegistrar().register_callbacks(self.dash_app)
         TimeSpentGraphCallbackRegistrar().register_callbacks(self.dash_app)
         AgentsGraphCallbackRegistrar().register_callbacks(self.dash_app)
         AutoRefreshCallbackRegistrar().register_callbacks(self.dash_app)

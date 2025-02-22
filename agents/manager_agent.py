@@ -1,7 +1,7 @@
 import numpy as np
 import pyoptinterface as poi
 from mesa import Agent, Model
-from pyoptinterface import highs
+from pyoptinterface import highs, quicksum
 
 from agents import service_agent
 from agents.customer_agent import CustomerAgent
@@ -153,9 +153,7 @@ class ManagerAgent(Agent):
         )
 
         # ToDo: Pay only agents that are assigned to a shift
-        total_payment = Config().service.service_agent_salary_per_tick * len(
-            self.model.agents_by_type[service_agent.ServiceAgent]
-        )
+        total_payment = sum([agent.salary_per_tick for agent in self.model.agents_by_type[ServiceAgent]])
 
         logger.info(
             "Step %d: Revenue: %.2f, Payment: %.2f, Profit: %.2f.",
@@ -249,7 +247,7 @@ class ManagerAgent(Agent):
             rating_history=history.rating_history,
             n=Config().run.full_day_cycle_period,
         )
-        history.add_lstm_predicted_customers_added(predicted_visitors)
+        history.add_predicted_customer_agents_growth(predicted_visitors)
         available_service_agents = list(self.model.agents_by_type[ServiceAgent])
 
         # Optimize the shift schedule

@@ -22,7 +22,7 @@ class History:
         self.__num_service_agents_history: list[int] = []
         self.__num_manager_agents_history: list[int] = []
         self.__customers_added_history: list[int] = [Config().customers.max_new_customer_agents_per_step]
-        self.__lstm_predicted_customers_added_history: list[int] = []
+        self.__predicted_customers_agents_growth_history: list[int] = []
 
     def add_step(self, step: int):
         self.__steps_history.append(step)
@@ -36,8 +36,8 @@ class History:
     def add_customers_added(self, customers_added: int):
         self.__customers_added_history.append(customers_added)
 
-    def add_lstm_predicted_customers_added(self, predicted_visitors: list[int]):
-        self.__lstm_predicted_customers_added_history.extend(predicted_visitors)
+    def add_predicted_customer_agents_growth(self, predicted_customer_growth: list[int]):
+        self.__predicted_customers_agents_growth_history.extend(predicted_customer_growth)
 
     def add_total_time_spent(self, total_time_spent: int):
         self.__total_time_spent_history.append(total_time_spent)
@@ -74,8 +74,8 @@ class History:
         return self.__customers_added_history
 
     @property
-    def lstm_predicted_customers_added_history(self) -> list[int]:
-        return self.__lstm_predicted_customers_added_history
+    def predicted_customer_growth_history(self) -> list[int]:
+        return self.__predicted_customers_agents_growth_history
 
     @property
     def total_time_spent_history(self) -> list[int]:
