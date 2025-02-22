@@ -12,6 +12,7 @@ class RunSettings:
             self.__step_amount: int = config["step_amount"]
             self.__full_day_cycle_period: int = config["full_day_cycle_period"]
             self.__retrain_interval: int = config["retrain_interval"]
+            self.__endless_mode: bool = bool(config["endless_mode"])
         else:
             raise ValueError("No default values for run settings available.")
 
@@ -26,3 +27,7 @@ class RunSettings:
     @property
     def retrain_interval(self) -> int:
         return self.__retrain_interval
+
+    @property
+    def endless_mode(self) -> int:
+        return self.__endless_mode

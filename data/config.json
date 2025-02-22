@@ -35,6 +35,7 @@
   "Run": {
     "step_amount": 1440,
     "full_day_cycle_period": 144,
-    "retrain_interval": 6
+    "retrain_interval": 6,
+    "endless_mode": true
   }
 }
