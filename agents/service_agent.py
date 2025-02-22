@@ -73,6 +73,7 @@ class ServiceAgent(Agent):
                 # Add the customer to the queue and update their state
                 self.customer_queue.append(customer)
                 customer.state = CustomerAgentState.WAITING_FOR_FOOD
+                self.__place_customer_in_grid(customer)
 
             logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s",
                         self.model.steps, self.unique_id, customer.unique_id, customer.state)
@@ -110,3 +111,12 @@ class ServiceAgent(Agent):
 
             logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s.",
                         self.model.steps, self.unique_id, customer.unique_id, customer.state)
+
+    def __place_customer_in_grid(self, customer: CustomerAgent):
+        """
+        Place a customer in the grid at an empty position.
+        :param customer: The customer agent to place in the grid of the restaurant model.
+        """
+        self.model.grid.move_to_empty(customer)
+        logger.info("Step %d: Service agent %d placed customer %d in the grid.",
+                    self.model.steps, self.unique_id, customer.unique_id)

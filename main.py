@@ -22,12 +22,11 @@ def run_restaurant():
     # Create the restaurant model and the machine learning model
     lstm_model = LSTMModel()
     restaurant = RestaurantModel(lstm_model)
-    restaurant_grid_utils = RestaurantGridUtils()
 
     # Iterate over the steps of the restaurant model
     while restaurant.running and restaurant.steps < Config().run.step_amount:
         restaurant.step()
-        restaurant_grid_utils.show_grid(restaurant)
+        RestaurantGridUtils.show_grid(restaurant)
 
 
 def is_running_in_debug_mode():

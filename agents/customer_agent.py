@@ -1,5 +1,6 @@
 import random
 
+from keras.src.callbacks import Callback
 from mesa import Agent, Model
 
 from enums.customer_agent_state import CustomerAgentState
@@ -117,6 +118,7 @@ class CustomerAgent(Agent):
         # If agent finished eating, don't do anything and don't decrease time_left
         if self.state == CustomerAgentState.FINISHED_EATING:
             self.state = CustomerAgentState.DONE
+            self.__leave_restaurant()
             return
 
         # If customer is rejected, set rating to the worst and set agent to done
@@ -158,3 +160,7 @@ class CustomerAgent(Agent):
 
     def __str__(self):
         return f"Step {self.model.steps}: CustomerAgent {self.unique_id} with {self.num_people} people in state {self.state}. Time left: {self.time_left}. Current rating: {self.rating:.2f}. Selected dish: {self.dish}"
+
+    def __leave_restaurant(self):
+        """Remove the customer from the restaurant's grid."""
+        self.model.grid.remove_agent(self)
