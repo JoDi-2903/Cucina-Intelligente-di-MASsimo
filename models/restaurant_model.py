@@ -12,7 +12,6 @@ from main import history
 from ml.lstm_model import LSTMModel
 from models.config.config import Config
 from models.config.logging_config import restaurant_logger
-from models.history import History
 from models.menu import Menu
 
 logger = restaurant_logger

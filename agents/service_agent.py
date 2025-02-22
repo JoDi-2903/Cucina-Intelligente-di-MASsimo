@@ -9,6 +9,7 @@ from models.config.logging_config import service_logger
 
 logger = service_logger
 
+
 class ServiceAgent(Agent):
     """An agent that represents the service in the restaurant"""
 
@@ -32,20 +33,19 @@ class ServiceAgent(Agent):
     def weighted_sort_placing(self, customer: CustomerAgent):
         """ Custom sort key for sorting new customers by weighted criteria profit, waiting time and time left """
         return (
-            (customer.dish.profit * customer.num_people) * Config().weights.rating_profit +
-            customer.get_total_time() * Config().weights.rating_time_spent +
-            customer.time_left * Config().weights.rating_time_left
+                (customer.dish.profit * customer.num_people) * Config().weights.rating_profit +
+                customer.get_total_time() * Config().weights.rating_time_spent +
+                customer.time_left * Config().weights.rating_time_left
         )
 
     def weighted_sort_serving(self, customer: CustomerAgent):
         """ Custom sort key for sorting already seated customers by weighted criteria profit, waiting time, time left and food preparation time """
         return (
-            (customer.dish.profit * customer.num_people) * Config().weights.rating_profit +
-            customer.get_total_time() * Config().weights.rating_time_spent +
-            customer.time_left * Config().weights.rating_time_left +
-            customer.food_preparation_time * Config().weights.rating_time_food_preparation
+                (customer.dish.profit * customer.num_people) * Config().weights.rating_profit +
+                customer.get_total_time() * Config().weights.rating_time_spent +
+                customer.time_left * Config().weights.rating_time_left +
+                customer.food_preparation_time * Config().weights.rating_time_food_preparation
         )
-
 
     def step(self):
         # Remove all customers that are done eating

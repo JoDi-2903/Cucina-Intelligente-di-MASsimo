@@ -10,6 +10,7 @@ log_directory = os.path.join("log")
 if not os.path.exists(log_directory):
     os.makedirs(log_directory)
 
+
 def setup_logger(name):
     """Function to setup as many loggers as you want"""
 
@@ -38,6 +39,7 @@ def setup_logger(name):
     logger.propagate = False
 
     return logger
+
 
 # Create loggers for each module
 customer_logger = setup_logger("customer")

@@ -28,7 +28,7 @@ class ServiceSettings:
     @property
     def service_agent_capacity_min(self) -> int:
         return self.__service_agent_capacity_min
-    
+
     @property
     def service_agent_capacity_max(self) -> int:
         return self.__service_agent_capacity_max

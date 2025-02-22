@@ -9,6 +9,7 @@ from models.menu import Menu
 
 logger = customer_logger
 
+
 class CustomerAgent(Agent):
     """An agent that represents a table of customers"""
 
