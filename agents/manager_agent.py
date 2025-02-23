@@ -150,10 +150,10 @@ class ManagerAgent(Agent):
 
         # Print the optimal objective and the schedule for each agent
         print(f"Optimal objective: {optimal_objective}")
-        for a in agents:
-            print(f"Agent {a.unique_id}".center(20, "-"))
-            for t in range(n_slots):
-                print(f"Time {t}: {model.get_variable_attribute(x_vars[(a, t)], poi.VariableAttribute.Value)}")
+        # for a in agents:
+        #     print(f"Agent {a.unique_id}".center(20, "-"))
+        #     for t in range(n_slots):
+        #         print(f"Time {t}: {model.get_variable_attribute(x_vars[(a, t)], poi.VariableAttribute.Value)}")
 
         return agent_schedules, optimal_objective
 

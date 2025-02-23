@@ -67,9 +67,9 @@ class ServiceAgent(Agent):
         waiting_customers_placing = sorted(
             (a for a in self.model.agents_by_type[CustomerAgent]
              if a.state == CustomerAgentState.WAIT_FOR_SERVICE_AGENT),
-            key=self.weighted_sort_placing
+            key=self.weighted_sort_placing,
+            reverse=True
         )
-        # TODO: print the sort order!! ASC // DESC? check following code
 
         if waiting_customers_placing:
             # For each customer that the service agent can serve
@@ -93,7 +93,8 @@ class ServiceAgent(Agent):
         waiting_customers_food = sorted(
             (a for a in self.model.agents_by_type[CustomerAgent]
              if a.state == CustomerAgentState.WAITING_FOR_FOOD),
-            key=self.weighted_sort_serving
+            key=self.weighted_sort_serving,
+            reverse=True
         )
 
         # Get the customer with the smallest time_left

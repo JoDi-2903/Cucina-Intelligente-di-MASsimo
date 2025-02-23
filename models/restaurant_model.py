@@ -61,7 +61,7 @@ class RestaurantModel(Model):
         if ServiceAgent in self.agents_by_type.keys():
             for agent in self.agents_by_type[ServiceAgent]:
                 agent.step()
-        if ManagerAgent in self.agents_by_type.keys():
+        if ManagerAgent in self.agents_by_type.keys() and self.steps > 1:
             for agent in self.agents_by_type[ManagerAgent]:
                 agent.step()
 
@@ -82,7 +82,8 @@ class RestaurantModel(Model):
         total_time_spent = history.total_time_spent_history[-1]
         time_spent_change = (total_time_spent - (history.total_time_spent_history[self.steps - 2]
                                                  if len(history.total_time_spent_history) > 1 else 0))
-        profit = history.profit_history[self.steps - 1]
+        profit = history.profit_history[self.steps - 1] if len(history.profit_history) > 1 else 0
+
         log_message = f"Step {self.steps}: Evaluating model. Total time spent: {total_time_spent} (change: {time_spent_change}), profit: {profit}"
         logger.info(log_message)
         print(log_message)
@@ -186,11 +187,11 @@ class RestaurantModel(Model):
                                                    if self.steps in a.shift_schedule.keys()
                                                      and a.shift_schedule[self.steps] == True]))
         history.add_num_manager_agents(len(self.agents_by_type[ManagerAgent]))
-        history.add_num_agents(
-            history.num_customer_agents_history[-1] +
-            history.num_service_agents_history[-1] +
-            history.num_manager_agents_history[-1]
-        )
+        # history.add_num_agents(
+        #     history.num_customer_agents_history[-1] +
+        #     history.num_active_service_agents_history[-1] +
+        #     history.num_manager_agents_history[-1]
+        # )
 
     def get_total_time_spent(self) -> int:
         """ Compute the total time spent for all customers in the model """
