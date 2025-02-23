@@ -1,3 +1,5 @@
+import logging
+
 import plotly.graph_objects as go
 from dash import Dash, Output, Input
 
@@ -7,6 +9,9 @@ from meta_classes.callback_registrar import CallbackRegistrarMeta
 class AgentsGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
     @staticmethod
     def register_callbacks(app: Dash):
+        # Set the logging level to ERROR to suppress informational messages
+        log = logging.getLogger('plotly')
+        log.setLevel(logging.ERROR)
         @app.callback(
             Output("agents-graph", "figure"),
             Input('interval-component', 'n_intervals')
