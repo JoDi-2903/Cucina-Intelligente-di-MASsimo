@@ -26,7 +26,7 @@
     "time_max": 12
   },
   "Service": {
-    "service_agents": 10,
+    "service_agents": 30,
     "service_agent_capacity": 5,
     "service_agent_capacity_min": 2,
     "service_agent_capacity_max": 10,
@@ -36,6 +36,6 @@
     "step_amount": 1440,
     "full_day_cycle_period": 144,
     "retrain_interval": 6,
-    "endless_mode": true
+    "endless_mode": false
   }
 }
