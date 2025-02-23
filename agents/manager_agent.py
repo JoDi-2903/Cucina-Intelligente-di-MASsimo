@@ -168,8 +168,9 @@ class ManagerAgent(Agent):
             if customer_agent.state == CustomerAgentState.FINISHED_EATING
         )
 
-        # ToDo: Pay only agents that are assigned to a shift
-        total_payment = sum([agent.salary_per_tick for agent in self.model.agents_by_type[ServiceAgent]])
+        total_payment = sum([agent.salary_per_tick for agent in self.model.agents_by_type[ServiceAgent]
+                             if self.model.steps in agent.shift_schedule.keys()
+                             and agent.shift_schedule[self.model.steps] == True])
 
         logger.info(
             "Step %d: Revenue: %.2f, Payment: %.2f, Profit: %.2f.",
