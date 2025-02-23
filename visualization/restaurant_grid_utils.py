@@ -1,6 +1,7 @@
 import base64
 import io
 
+import matplotlib
 import numpy as np
 import seaborn as sns
 from matplotlib import colors, pyplot as plt
@@ -9,6 +10,10 @@ from matplotlib.figure import Figure
 from models.config.config import Config
 from models.restaurant_model import RestaurantModel
 
+# Use the Agg backend to avoid the need for a GUI
+matplotlib.use("Agg")
+
+# Define the color map for the grid
 _CMAP = colors.ListedColormap(["lightgrey", "salmon", "mediumseagreen", "cornflowerblue"])
 __BOUNDS = [0, 1, 2, 3, 4]
 _NORM = colors.BoundaryNorm(__BOUNDS, _CMAP.N)
