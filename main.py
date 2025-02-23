@@ -17,7 +17,6 @@ def run_restaurant():
     """Run the restaurant model and emit updates to the dashboard."""
     # Lazy import to avoid partial initialization
     from models.restaurant_model import RestaurantModel
-    from utils.restaurant_grid_utils import RestaurantGridUtils
 
     # Create the restaurant model and the machine learning model
     lstm_model = LSTMModel()

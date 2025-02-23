@@ -14,4 +14,8 @@ class RestaurantGridHeatmapImageCallbackRegistrar(metaclass=CallbackRegistrarMet
             """Update the heatmap image of the restaurant grid."""
             # Lazy import to avoid partial initialization
             from main import history as h
+
+            if h.restaurant_grid_heatmap_image == '':
+                return ''
+
             return f'data:image/png;base64,{h.restaurant_grid_heatmap_image}'

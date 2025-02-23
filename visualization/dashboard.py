@@ -6,6 +6,8 @@ from visualization.callback_registrars.agents_graph_callback_registrar import Ag
 from visualization.callback_registrars.auto_refresh_callback_registrar import AutoRefreshCallbackRegistrar
 from visualization.callback_registrars.profit_graph_callback_registrar import ProfitGraphCallbackRegistrar
 from visualization.callback_registrars.rating_graph_callback_registrar import RatingGraphCallbackRegistrar
+from visualization.callback_registrars.restaurant_grid_heatmap_image_callback_registrar import \
+    RestaurantGridHeatmapImageCallbackRegistrar
 from visualization.callback_registrars.time_spent_graph_callback_registrar import TimeSpentGraphCallbackRegistrar
 
 
@@ -40,7 +42,7 @@ class Dashboard:
                     label='Auto-refresh',
                     labelPosition='top',
                     style={'marginRight': '10px', 'alignSelf': 'center'},
-                    color='#00cc00'  # Default color when on
+                    color='#00cc00'
                 ),
             ], style={
                 'display': 'flex',
@@ -51,16 +53,19 @@ class Dashboard:
 
             dcc.Graph(id="profit-graph"),
             dcc.Graph(id="rating-graph"),
-            dcc.Graph(id="agents-graph"),
-            html.Img(
-                id="restaurant-grid-heatmap-image",
-                style={
-                    'display': 'block',
-                    'margin': '0 auto',
-                    'padding': '20px'
-                }
-            ),
-
+            html.Div([
+                dcc.Graph(id="agents-graph", style={'width': '75%'}),
+                html.Img(
+                    id="restaurant-grid-heatmap-image",
+                    style={
+                        'flex': '0 0 auto',
+                        'max-width': '20%',
+                        'max-height': '450px',
+                        'alignSelf': 'center',
+                        'margin-left': 'auto'
+                    }
+                ),
+            ], style={'display': 'flex', 'alignItems': 'center'}),
             dcc.Graph(id="time-spent-graph"),
 
             dcc.Interval(
@@ -78,6 +83,7 @@ class Dashboard:
         RatingGraphCallbackRegistrar().register_callbacks(self.dash_app)
         TimeSpentGraphCallbackRegistrar().register_callbacks(self.dash_app)
         AgentsGraphCallbackRegistrar().register_callbacks(self.dash_app)
+        RestaurantGridHeatmapImageCallbackRegistrar().register_callbacks(self.dash_app)
         AutoRefreshCallbackRegistrar().register_callbacks(self.dash_app)
 
     def run(self, run_server_in_debug_mode: bool):

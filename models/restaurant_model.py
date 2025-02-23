@@ -185,7 +185,7 @@ class RestaurantModel(Model):
         )
 
         # Update the heatmap of the restaurant grid for visualization
-        from utils.restaurant_grid_utils import RestaurantGridUtils  # Avoid circular dependencies
+        from visualization.restaurant_grid_utils import RestaurantGridUtils  # Avoid circular dependencies
         RestaurantGridUtils.update_grid_heatmap(self)
 
     def get_total_time_spent(self) -> int:
