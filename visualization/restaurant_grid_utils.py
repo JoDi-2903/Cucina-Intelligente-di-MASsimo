@@ -9,7 +9,7 @@ from matplotlib.figure import Figure
 from models.config.config import Config
 from models.restaurant_model import RestaurantModel
 
-_CMAP = colors.ListedColormap(["lightgrey", "lightcoral", "lightgreen", "lightskyblue"])
+_CMAP = colors.ListedColormap(["lightgrey", "salmon", "mediumseagreen", "cornflowerblue"])
 __BOUNDS = [0, 1, 2, 3]
 _NORM = colors.BoundaryNorm(__BOUNDS, _CMAP.N)
 _LEGEND_LABELS = [
@@ -30,10 +30,10 @@ class RestaurantGridUtils:
         :param restaurant: The restaurant model to get the grid heatmap for.
         """
         # Create the heatmap with a dark background (dark mode)
-        with plt.style.context('dark_background'):
+        with plt.style.context({'axes.facecolor': '#141414', 'figure.facecolor': '#141414'}):
             # Create a new plot with the figure size
             fig, ax = plt.subplots(figsize=(Config().restaurant.grid_width, Config().restaurant.grid_height))
-            fig.suptitle("The heatmap of the restaurant's grid", fontsize=12, color='white', x=0.5)
+            fig.suptitle("The heatmap of the restaurant's grid", fontsize=18, color='white', x=0.5)
 
             # Get all cell values for the grid and create the heatmap
             cell_values = RestaurantGridUtils.__get_cell_values(restaurant)
@@ -52,8 +52,6 @@ class RestaurantGridUtils:
             # Save the plot as a Base64 string in the global history
             from main import history  # Avoid circular import
             history.restaurant_grid_heatmap_image = RestaurantGridUtils.__get_plot_as_base64_image(fig)
-            print(
-                f"Updated restaurant grid heatmap at step {restaurant.steps}: {history.restaurant_grid_heatmap_image}")
 
     @staticmethod
     def __get_cell_values(restaurant):
@@ -81,7 +79,7 @@ class RestaurantGridUtils:
         """
         for i, label in enumerate(_LEGEND_LABELS):
             ax.plot([], [], marker='s', color=_CMAP(i), label=label, linestyle='None')
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=2)
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=1, frameon=False, fontsize=16, labelcolor='white')
 
     @staticmethod
     def __get_plot_as_base64_image(fig: Figure) -> str:

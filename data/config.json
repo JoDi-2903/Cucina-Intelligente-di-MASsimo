@@ -19,8 +19,8 @@
     "rating_time_food_preparation": 0.4
   },
   "Restaurant": {
-    "grid_width": 5,
-    "grid_height": 5
+    "grid_width": 7,
+    "grid_height": 6
   },
   "Customers": {
     "max_new_customer_agents_per_step": 10,
