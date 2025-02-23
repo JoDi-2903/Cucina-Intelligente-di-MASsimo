@@ -10,7 +10,7 @@ from models.config.config import Config
 from models.restaurant_model import RestaurantModel
 
 _CMAP = colors.ListedColormap(["lightgrey", "salmon", "mediumseagreen", "cornflowerblue"])
-__BOUNDS = [0, 1, 2, 3]
+__BOUNDS = [0, 1, 2, 3, 4]
 _NORM = colors.BoundaryNorm(__BOUNDS, _CMAP.N)
 _LEGEND_LABELS = [
     'Empty table',
