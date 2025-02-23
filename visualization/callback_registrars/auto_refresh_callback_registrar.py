@@ -1,3 +1,5 @@
+import logging
+
 from dash import Dash, Output, Input
 
 from meta_classes.callback_registrar import CallbackRegistrarMeta
@@ -6,6 +8,9 @@ from meta_classes.callback_registrar import CallbackRegistrarMeta
 class AutoRefreshCallbackRegistrar(metaclass=CallbackRegistrarMeta):
     @staticmethod
     def register_callbacks(app: Dash):
+        # Set the logging level to ERROR to suppress informational messages
+        log = logging.getLogger('plotly')
+        log.setLevel(logging.ERROR)
         @app.callback(
             [Output('interval-component', 'disabled'),
              Output('auto-refresh-toggle', 'color')],

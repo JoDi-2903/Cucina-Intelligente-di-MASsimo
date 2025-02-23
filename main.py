@@ -23,7 +23,7 @@ def run_restaurant():
     restaurant = RestaurantModel(lstm_model)
 
     # Iterate over the steps of the restaurant model
-    while restaurant.running and restaurant.steps < Config().run.step_amount:
+    while restaurant.running and (restaurant.steps < Config().run.step_amount or Config().run.endless_mode):
         restaurant.step()
 
 

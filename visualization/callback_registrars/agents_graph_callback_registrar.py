@@ -1,3 +1,5 @@
+import logging
+
 import plotly.graph_objects as go
 from dash import Dash, Output, Input
 
@@ -7,6 +9,9 @@ from meta_classes.callback_registrar import CallbackRegistrarMeta
 class AgentsGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
     @staticmethod
     def register_callbacks(app: Dash):
+        # Set the logging level to ERROR to suppress informational messages
+        log = logging.getLogger('plotly')
+        log.setLevel(logging.ERROR)
         @app.callback(
             Output("agents-graph", "figure"),
             Input('interval-component', 'n_intervals')
@@ -47,11 +52,20 @@ class AgentsGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
             ))
 
             # Add a trace for the number of service agents
+            # figure.add_trace(go.Scatter(
+            #     x=h.steps_history,
+            #     y=h.num_service_agents_history,
+            #     mode='lines+markers',
+            #     name="Number of service agents",
+            #     line=dict(color='orange')
+            # ))
+
+            # Add a trace for the number of active service agents
             figure.add_trace(go.Scatter(
                 x=h.steps_history,
-                y=h.num_service_agents_history,
+                y=h.num_active_service_agents_history,
                 mode='lines+markers',
-                name="Number of service agents",
+                name="Number of active service agents",
                 line=dict(color='orange')
             ))
 

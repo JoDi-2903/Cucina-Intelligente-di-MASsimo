@@ -33,12 +33,18 @@ class ManagerAgent(Agent):
         history.add_profit(self.calculate_profit())
 
         # If the end of the working day is reached, run optimization model
-        if self.model.steps % Config().run.full_day_cycle_period == 0:
+        if self.model.steps % Config().run.full_day_cycle_period == 0 or self.model.steps == 1:
             self._optimize_restaurant_operations()
 
     def optimize_shift_schedule(
             self, agents: list, predicted_visitors: list[int]
     ) -> tuple[dict, float]:
+        """
+        Optimize the shift schedule for the service agents to maximize profit.
+        :param agents: List of service agents
+        :param predicted_visitors: Predicted number of visitors for each time slot
+        :return: agent schedules (dict[agent, list(works_at_step_binary)]) and optimal objective value (total cost)
+        """
         # Time parameters
         n_slots = len(
             predicted_visitors
@@ -144,10 +150,10 @@ class ManagerAgent(Agent):
 
         # Print the optimal objective and the schedule for each agent
         print(f"Optimal objective: {optimal_objective}")
-        for a in agents:
-            print(f"Agent {a.unique_id}".center(20, "-"))
-            for t in range(n_slots):
-                print(f"Time {t}: {model.get_variable_attribute(x_vars[(a, t)], poi.VariableAttribute.Value)}")
+        # for a in agents:
+        #     print(f"Agent {a.unique_id}".center(20, "-"))
+        #     for t in range(n_slots):
+        #         print(f"Time {t}: {model.get_variable_attribute(x_vars[(a, t)], poi.VariableAttribute.Value)}")
 
         return agent_schedules, optimal_objective
 
@@ -162,8 +168,9 @@ class ManagerAgent(Agent):
             if customer_agent.state == CustomerAgentState.FINISHED_EATING
         )
 
-        # ToDo: Pay only agents that are assigned to a shift
-        total_payment = sum([agent.salary_per_tick for agent in self.model.agents_by_type[ServiceAgent]])
+        total_payment = sum([agent.salary_per_tick for agent in self.model.agents_by_type[ServiceAgent]
+                             if self.model.steps in agent.shift_schedule.keys()
+                             and agent.shift_schedule[self.model.steps] == True])
 
         logger.info(
             "Step %d: Revenue: %.2f, Payment: %.2f, Profit: %.2f.",
@@ -276,15 +283,16 @@ class ManagerAgent(Agent):
             [(ag.unique_id, sh) for ag, sh in service_agent_shift_schedule.items()],
         )
 
+        next_step = self.model.steps + 1
+
         # Update each service agent with their computed schedule
         for agent in available_service_agents:
             # Assume each ServiceAgent has a 'shift_schedule' attribute to store its schedule.
-            if agent in service_agent_shift_schedule:
-                agent.shift_schedule = service_agent_shift_schedule[agent]
+            if agent in service_agent_shift_schedule.keys():
+                for i in range(Config().run.full_day_cycle_period):
+                    agent.shift_schedule[next_step + i] = service_agent_shift_schedule[agent][i]
             else:
                 agent.shift_schedule = [0] * Config().run.full_day_cycle_period
-
-        # ToDo: Update the logic of the ServiceAgents to actually use the shift plan that the optimizer calculated
 
         # Calculate derived parameters resulting from service_agent_shift_schedule
         (

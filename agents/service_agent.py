@@ -26,9 +26,10 @@ class ServiceAgent(Agent):
         super().__init__(model)
         self.salary_per_tick: float = salary_per_tick if salary_per_tick is not None else Config().service.service_agent_salary_per_tick
         self.customer_capacity: int = customer_capacity if customer_capacity is not None else Config().service.service_agent_capacity
+        self.remaining_capacity: int = self.customer_capacity
 
-        # Initialize the queue for customers. Queue is limited by capacity
-        self.customer_queue: list[CustomerAgent] = []
+        # Initialize the shift schedule dict[step] = bool
+        self.shift_schedule: dict[int, bool] = {}
 
     def weighted_sort_placing(self, customer: CustomerAgent):
         """ Custom sort key for sorting new customers by weighted criteria profit, waiting time and time left """
@@ -48,69 +49,70 @@ class ServiceAgent(Agent):
         )
 
     def step(self):
-        # Remove all customers that are done eating
-        for c in self.customer_queue:
-            if c.state == CustomerAgentState.DONE:
-                self.customer_queue.remove(c)
+        # Don't do anything if the service agent is not scheduled to work
+        if self.model.steps not in self.shift_schedule.keys() or not self.shift_schedule[self.model.steps]:
+            return
 
+        self._serve_customers()
+        self._seat_customers()
+
+        # Reset the remaining capacity for the next step
+        self.remaining_capacity = self.customer_capacity
+
+
+
+    def _seat_customers(self):
+        """ Seat the customers that one service agent can serve """
         # Filter and sort new customers by weighted sort
-        waiting_customers = sorted(
+        waiting_customers_placing = sorted(
             (a for a in self.model.agents_by_type[CustomerAgent]
              if a.state == CustomerAgentState.WAIT_FOR_SERVICE_AGENT),
-            key=self.weighted_sort_placing
+            key=self.weighted_sort_placing,
+            reverse=True
         )
 
-        # Get the customer with the smallest time_left
-        if waiting_customers:
-            customer: CustomerAgent = waiting_customers[0]
+        if waiting_customers_placing:
+            # For each customer that the service agent can serve
+            for customer in waiting_customers_placing[:self.remaining_capacity]:
+                # Check if the customer needs to be rejected
+                if customer.dish.preparation_time + customer.dish.eating_time > customer.time_left:
+                    customer.state = CustomerAgentState.REJECTED
 
-            # Check if the customer needs to be rejected
-            if customer.dish.preparation_time + customer.dish.eating_time > customer.time_left:
-                customer.state = CustomerAgentState.REJECTED
+                # Seat the customers that one service agent can serve
+                else:
+                    customer.state = CustomerAgentState.WAITING_FOR_FOOD
+                    self.__place_customer_in_grid(customer)
 
-            # Check if the personal queue is full
-            elif len(self.customer_queue) < Config().service.service_agent_capacity:
-                # Add the customer to the queue and update their state
-                self.customer_queue.append(customer)
-                customer.state = CustomerAgentState.WAITING_FOR_FOOD
-                self.__place_customer_in_grid(customer)
+                self.remaining_capacity -= 1
 
-            logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s",
-                        self.model.steps, self.unique_id, customer.unique_id, customer.state)
+                logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s",
+                            self.model.steps, self.unique_id, customer.unique_id, customer.state)
 
+    def _serve_customers(self):
+        """ Serve the customers that are already seated """
         # Filter and sort customers waiting for food by weighted sort
-        waiting_customers = sorted(
-            (a for a in self.customer_queue if a.state == CustomerAgentState.WAITING_FOR_FOOD),
-            key=self.weighted_sort_serving
+        waiting_customers_food = sorted(
+            (a for a in self.model.agents_by_type[CustomerAgent]
+             if a.state == CustomerAgentState.WAITING_FOR_FOOD),
+            key=self.weighted_sort_serving,
+            reverse=True
         )
 
         # Get the customer with the smallest time_left
-        if waiting_customers:
-            customer: CustomerAgent = waiting_customers[0]
+        if waiting_customers_food:
 
-            # # Only the specified amount of food can be processed at once.
-            # # The delay depends on the amount of customers
-            # preparation_delay = math.ceil(
-            #     customer.num_people / Config().orders.parallel_preparation
-            # )
+            for customer in waiting_customers_food[:self.remaining_capacity]:
+                # Prepare the food
+                if customer.food_preparation_time > 1:
+                    customer.food_preparation_time -= 1
+                else:
+                    customer.state = CustomerAgentState.EATING
+                    customer.waiting_time = customer.init_time - customer.time_left
 
-            # # Occasionally introduce a probabilistic delay based on order_correctness
-            # random_delay = random.randint(0, Config().orders.delay_max) \
-            #     if random.random() > Config().orders.delay_randomness \
-            #     else 0
+                self.remaining_capacity -= 1
 
-            # # Total delay combines the batch adjustment and random delay (if applicable)
-            # total_delay = preparation_delay + random_delay
-
-            # Prepare the food
-            if customer.food_preparation_time > 1:
-                customer.food_preparation_time -= 1
-            else:
-                customer.state = CustomerAgentState.EATING
-                customer.waiting_time = customer.init_time - customer.time_left
-
-            logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s.",
-                        self.model.steps, self.unique_id, customer.unique_id, customer.state)
+                logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s.",
+                            self.model.steps, self.unique_id, customer.unique_id, customer.state)
 
     def __place_customer_in_grid(self, customer: CustomerAgent):
         """
