@@ -33,7 +33,7 @@ class ManagerAgent(Agent):
         history.add_profit(self.calculate_profit())
 
         # If the end of the working day is reached, run optimization model
-        if self.model.steps % Config().run.full_day_cycle_period == 0:
+        if self.model.steps % Config().run.full_day_cycle_period == 0 or self.model.steps == 1:
             self._optimize_restaurant_operations()
 
     def optimize_shift_schedule(
