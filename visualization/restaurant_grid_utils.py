@@ -18,6 +18,14 @@ _LEGEND_LABELS = [
     'Customer agent is eating',
     'Customer agent finished eating'
 ]
+_DARK_MODE_SCHEME = {
+    'figure.facecolor': '#141414',
+    'axes.facecolor': '#141414',
+    'axes.edgecolor': 'white',
+    'xtick.color': 'white',
+    'ytick.color': 'white',
+    'text.color': 'white'
+}
 
 
 class RestaurantGridUtils:
@@ -30,10 +38,10 @@ class RestaurantGridUtils:
         :param restaurant: The restaurant model to get the grid heatmap for.
         """
         # Create the heatmap with a dark background (dark mode)
-        with plt.style.context({'axes.facecolor': '#141414', 'figure.facecolor': '#141414'}):
+        with plt.style.context(_DARK_MODE_SCHEME):
             # Create a new plot with the figure size
             fig, ax = plt.subplots(figsize=(Config().restaurant.grid_width, Config().restaurant.grid_height))
-            fig.suptitle("The heatmap of the restaurant's grid", fontsize=18, color='white', x=0.5)
+            ax.set_title("The heatmap of the restaurant's grid", fontsize=18, pad=10)
 
             # Get all cell values for the grid and create the heatmap
             cell_values = RestaurantGridUtils.__get_cell_values(restaurant)
@@ -79,7 +87,7 @@ class RestaurantGridUtils:
         """
         for i, label in enumerate(_LEGEND_LABELS):
             ax.plot([], [], marker='s', color=_CMAP(i), label=label, linestyle='None')
-        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=1, frameon=False, fontsize=16, labelcolor='white')
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=1, frameon=False, fontsize=16)
 
     @staticmethod
     def __get_plot_as_base64_image(fig: Figure) -> str:
