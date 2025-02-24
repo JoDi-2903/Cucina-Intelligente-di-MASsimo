@@ -8,8 +8,8 @@ from agents.customer_agent import CustomerAgent
 from agents.service_agent import ServiceAgent
 from enums.customer_agent_state import CustomerAgentState
 from main import history
-from models.config.config import Config
-from models.config.logging_config import manager_logger
+from data_structures.config import Config
+from data_structures.config import manager_logger
 
 logger = manager_logger
 
@@ -263,11 +263,12 @@ class ManagerAgent(Agent):
             the higher the employee's salary.
         """
         # Decision variables
-        predicted_visitors: list[int] = self.model.lstm_model.forecast(
-            customer_added_history=history.customers_added_history,
-            rating_history=history.rating_history,
-            n=Config().run.full_day_cycle_period,
-        )
+        # predicted_visitors: list[int] = self.model.lstm_model.forecast( TODO CHANGE TO LSTM BEFORE PUSH
+        #     customer_added_history=history.customers_added_history,
+        #     rating_history=history.rating_history,
+        #     n=Config().run.full_day_cycle_period,
+        # )
+        predicted_visitors = [30] * Config().run.full_day_cycle_period
         history.add_predicted_customer_agents_growth(predicted_visitors)
         available_service_agents = list(self.model.agents_by_type[ServiceAgent])
 

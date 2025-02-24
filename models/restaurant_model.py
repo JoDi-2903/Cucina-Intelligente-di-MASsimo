@@ -7,13 +7,14 @@ from mesa.space import SingleGrid
 
 from agents.customer_agent import CustomerAgent
 from agents.manager_agent import ManagerAgent
+from agents.route_agent import RouteAgent
 from agents.service_agent import ServiceAgent
+from data_structures.config.config import Config
+from data_structures.config.logging_config import restaurant_logger
+from data_structures.menu import Menu
 from enums.customer_agent_state import CustomerAgentState
 from main import history
 from ml.lstm_model import LSTMModel
-from models.config.config import Config
-from models.config.logging_config import restaurant_logger
-from models.menu import Menu
 
 logger = restaurant_logger
 
@@ -24,9 +25,19 @@ class RestaurantModel(Model):
     def __init__(self, lstm_model: LSTMModel):
         # Initialize the model and its properties
         super().__init__()
+
+        # Initialize the LSTM model for time series prediction
         self.lstm_model = lstm_model
+
+        # Initialize the menu of the restaurant including all available dishes
         self.menu = Menu()
+
+        # Initialize the grid to visualize the restaurant layout
         self.grid = SingleGrid(Config().restaurant.grid_width, Config().restaurant.grid_height, False)
+
+        # Initialize route lists that the service agents take to serve/seat customers
+        self.serve_route: list[CustomerAgent] = []
+        self.seat_route: list[CustomerAgent] = []
 
         # Initialize agents
         CustomerAgent.create_agents(
@@ -50,21 +61,8 @@ class RestaurantModel(Model):
         # Spawn new customers
         self.spawn_customers()
 
-        if self.steps == 1:
-            if ManagerAgent in self.agents_by_type.keys():
-                for agent in self.agents_by_type[ManagerAgent]:
-                    agent.step()
-
-        # Step all agents manually, because Manager is scaling the ServiceAgents
-        if CustomerAgent in self.agents_by_type.keys():
-            for agent in self.agents_by_type[CustomerAgent]:
-                agent.step()
-        if ServiceAgent in self.agents_by_type.keys():
-            for agent in self.agents_by_type[ServiceAgent]:
-                agent.step()
-        if ManagerAgent in self.agents_by_type.keys() and self.steps > 1:
-            for agent in self.agents_by_type[ManagerAgent]:
-                agent.step()
+        # Step through all agents
+        self.__step_through_agents()
 
         # Update the time series prediction model (online training) based on the 'real' data of the former step
         satisfaction_rating = (history.rating_history[self.steps - 1] if len(history.rating_history) > 1
@@ -185,7 +183,7 @@ class RestaurantModel(Model):
         history.add_num_service_agents(len(self.agents_by_type[ServiceAgent]))
         history.add_num_active_service_agents(len([a for a in self.agents_by_type[ServiceAgent]
                                                    if self.steps in a.shift_schedule.keys()
-                                                     and a.shift_schedule[self.steps] == True]))
+                                                   and a.shift_schedule[self.steps] == True]))
         history.add_num_manager_agents(len(self.agents_by_type[ManagerAgent]))
         # history.add_num_agents(
         #     history.num_customer_agents_history[-1] +
@@ -211,3 +209,25 @@ class RestaurantModel(Model):
         """ Compute the total rating for all customers in the model """
         return fmean(agent.rating for agent in self.agents_by_type[CustomerAgent]
                      if agent.rating is not None)
+
+    def __step_through_agents(self):
+        """Step through all agents in the model."""
+        # If this is the first step, step the ManagerAgent first to handle shifts
+        if self.steps == 1 and ManagerAgent in self.agents_by_type.keys():
+            for agent in self.agents_by_type[ManagerAgent]:
+                agent.step()
+
+        # Step all agents manually, because Manager is scaling the ServiceAgents
+        if CustomerAgent in self.agents_by_type.keys():
+            for agent in self.agents_by_type[CustomerAgent]:
+                agent.step()
+        if ServiceAgent in self.agents_by_type.keys() and RouteAgent in self.agents_by_type.keys():
+            # Step through the RouteAgent first to update the routes that the service agents take to serve/seat customers
+            self.agents_by_type[RouteAgent][0].step()
+
+            # Step through all ServiceAgents
+            for agent in self.agents_by_type[ServiceAgent]:
+                agent.step()
+        if ManagerAgent in self.agents_by_type.keys() and self.steps > 1:
+            for agent in self.agents_by_type[ManagerAgent]:
+                agent.step()

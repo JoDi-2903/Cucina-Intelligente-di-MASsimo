@@ -2,8 +2,8 @@ import sys
 import threading
 
 from ml.lstm_model import LSTMModel
-from models.config.config import Config
-from models.history import History
+from data_structures.config import Config
+from data_structures.history import History
 from visualization.dashboard import Dashboard
 
 # Create a global history object to track the data
@@ -41,5 +41,3 @@ if __name__ == "__main__":
 
     # Run the Dash server in the main thread
     dashboard.run(is_running_in_debug_mode())
-
-# TODO: Präsentation

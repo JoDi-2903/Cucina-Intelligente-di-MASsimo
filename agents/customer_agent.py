@@ -3,9 +3,9 @@ import random
 from mesa import Agent, Model
 
 from enums.customer_agent_state import CustomerAgentState
-from models.config.config import Config
-from models.config.logging_config import customer_logger
-from models.menu import Menu
+from data_structures.config import Config
+from data_structures.config import customer_logger
+from data_structures.menu import Menu
 
 logger = customer_logger
 

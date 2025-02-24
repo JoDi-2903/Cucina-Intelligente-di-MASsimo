@@ -2,13 +2,13 @@ import json
 import os
 
 from meta_classes.singleton import SingletonMeta
-from models.config.customers_settings import CustomersSettings
-from models.config.orders_settings import OrdersSettings
-from models.config.rating_settings import RatingSettings
-from models.config.restaurant_settings import RestaurantSettings
-from models.config.run_settings import RunSettings
-from models.config.service_settings import ServiceSettings
-from models.config.weights_settings import WeightsSettings
+from data_structures.config.customers_settings import CustomersSettings
+from data_structures.config.orders_settings import OrdersSettings
+from data_structures.config.rating_settings import RatingSettings
+from data_structures.config.restaurant_settings import RestaurantSettings
+from data_structures.config.run_settings import RunSettings
+from data_structures.config.service_settings import ServiceSettings
+from data_structures.config.weights_settings import WeightsSettings
 
 
 class Config(metaclass=SingletonMeta):

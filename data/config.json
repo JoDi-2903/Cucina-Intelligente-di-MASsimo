@@ -33,7 +33,8 @@
     "service_agent_capacity": 5,
     "service_agent_capacity_min": 2,
     "service_agent_capacity_max": 10,
-    "service_agent_salary_per_tick": 2.5
+    "service_agent_salary_per_tick": 2.5,
+    "route_algorithm": "ACO"
   },
   "Run": {
     "step_amount": 1440,

@@ -1,4 +1,4 @@
-from models.config.config import Config
+from data_structures.config.config import Config
 
 
 class History:

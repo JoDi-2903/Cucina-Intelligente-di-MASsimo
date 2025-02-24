@@ -7,7 +7,7 @@ import seaborn as sns
 from matplotlib import colors, pyplot as plt
 from matplotlib.figure import Figure
 
-from models.config.config import Config
+from data_structures.config import Config
 from models.restaurant_model import RestaurantModel
 
 # Use the Agg backend to avoid the need for a GUI

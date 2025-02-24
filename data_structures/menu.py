@@ -1,7 +1,7 @@
 import json
 import os
 
-from models.dish import Dish
+from data_structures.dish import Dish
 
 
 class Menu:

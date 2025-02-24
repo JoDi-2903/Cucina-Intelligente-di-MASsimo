@@ -2,8 +2,8 @@ import numpy as np
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.models import Sequential
 
-from models.config.config import Config
-from models.config.logging_config import machine_learning_logger
+from data_structures.config import Config
+from data_structures.config import machine_learning_logger
 
 logger = machine_learning_logger
 
