@@ -2,14 +2,15 @@ import numpy as np
 from mesa import Agent, Model
 from numpy import ndarray
 from scipy import spatial
-from scipy.spatial import distance_matrix
 from sko.ACA import ACA_TSP
 
 from agents.customer_agent import CustomerAgent
-from agents.service_agent import ServiceAgent
 from data_structures.config.config import Config
+from data_structures.config.logging_config import route_logger
 from enums.customer_agent_state import CustomerAgentState
 from enums.route_algorithm import RouteAlgorithm
+
+logger = route_logger
 
 
 class RouteAgent(Agent):
@@ -89,30 +90,30 @@ class RouteAgent(Agent):
         """
         # Get a mask of empty cells to calculate the occupied and free tables
         empty_mask: ndarray = self.model.grid.empty_mask
+
+        # Assign tables to each service agent and calculate the route for each service agent
         occupied_tables: ndarray = np.column_stack(np.nonzero(empty_mask is False))
-        free_tables: ndarray = np.column_stack(np.nonzero(empty_mask is True))
-
-        # Assign tables to each service agent and calculate the route for each service agent TODO
-        for service_agent in self.model.agents_by_type[ServiceAgent]:
-            # Calculate the serve distance matrix for the ACO algorithm using the Euclidean distance
-            self.__serve_distance_matrix = spatial.distance.cdist(occupied_tables, occupied_tables, metric='euclidean')
-
-            aca_serve = ACA_TSP(func=self.__calculate_serve_tour_distance, n_dim=len(occupied_tables),
-                                size_pop=50, max_iter=200,
-                                distance_matrix=distance_matrix)
-
-            best_x, best_y = aca_serve.run()
-            return best_points, best_distance
-
-        # Calculate the serve distance matrix for the ACO algorithm using the Euclidean distance
         self.__serve_distance_matrix = spatial.distance.cdist(occupied_tables, occupied_tables, metric='euclidean')
-
         aca_serve = ACA_TSP(func=self.__calculate_serve_tour_distance, n_dim=len(occupied_tables),
-                            size_pop=50, max_iter=200,
-                            distance_matrix=distance_matrix)
+                            size_pop=50, max_iter=200, distance_matrix=self.__serve_distance_matrix)
+        serve_route_aco, best_serve_distance = aca_serve.run()
 
-        best_x, best_y = aca_serve.run()
-        return best_points, best_distance
+        # Calculate the serve distance matrix for the ACO algorithm using the Euclidean distance TODO: Does it make sense to use TSP for seating?
+        free_tables: ndarray = np.column_stack(np.nonzero(empty_mask is True))
+        self.__seat_distance_matrix = spatial.distance.cdist(free_tables, free_tables, metric='euclidean')
+        aca_serve = ACA_TSP(func=self.__calculate_serve_tour_distance, n_dim=len(occupied_tables),
+                            size_pop=50, max_iter=200, distance_matrix=self.__seat_distance_matrix)
+        seat_route_aco, best_seat_route = aca_serve.run()
+
+        # Update the routes in the restaurant model
+        self.model.serve_route = serve_route_aco
+        self.model.seat_route = seat_route_aco
+
+        # Log the best serve and seat distance
+        route_logger.info(f"Step {self.model.steps}: Best serve distance: {best_serve_distance}")
+        route_logger.info(f"Step {self.model.steps}: Best seat distance: {best_seat_route}")
+
+        return serve_route_aco, seat_route_aco
 
     def __calculate_serve_tour_distance(self, routine) -> float:
         """
@@ -121,15 +122,7 @@ class RouteAgent(Agent):
         :return: The total distance of the route.
         """
         num_points, = routine.shape
-        return sum([self.__serve_distance_matrix[routine[i % num_points], routine[(i + 1) % num_points]] for i in range(num_points)])
+        return sum([self.__serve_distance_matrix[routine[i % num_points], routine[(i + 1) % num_points]] for i in
+                    range(num_points)])
 
-    def __calculate_seat_tour_distance(self, routine) -> float:
-        """
-        Calculate the total distance of the passed route for the ACO algorithm.
-        :param routine: The routine to calculate the total distance for.
-        :return: The total distance of the route.
-        """
-        num_points, = routine.shape
-        return sum([self.__serve_distance_matrix[routine[i % num_points], routine[(i + 1) % num_points]] for i in range(num_points)])
-
-# endregion
+    # endregion
