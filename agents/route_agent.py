@@ -1,8 +1,7 @@
 import numpy as np
+from acopy import Solver, Colony, Solution
 from mesa import Agent, Model
-from numpy import ndarray
-from scipy import spatial
-from sko.ACA import ACA_TSP
+from networkx.classes import Graph
 
 from agents.customer_agent import CustomerAgent
 from data_structures.config.config import Config
@@ -90,38 +89,77 @@ class RouteAgent(Agent):
         Plan a serve route using the ant colony optimization algorithm.
         :return: A list of CustomerAgents representing the serve route.
         """
-        # Calculate the distance matrix for the ACO algorithm by calculating the Euclidean distance between the occupied
-        # tables. The occupied tables are determined by restaurant's grid.
-        occupied_tables: ndarray = np.argwhere(self.model.grid.empty_mask is False)  # As coordinates TODO: CHECK IF THIS DELIVERS THE NODE COORDINATES
-        distance_matrix = spatial.distance.cdist(occupied_tables, occupied_tables, metric='euclidean')
+        # Get the coordinates of all occupied tables from the restaurant's grid as a list of tuples
+        occupied_tables: list[tuple[int, int]] = self.__get_occupied_tables()
 
-        # Run the ACO algorithm to calculate the best seat route and the best seat distance
-        aca = ACA_TSP(
-            func=lambda routine: self.__calculate_tour_distance(routine, distance_matrix),
-            n_dim=len(occupied_tables),
-            size_pop=50,
-            max_iter=200,
-            distance_matrix=distance_matrix
-        )
-        aca_route, best_serve_distance = aca.run()
+        # Create a graph with the occupied tables as nodes for the ACO algorithm to solve
+        graph = self.__create_graph(occupied_tables)
+
+        # Solve the TSP using the ACO algorithm
+        solution = self.__aco_solve(graph)
 
         # Log the best serve distance
-        route_logger.info(f"Step {self.model.steps}: Best serve distance: {best_serve_distance}")
+        route_logger.info(f"Step {self.model.steps}: Best serve distance: {solution.cost}")
 
-        # Convert the ACO route to a list of CustomerAgents
-        serve_route_aco = [self.model.grid.get_cell(occupied_tables[i][0], occupied_tables[i][1]).agent for i in aca_route]
+        # Get list of CustomerAgents from the solution nodes
+        serve_route_aco: list[CustomerAgent] = [self.model.grid.get_cell(i).agent for i in solution.nodes]
 
         return serve_route_aco
 
+    def __get_occupied_tables(self) -> list[tuple[int, int]]:
+        """
+        Get the coordinates of all occupied tables from the restaurant's grid.
+        :return: A list of tuples representing the coordinates of the occupied tables.
+        """
+        # Get the coordinates of all occupied tables from the restaurant's grid using the empty mask
+        occupied_tables_lists: list[list[int, int]] = np.column_stack(
+            np.nonzero(self.model.grid.empty_mask == False)
+        ).tolist()
+        occupied_tables: list[tuple[int, int]] = [(table[0], table[1]) for table in occupied_tables_lists]
+
+        return occupied_tables
+
     @staticmethod
-    def __calculate_tour_distance(routine, distance_matrix: ndarray) -> float:
+    def __create_graph(occupied_tables: list[tuple[int, int]]) -> Graph:
         """
-        Calculate the total distance of the passed route for the ACO algorithm.
-        :param routine: The routine to calculate the total distance for.
-        :return: The total distance of the route.
+        Initialize a networkx graph for the ACO algorithm.
+        :param occupied_tables: A list of tuples representing the coordinates of the occupied tables.
+        :return: A networkx graph with the occupied tables as nodes and the Euclidean distance between them as edges.
         """
-        num_points, = routine.shape
-        return sum([distance_matrix[routine[i % num_points], routine[(i + 1) % num_points]] for i in
-                    range(num_points)])
+        # Create a networkx graph and add the occupied tables as nodes to the graph
+        graph = Graph()
+        graph.add_nodes_from(occupied_tables)
+
+        # Add edges between all nodes
+        edges = [
+            (occupied_tables[i], occupied_tables[j])
+            for i in range(len(occupied_tables))
+            for j in range(i + 1, len(occupied_tables))
+        ]
+        graph.add_edges_from(edges)
+
+        # Add the Euclidean distance between two nodes as the weight of the edge
+        for u, v in graph.edges():
+            weight = np.linalg.norm(np.array(u) - np.array(v))
+            graph[u][v]['weight'] = weight
+
+        return graph
+
+    @staticmethod
+    def __aco_solve(graph: Graph) -> Solution:
+        """
+        Solve the ACO algorithm for the given graph.
+        :param graph: A networkx graph representing the occupied tables in the restaurant.
+        """
+        solver = Solver(
+            rho=.03,  # Percentage of pheromone to evaporate each iteration
+            q=1  # Amount of pheromone an ant can deposit on a node
+        )
+        colony = Colony(
+            alpha=1,  # Relative importance of pheromones
+            beta=2  # Relative importance of edge weight
+        )
+
+        return solver.solve(graph, colony, limit=100)
 
     # endregion
