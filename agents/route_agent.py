@@ -20,8 +20,6 @@ class RouteAgent(Agent):
         customers.
         """
         super().__init__(model)
-        self.__serve_distance_matrix: ndarray
-        self.__seat_distance_matrix: ndarray
 
     def step(self):
         """
@@ -29,9 +27,10 @@ class RouteAgent(Agent):
         """
         # Create routes using the configured algorithm
         if Config().service.route_algorithm == RouteAlgorithm.WEIGHTED_SORT:
-            serve_route, seat_route = self.__plan_routes_weighted_sort()
+            serve_route, seat_route = self.__plan_serve_route_ws(), self.__plan_seat_route_ws()
         else:
-            serve_route, seat_route = self.__plan_routes_aco()
+            # The seat route is not a TSP so we can use the weighted sort algorithm for it
+            serve_route, seat_route = self.__plan_serve_route_aco(), self.__plan_seat_route_ws()
 
         # Update the routes in the restaurant model
         self.model.serve_route = serve_route
@@ -39,25 +38,17 @@ class RouteAgent(Agent):
 
     # region Weighted Sort Algorithm
 
-    def __plan_routes_weighted_sort(self) -> tuple[list[CustomerAgent], list[CustomerAgent]]:
+    def __plan_serve_route_ws(self) -> list[CustomerAgent]:
         """
-        Plan the routes for the service agents using the weighted sort algorithm.
-        :return: A tuple of the serve and seat routes as lists of CustomerAgents.
+        Plan the serve route for the service agents using the weighted sort algorithm.
+        :return: A list of CustomerAgents representing the serve route.
         """
-        serve_route_ws: list[CustomerAgent] = sorted(
+        return sorted(
             (a for a in self.model.agents_by_type[CustomerAgent]
              if a.state == CustomerAgentState.WAITING_FOR_FOOD),
             key=self.__weighted_sort_serving,
             reverse=True
         )
-        seat_route_ws: list[CustomerAgent] = sorted(
-            (a for a in self.model.agents_by_type[CustomerAgent]
-             if a.state == CustomerAgentState.WAIT_FOR_SERVICE_AGENT),
-            key=self.__weighted_sort_seating,
-            reverse=True
-        )
-
-        return serve_route_ws, seat_route_ws
 
     @staticmethod
     def __weighted_sort_serving(customer: CustomerAgent):
@@ -67,6 +58,18 @@ class RouteAgent(Agent):
                 customer.get_total_time() * Config().weights.rating_time_spent +
                 customer.time_left * Config().weights.rating_time_left +
                 customer.food_preparation_time * Config().weights.rating_time_food_preparation
+        )
+
+    def __plan_seat_route_ws(self) -> list[CustomerAgent]:
+        """
+        Plan the seat route for the service agents using the weighted sort algorithm.
+        :return: A list of CustomerAgents representing the seat route.
+        """
+        return sorted(
+            (a for a in self.model.agents_by_type[CustomerAgent]
+             if a.state == CustomerAgentState.WAIT_FOR_SERVICE_AGENT),
+            key=self.__weighted_sort_seating,
+            reverse=True
         )
 
     @staticmethod
@@ -81,48 +84,41 @@ class RouteAgent(Agent):
     # endregion
 
     # region ACO Algorithm
-    # TODO: ACO MAKES ONLY SENSE IF ONE SERVICE AGENT IS ACTIVE BECAUSE ONLY ONE WOULD "WALK" THE CALCULATED ROUTE. SOLUTION: ASSIGN TABLES TO EACH SERVICE AGENT AND CALCULATE ROUTE FOR EACH SERVICE AGENT
-    def __plan_routes_aco(self) -> tuple[list[CustomerAgent], list[CustomerAgent]]:
+
+    def __plan_serve_route_aco(self) -> list[CustomerAgent]:
         """
-        Plan the routes for the service agents using the ACO algorithm. The distance matrix is calculated using the
-        total distance function and grid coordinates.
-        :return: A tuple of the serve and seat routes as lists of CustomerAgents.
+        Plan a serve route using the ACO algorithm.
+        :return: A list of CustomerAgents representing the serve route.
         """
-        # Get a mask of empty cells to calculate the occupied and free tables
-        empty_mask: ndarray = self.model.grid.empty_mask
+        # Calculate the distance matrix for the ACO algorithm by calculating the Euclidean distance between the occupied
+        # tables. The occupied tables are determined by restaurant's grid.
+        occupied_tables: ndarray = np.column_stack(np.nonzero(self.model.grid.empty_mask is False))
+        distance_matrix = spatial.distance.cdist(occupied_tables, occupied_tables, metric='euclidean')
 
-        # Assign tables to each service agent and calculate the route for each service agent
-        occupied_tables: ndarray = np.column_stack(np.nonzero(empty_mask is False))
-        self.__serve_distance_matrix = spatial.distance.cdist(occupied_tables, occupied_tables, metric='euclidean')
-        aca_serve = ACA_TSP(func=self.__calculate_serve_tour_distance, n_dim=len(occupied_tables),
-                            size_pop=50, max_iter=200, distance_matrix=self.__serve_distance_matrix)
-        serve_route_aco, best_serve_distance = aca_serve.run()
+        # Run the ACO algorithm to calculate the best seat route and the best seat distance
+        aca = ACA_TSP(
+            func=lambda routine: self.__calculate_tour_distance(routine, distance_matrix),
+            n_dim=len(occupied_tables),
+            size_pop=50,
+            max_iter=200,
+            distance_matrix=distance_matrix
+        )
+        serve_route_aco, best_serve_distance = aca.run()
 
-        # Calculate the serve distance matrix for the ACO algorithm using the Euclidean distance TODO: Does it make sense to use TSP for seating?
-        free_tables: ndarray = np.column_stack(np.nonzero(empty_mask is True))
-        self.__seat_distance_matrix = spatial.distance.cdist(free_tables, free_tables, metric='euclidean')
-        aca_serve = ACA_TSP(func=self.__calculate_serve_tour_distance, n_dim=len(occupied_tables),
-                            size_pop=50, max_iter=200, distance_matrix=self.__seat_distance_matrix)
-        seat_route_aco, best_seat_route = aca_serve.run()
-
-        # Update the routes in the restaurant model
-        self.model.serve_route = serve_route_aco
-        self.model.seat_route = seat_route_aco
-
-        # Log the best serve and seat distance
+        # Log the best serve distance
         route_logger.info(f"Step {self.model.steps}: Best serve distance: {best_serve_distance}")
-        route_logger.info(f"Step {self.model.steps}: Best seat distance: {best_seat_route}")
 
-        return serve_route_aco, seat_route_aco
+        return serve_route_aco
 
-    def __calculate_serve_tour_distance(self, routine) -> float:
+    @staticmethod
+    def __calculate_tour_distance(routine, distance_matrix: ndarray) -> float:
         """
         Calculate the total distance of the passed route for the ACO algorithm.
         :param routine: The routine to calculate the total distance for.
         :return: The total distance of the route.
         """
         num_points, = routine.shape
-        return sum([self.__serve_distance_matrix[routine[i % num_points], routine[(i + 1) % num_points]] for i in
+        return sum([distance_matrix[routine[i % num_points], routine[(i + 1) % num_points]] for i in
                     range(num_points)])
 
     # endregion
