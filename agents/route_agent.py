@@ -92,7 +92,7 @@ class RouteAgent(Agent):
         """
         # Calculate the distance matrix for the ACO algorithm by calculating the Euclidean distance between the occupied
         # tables. The occupied tables are determined by restaurant's grid.
-        occupied_tables: ndarray = np.column_stack(np.nonzero(self.model.grid.empty_mask is False))
+        occupied_tables: ndarray = np.argwhere(self.model.grid.empty_mask is False)  # As coordinates TODO: CHECK IF THIS DELIVERS THE NODE COORDINATES
         distance_matrix = spatial.distance.cdist(occupied_tables, occupied_tables, metric='euclidean')
 
         # Run the ACO algorithm to calculate the best seat route and the best seat distance
@@ -103,10 +103,13 @@ class RouteAgent(Agent):
             max_iter=200,
             distance_matrix=distance_matrix
         )
-        serve_route_aco, best_serve_distance = aca.run()
+        aca_route, best_serve_distance = aca.run()
 
         # Log the best serve distance
         route_logger.info(f"Step {self.model.steps}: Best serve distance: {best_serve_distance}")
+
+        # Convert the ACO route to a list of CustomerAgents
+        serve_route_aco = [self.model.grid.get_cell(occupied_tables[i][0], occupied_tables[i][1]).agent for i in aca_route]
 
         return serve_route_aco
 
