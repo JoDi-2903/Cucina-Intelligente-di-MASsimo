@@ -87,7 +87,7 @@ class RouteAgent(Agent):
 
     def __plan_serve_route_aco(self) -> list[CustomerAgent]:
         """
-        Plan a serve route using the ACO algorithm.
+        Plan a serve route using the ant colony optimization algorithm.
         :return: A list of CustomerAgents representing the serve route.
         """
         # Calculate the distance matrix for the ACO algorithm by calculating the Euclidean distance between the occupied

@@ -1,9 +1,9 @@
 import sys
 import threading
 
-from ml.lstm_model import LSTMModel
-from data_structures.config import Config
+from data_structures.config.config import Config
 from data_structures.history import History
+from ml.lstm_model import LSTMModel
 from visualization.dashboard import Dashboard
 
 # Create a global history object to track the data

@@ -6,10 +6,10 @@ from pyoptinterface import highs
 from agents import service_agent
 from agents.customer_agent import CustomerAgent
 from agents.service_agent import ServiceAgent
+from data_structures.config.config import Config
+from data_structures.config.logging_config import manager_logger
 from enums.customer_agent_state import CustomerAgentState
 from main import history
-from data_structures.config import Config
-from data_structures.config import manager_logger
 
 logger = manager_logger
 
@@ -111,13 +111,13 @@ class ManagerAgent(Agent):
         # Constraint 3: Shift consistency.
         # If an agent is assigned to a shift y_{a,s} == 1, then they must work every time slot x_{a,t} == 1 in that shift.
         # Enforced for each t in the shift s by: 
-            # c1: y_{a,s} - x_{a,t} <= 0 AND 
-            # c2: x_{a,t} - y_{a,s} <= 0 
-            # s t  desired  c1  c2  c1 & c2
-            # 0 0  1        1   1   1
-            # 0 1  0        1   0   0
-            # 1 0  0        0   1   0
-            # 1 1  1        1   1   1
+        # c1: y_{a,s} - x_{a,t} <= 0 AND
+        # c2: x_{a,t} - y_{a,s} <= 0
+        # s t  desired  c1  c2  c1 & c2
+        # 0 0  1        1   1   1
+        # 0 1  0        1   0   0
+        # 1 0  0        0   1   0
+        # 1 1  1        1   1   1
 
         # c1: s-t <= 0
         # c2: t-s <= 0 

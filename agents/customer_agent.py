@@ -2,10 +2,10 @@ import random
 
 from mesa import Agent, Model
 
-from enums.customer_agent_state import CustomerAgentState
-from data_structures.config import Config
-from data_structures.config import customer_logger
+from data_structures.config.config import Config
+from data_structures.config.logging_config import customer_logger
 from data_structures.menu import Menu
+from enums.customer_agent_state import CustomerAgentState
 
 logger = customer_logger
 

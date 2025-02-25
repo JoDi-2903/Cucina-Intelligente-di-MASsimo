@@ -88,7 +88,7 @@ class RestaurantModel(Model):
 
     def spawn_customers(self):
         """
-        Spawn a new customer agent based on a ML detectable pattern.
+        Spawn a new customer agent based on an ML detectable pattern.
         
         The number of new customers is computed by combining several factors:
             - The current restaurant rating (total_rating_in_percent) is used as a baseline.
@@ -183,7 +183,7 @@ class RestaurantModel(Model):
         history.add_num_service_agents(len(self.agents_by_type[ServiceAgent]))
         history.add_num_active_service_agents(len([a for a in self.agents_by_type[ServiceAgent]
                                                    if self.steps in a.shift_schedule.keys()
-                                                   and a.shift_schedule[self.steps] == True]))
+                                                   and a.shift_schedule[self.steps] is True]))
         history.add_num_manager_agents(len(self.agents_by_type[ManagerAgent]))
         # history.add_num_agents(
         #     history.num_customer_agents_history[-1] +
