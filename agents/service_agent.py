@@ -36,35 +36,48 @@ class ServiceAgent(Agent):
         if self.model.steps not in self.shift_schedule.keys() or not self.shift_schedule[self.model.steps]:
             return
 
-        self._serve_customers()
-        self._seat_customers()
+        self.__serve_customers()
+        self.__seat_customers()
 
         # Reset the remaining capacity for the next step
         self.remaining_capacity = self.customer_capacity
 
-    def _serve_customers(self):
+    def __serve_customers(self):
         """
         Serve the customers that are already seated
         """
         # Get the customer with the smallest time_left
-        for customer in self.model.serve_route[:self.remaining_capacity]:
+
+        for _ in range(self.remaining_capacity):
+            # Break if there are no customers to serve
+            if len(self.model.serve_route) == 0:
+                break
+
             # Prepare the food
+            customer = self.model.serve_route[0]
             if customer.food_preparation_time > 1:
                 customer.food_preparation_time -= 1
             else:
                 customer.state = CustomerAgentState.EATING
                 customer.waiting_time = customer.init_time - customer.time_left
 
+            # Update the remaining capacity and the route
             self.remaining_capacity -= 1
+            self.model.serve_route(0)
 
             logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s.",
                         self.model.steps, self.unique_id, customer.unique_id, customer.state)
 
-    def _seat_customers(self):
+    def __seat_customers(self):
         """ Seat the customers that one service agent can serve """
         # For each customer that the service agent can serve
-        for customer in self.model.seat_route[:self.remaining_capacity]:
+        for _ in range(self.remaining_capacity):
+            # Break if there are no customers to serve
+            if len(self.model.serve_route) == 0:
+                break
+
             # Check if the customer needs to be rejected
+            customer = self.model.serve_route[0]
             if customer.dish.preparation_time + customer.dish.eating_time > customer.time_left:
                 customer.state = CustomerAgentState.REJECTED
 
@@ -73,7 +86,9 @@ class ServiceAgent(Agent):
                 customer.state = CustomerAgentState.WAITING_FOR_FOOD
                 self.__place_customer_in_grid(customer)
 
+            # Update the remaining capacity and the route
             self.remaining_capacity -= 1
+            self.model.serve_route(0)
 
             logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s",
                         self.model.steps, self.unique_id, customer.unique_id, customer.state)
