@@ -3,6 +3,7 @@ from typing import Optional
 from mesa import Agent, Model
 
 from agents.customer_agent import CustomerAgent
+from data_structures.config.config import Config
 from data_structures.config.logging_config import service_logger
 from enums.customer_agent_state import CustomerAgentState
 
@@ -46,7 +47,7 @@ class ServiceAgent(Agent):
         Serve the customers that are already seated
         """
         # Get the customer with the smallest time_left
-        for customer in self.menu.serve_route[:self.remaining_capacity]:
+        for customer in self.model.serve_route[:self.remaining_capacity]:
             # Prepare the food
             if customer.food_preparation_time > 1:
                 customer.food_preparation_time -= 1
@@ -62,7 +63,7 @@ class ServiceAgent(Agent):
     def _seat_customers(self):
         """ Seat the customers that one service agent can serve """
         # For each customer that the service agent can serve
-        for customer in self.menu.seat_route[:self.remaining_capacity]:
+        for customer in self.model.seat_route[:self.remaining_capacity]:
             # Check if the customer needs to be rejected
             if customer.dish.preparation_time + customer.dish.eating_time > customer.time_left:
                 customer.state = CustomerAgentState.REJECTED

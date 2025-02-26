@@ -100,11 +100,12 @@ class RouteAgent(Agent):
         # Solve the TSP using the ACO algorithm
         solution = self.__aco_solve(graph)
 
+        # Get list of CustomerAgents from the solution nodes
+        serve_route_aco: list[CustomerAgent] = [self.model.grid[i] for i in solution.nodes]
+
         # Log the best serve distance
         route_logger.info(f"Step {self.model.steps}: Best serve distance: {solution.cost}")
-
-        # Get list of CustomerAgents from the solution nodes
-        serve_route_aco: list[CustomerAgent] = [self.model.grid.get_cell(i).agent for i in solution.nodes]
+        route_logger.info(f"Step {self.model.steps}: Best serve route: {solution.nodes}\n")
 
         return serve_route_aco
 
