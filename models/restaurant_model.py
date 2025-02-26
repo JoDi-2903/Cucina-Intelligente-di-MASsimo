@@ -1,7 +1,7 @@
-import math
 import random
 from statistics import fmean
 
+import math
 from mesa import Model
 from mesa.space import SingleGrid
 
@@ -43,6 +43,10 @@ class RestaurantModel(Model):
         CustomerAgent.create_agents(
             model=self,
             n=Config().customers.max_new_customer_agents_per_step
+        )
+        RouteAgent.create_agents(
+            model=self,
+            n=1
         )
         # Note: ServiceAgents get employed by ManagerAgent
         ManagerAgent.create_agents(

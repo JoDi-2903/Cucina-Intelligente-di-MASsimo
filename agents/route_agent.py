@@ -91,6 +91,8 @@ class RouteAgent(Agent):
         """
         # Get the coordinates of all occupied tables from the restaurant's grid as a list of tuples
         occupied_tables: list[tuple[int, int]] = self.__get_occupied_tables()
+        if len(occupied_tables) == 0:
+            return []
 
         # Create a graph with the occupied tables as nodes for the ACO algorithm to solve
         graph = self.__create_graph(occupied_tables)
