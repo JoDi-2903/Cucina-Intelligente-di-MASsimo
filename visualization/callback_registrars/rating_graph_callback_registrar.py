@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 from dash import Dash, Output, Input
 
 from meta_classes.callback_registrar import CallbackRegistrarMeta
+from models.config.config import Config
 
 
 class RatingGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
@@ -42,7 +43,8 @@ class RatingGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
                 paper_bgcolor="rgba(20, 20, 20, 1)",
                 font=dict(color="white"),
                 xaxis=dict(gridcolor="gray"),
-                yaxis=dict(gridcolor="gray")
+                yaxis=dict(gridcolor="gray"),
+                yaxis_range=[Config().rating.rating_min, Config().rating.rating_max]
             )
 
             return figure
