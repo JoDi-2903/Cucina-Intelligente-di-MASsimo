@@ -7,6 +7,7 @@ from mesa.space import SingleGrid
 
 from agents.customer_agent import CustomerAgent
 from agents.manager_agent import ManagerAgent
+from agents.research_agent import ResearchAgent
 from agents.route_agent import RouteAgent
 from agents.service_agent import ServiceAgent
 from data_structures.config.config import Config
@@ -53,6 +54,10 @@ class RestaurantModel(Model):
             model=self,
             n=1
         )
+        ResearchAgent.create_agents(
+            model=self,
+            n=1
+        )
 
         logger.info(
             "Created model with %d customer agents, %d service agents and 1 manager agent",
@@ -77,8 +82,10 @@ class RestaurantModel(Model):
             satisfaction_rating=satisfaction_rating
         )
 
-        # Update the history data for visualization
-        self.__update_histories()
+        # Step through the research agent to evaluate the model
+        if ResearchAgent in self.agents_by_type.keys():
+            research_agent = self.agents_by_type[ResearchAgent][0]
+            research_agent.step()
 
         # Log the results of the current step
         total_time_spent = history.total_time_spent_history[-1]
@@ -164,40 +171,6 @@ class RestaurantModel(Model):
         total_rating = ((self.get_total_rating() - Config().rating.rating_min) / (
                 Config().rating.rating_max - Config().rating.rating_min))
         return total_rating
-
-    def __update_histories(self):
-        """Update the history lists with the current values."""
-
-        # Store the current step
-        history.add_step(self.steps)
-
-        # Evaluate the current rating of the restaurant
-        history.add_rating(self.get_total_rating())
-
-        # Calculate the total time that customers have spent in the restaurant waiting for their food
-        history.add_total_time_spent(self.get_total_time_spent())
-        history.add_total_waiting_time(self.get_waiting_time_spent())
-
-        # Update the number of agents
-        active_customer_agents = [  # Filter out all customers that are done
-            agent for agent in self.agents_by_type[CustomerAgent]
-            if agent.state != CustomerAgentState.DONE
-        ]
-        history.add_num_customer_agents(len(active_customer_agents))
-        history.add_num_service_agents(len(self.agents_by_type[ServiceAgent]))
-        history.add_num_active_service_agents(len([a for a in self.agents_by_type[ServiceAgent]
-                                                   if self.steps in a.shift_schedule.keys()
-                                                   and a.shift_schedule[self.steps] is True]))
-        history.add_num_manager_agents(len(self.agents_by_type[ManagerAgent]))
-        # history.add_num_agents(
-        #     history.num_customer_agents_history[-1] +
-        #     history.num_active_service_agents_history[-1] +
-        #     history.num_manager_agents_history[-1]
-        # )
-
-        # Update the heatmap of the restaurant grid for visualization
-        from visualization.restaurant_grid_utils import RestaurantGridUtils  # Avoid circular dependencies
-        RestaurantGridUtils.update_grid_heatmap(self)
 
     def get_total_time_spent(self) -> int:
         """ Compute the total time spent for all customers in the model """

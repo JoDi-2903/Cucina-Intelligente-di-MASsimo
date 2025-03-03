@@ -1,14 +1,15 @@
 import json
 import os
 
-from meta_classes.singleton import SingletonMeta
 from data_structures.config.customers_settings import CustomersSettings
 from data_structures.config.orders_settings import OrdersSettings
 from data_structures.config.rating_settings import RatingSettings
+from data_structures.config.research_settings import ResearchSettings
 from data_structures.config.restaurant_settings import RestaurantSettings
 from data_structures.config.run_settings import RunSettings
 from data_structures.config.service_settings import ServiceSettings
 from data_structures.config.weights_settings import WeightsSettings
+from meta_classes.singleton import SingletonMeta
 
 
 class Config(metaclass=SingletonMeta):
@@ -30,6 +31,7 @@ class Config(metaclass=SingletonMeta):
         self.__restaurant = RestaurantSettings(json_content["Restaurant"])
         self.__customers = CustomersSettings(json_content["Customers"])
         self.__service = ServiceSettings(json_content["Service"])
+        self.__research = ResearchSettings(json_content["Research"])
         self.__run = RunSettings(json_content["Run"])
 
     @staticmethod
@@ -64,6 +66,10 @@ class Config(metaclass=SingletonMeta):
     @property
     def service(self) -> ServiceSettings:
         return self.__service
+
+    @property
+    def research(self) -> ResearchSettings:
+        return self.__research
 
     @property
     def run(self) -> RunSettings:
