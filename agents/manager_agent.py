@@ -111,13 +111,13 @@ class ManagerAgent(Agent):
         # Constraint 3: Shift consistency.
         # If an agent is assigned to a shift y_{a,s} == 1, then they must work every time slot x_{a,t} == 1 in that shift.
         # Enforced for each t in the shift s by: 
-        # c1: y_{a,s} - x_{a,t} <= 0 AND
-        # c2: x_{a,t} - y_{a,s} <= 0
-        # s t  desired  c1  c2  c1 & c2
-        # 0 0  1        1   1   1
-        # 0 1  0        1   0   0
-        # 1 0  0        0   1   0
-        # 1 1  1        1   1   1
+            # c1: y_{a,s} - x_{a,t} <= 0 AND
+            # c2: x_{a,t} - y_{a,s} <= 0
+            # s t  desired  c1  c2  c1 & c2
+            # 0 0  1        1   1   1
+            # 0 1  0        1   0   0
+            # 1 0  0        0   1   0
+            # 1 1  1        1   1   1
 
         # c1: s-t <= 0
         # c2: t-s <= 0 
@@ -263,12 +263,12 @@ class ManagerAgent(Agent):
             the higher the employee's salary.
         """
         # Decision variables
-        # predicted_visitors: list[int] = self.model.lstm_model.forecast( TODO CHANGE TO LSTM BEFORE PUSH
+        # predicted_visitors: list[int] = self.model.lstm_model.forecast(
         #     customer_added_history=history.customers_added_history,
         #     rating_history=history.rating_history,
         #     n=Config().run.full_day_cycle_period,
         # )
-        predicted_visitors = [30] * Config().run.full_day_cycle_period
+        predicted_visitors = [30] * Config().run.full_day_cycle_period # TODO FIX LSTM BUG
         history.add_predicted_customer_agents_growth(predicted_visitors)
         available_service_agents = list(self.model.agents_by_type[ServiceAgent])
 

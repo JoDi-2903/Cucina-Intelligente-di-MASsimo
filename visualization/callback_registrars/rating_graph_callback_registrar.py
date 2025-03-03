@@ -3,8 +3,8 @@ import logging
 import plotly.graph_objects as go
 from dash import Dash, Output, Input
 
+from data_structures.config.config import Config
 from meta_classes.callback_registrar import CallbackRegistrarMeta
-from models.config.config import Config
 
 
 class RatingGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
