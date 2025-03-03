@@ -12,7 +12,7 @@ if not os.path.exists(log_directory):
 
 
 def setup_logger(name):
-    """Function to setup as many loggers as you want"""
+    """Function to set up as many loggers as you want"""
 
     # Create a logger
     logger = logging.getLogger(name)
@@ -47,4 +47,5 @@ service_logger = setup_logger("service")
 manager_logger = setup_logger("manager")
 restaurant_logger = setup_logger("restaurant")
 route_logger = setup_logger("route")
+research_logger = setup_logger("research")
 machine_learning_logger = setup_logger("machine_learning")
