@@ -9,7 +9,7 @@ class ProfitGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
     @staticmethod
     def register_callbacks(app: Dash):
         # Set the logging level to ERROR to suppress informational messages
-        log = logging.getLogger('plotly')
+        log = logging.getLogger("werkzeug")
         log.setLevel(logging.ERROR)
         @app.callback(
             Output("profit-graph", "figure"),

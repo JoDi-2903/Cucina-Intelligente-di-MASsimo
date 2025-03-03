@@ -6,9 +6,7 @@
   },
   "Orders": {
     "order_correctness": 0.90,
-    "parallel_preparation": 5,
-    "delay_randomness": 0.80,
-    "delay_max": 10
+    "parallel_preparation": 5
   },
   "Weights": {
     "time_exceeding": 0.05,
