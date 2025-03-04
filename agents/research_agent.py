@@ -1,16 +1,15 @@
-from huggingface_hub import login
+import os
+from datetime import datetime
+
+import ollama
 from mesa import Agent, Model
-from transformers import pipeline, Pipeline
 
 from agents.customer_agent import CustomerAgent
 from agents.manager_agent import ManagerAgent
 from agents.service_agent import ServiceAgent
 from data_structures.config.config import Config
-from data_structures.config.logging_config import research_logger
 from enums.customer_agent_state import CustomerAgentState
 from main import history
-
-logger = research_logger
 
 
 class ResearchAgent(Agent):
@@ -24,15 +23,11 @@ class ResearchAgent(Agent):
         :param model: The restaurant model
         """
         super().__init__(model)
-        self.__logged_in: bool = False
 
-        # Try to log into the Hugging Face Hub
-        if Config().research.huggingface_token != "" and Config().research.llm_model_id != "":
-            try:
-                login(token=Config().research.huggingface_token)
-                self.__logged_in: bool = True
-            except Exception as e:
-                logger.error(f"Could not log into Hugging Face Hub: {e}")
+        # If ollama is running, initialize the report folder path
+        self.__report_folder_path: str = ""
+        if Config().research.is_report_generation_active:
+            self.__report_folder_path: str = f"reports/{datetime.now().strftime("%d-%m-%Y_%H-%M-%S-%f")[:-3]}"
 
     def step(self):
         """
@@ -41,8 +36,8 @@ class ResearchAgent(Agent):
         self.__update_histories()
 
         # Interpret the statistics if the agent is logged in and the end of a day is reached
-        if self.__logged_in and self.model.steps % Config().run.full_day_cycle_period == 0:
-            self.__interpret_statistics()
+        if Config().research.is_report_generation_active and self.model.steps % Config().run.full_day_cycle_period == 0:
+            self.__create_report()
 
     def __update_histories(self):
         """Update the history lists with the current values."""
@@ -78,90 +73,84 @@ class ResearchAgent(Agent):
         from visualization.restaurant_grid_utils import RestaurantGridUtils  # Avoid circular dependencies
         RestaurantGridUtils.update_grid_heatmap(self.model)
 
-    def __interpret_statistics(self):
+    def __create_report(self):
         """
-        Interpret the statistics using the LLM model and log the results.
+        Create a report using a LLM model and store it as a Markdown file.
         """
-        # Initialize the generator
-        generator: Pipeline = pipeline("text-generation", model="openai-community/gpt2")
-
         # Get the number of passed days
         days_count = len(history.rating_history) // Config().run.full_day_cycle_period
-        logger.info(f"Interpreting statistics for day {days_count}:")
 
-        # Interpret the profit, rating and waiting time change
-        self.__interpret_statistic(
-            days_count,
-            history.profit_history,
-            generator,
-            "The restaurant's profit today is {today_value} € and yesterday it was {yesterday_value} €. So it has changed by"
+        # Get the profit and rating history of the day
+        profit_history = history.profit_history[Config().run.full_day_cycle_period * (days_count - 1)
+                                                :Config().run.full_day_cycle_period * days_count]
+        rating_history = history.rating_history[Config().run.full_day_cycle_period * (days_count - 1)
+                                                :Config().run.full_day_cycle_period * days_count]
+
+        # Create the prompt for the report
+        prompt = self.__create_prompt(
+            profit_history=profit_history,
+            highest_profit=max(profit_history),
+            highest_profit_time=f"{divmod(profit_history.index(max(profit_history)) * 10, 60)[0]}h {divmod(profit_history.index(max(profit_history)) * 10, 60)[1]}m",
+            lowest_profit=min(profit_history),
+            lowest_profit_time=f"{divmod(profit_history.index(min(profit_history)) * 10, 60)[0]}h {divmod(profit_history.index(min(profit_history)) * 10, 60)[1]}m",
+            rating_history=rating_history,
+            peak_rating=max(rating_history),
+            peak_rating_time=f"{divmod(rating_history.index(max(rating_history)) * 10, 60)[0]}h {divmod(rating_history.index(max(rating_history)) * 10, 60)[1]}m",
+            drop_rating=min(rating_history),
+            drop_rating_time=f"{divmod(rating_history.index(min(rating_history)) * 10, 60)[0]}h {divmod(rating_history.index(min(rating_history)) * 10, 60)[1]}m"
         )
-        self.__interpret_statistic(
-            days_count,
-            history.rating_history,
-            generator,
-            "The restaurant's rating today is {today_value} stars and yesterday it was {yesterday_value} stars. So it has changed by"
+
+        # Generate the report using the LLM model
+        report = ollama.chat(
+            model=Config().research.llm_model,
+            messages=[{"role": "user", "content": prompt}]
         )
-        self.__interpret_statistic(
-            days_count,
-            history.total_time_spent_history,
-            generator,
-            "The total time spent in the restaurant is {today_value} minutes and yesterday it was {yesterday_value} minutes. So it has changed by"
-        )
-        logger.info("\n")
 
-    def __interpret_statistic(
-            self,
-            days_count: int,
-            history_list: list[int or float],
-            generator: Pipeline,
-            prompt_template: str
-    ):
-        """
-        Interpret the passed statistic using the LLM model and log the results.
-        :param days_count: The number of days that have passed.
-        :param history_list: The history list to get the values from.
-        :param generator: The LLM model to interpret the statistics.
-        :param prompt_template: The template to generate the prompt.
-        """
-        # Get the values of yesterday and today
-        yesterday_value, today_value = self.__get_yesterday_and_today_values(days_count, history_list)
-
-        # Generate the prompt with the values and the passed prompt template
-        prompt = prompt_template.format(today_value=today_value, yesterday_value=yesterday_value)
-
-        # Generate the result with the prompt
-        profit_result = generator(prompt, num_return_sequences=1, truncation=True)
-
-        # Log the result
-        logger.info(profit_result[0]['generated_text'].replace('\n', ' '))
+        # Store the report as a Markdown file
+        os.makedirs(self.__report_folder_path, exist_ok=True)
+        with open(f"{self.__report_folder_path}/report_day_{days_count}.md", "w") as file:
+            file.write(report["message"]["content"])
 
     @staticmethod
-    def __get_yesterday_and_today_values(
-            days_count: int,
-            history_array: list[int or float]
-    ) -> tuple[int or float, int or float]:
+    def __create_prompt(
+            profit_history: list[float],
+            highest_profit: float,
+            highest_profit_time: str,
+            lowest_profit: float,
+            lowest_profit_time: str,
+            rating_history: list[float],
+            peak_rating: float,
+            peak_rating_time: str,
+            drop_rating: float,
+            drop_rating_time: str
+    ) -> str:
         """
-        Get the total values of yesterday and today from the passed history array.
-        :param days_count: The number of days that have passed.
-        :param history_array: The history array to get the values from.
-        :return: The values of yesterday and today.
+        Create a prompt for the report with the passed statistics.
+        :param profit_history: The profit history of the day.
+        :param highest_profit: The highest profit.
+        :param highest_profit_time: The time of the highest profit.
+        :param lowest_profit: The lowest profit.
+        :param lowest_profit_time: The time of the lowest profit.
+        :param rating_history: The rating history of the day.
+        :param peak_rating: The peak rating.
+        :param peak_rating_time: The time of the peak rating.
+        :param drop_rating: The dropped rating.
+        :param drop_rating_time: The time of the dropped rating.
         """
-        # Sum up the values from yesterday to today
-        today_values = history_array[
-                       Config().run.full_day_cycle_period * (days_count - 1)
-                       :Config().run.full_day_cycle_period * days_count
-                       ]
-        today_value = sum(value for value in today_values)
+        return f"""
+You are a data analyst reviewing statistical changes in a restaurant's performance over time. Below is a dataset containing key performance metrics in 10-minute intervals:
 
-        # Sum up the values from the day before yesterday to yesterday
-        if days_count < 2:
-            yesterday_value = 0
-        else:
-            yesterdays_values = history_array[
-                                Config().run.full_day_cycle_period * (days_count - 2)
-                                :Config().run.full_day_cycle_period * (days_count - 1)
-                                ]
-            yesterday_value = sum(value for value in yesterdays_values)
+- **Profit (€):** Total profit generated during each interval.
+- **Customer Rating (1-5 Stars):** Average customer rating collected via a feedback system.
 
-        return yesterday_value, today_value
+### **Summary of Key Changes:**
+- **Profit:**
+  - Recorded profit throughout the day in 10-minute intervals: {profit_history}
+  - Highest recorded profit: {highest_profit}€ at {highest_profit_time}.
+  - Lowest recorded profit: {lowest_profit}€ at {lowest_profit_time}.
+
+- **Customer Rating:**
+  - Recorded rating throughout the day in 10-minute intervals: {rating_history}
+  - Peak rating of {peak_rating} at {peak_rating_time}.
+  - Sharp drop to {drop_rating} around {drop_rating_time}.
+        """

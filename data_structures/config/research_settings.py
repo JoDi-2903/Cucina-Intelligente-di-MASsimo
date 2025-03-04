@@ -1,4 +1,4 @@
-import os
+import requests
 
 
 class ResearchSettings:
@@ -12,16 +12,28 @@ class ResearchSettings:
         """
         if config is not None:
             # The grid width and height are used to visualize the restaurant in a grid and determine the maximum capacity of customer agents in the restaurant.
-            self.__huggingface_token = config["hugging_face_token"]
-            self.__llm_model_id = "openai-community/gpt2"
+            self.__llm_model = config["llm_model"]
+            self.__is_report_generation_active: bool = self.__is_ollama_running()
         else:
-            os.environ["HUGGINGFACE_TOKEN"] = ''
             self.__llama_model_path: str = ""
+            self.__is_report_generation_active: bool = False
+
+    @staticmethod
+    def __is_ollama_running(self) -> bool:
+        """
+        Check if the ollama server is running.
+        :return: True if the server is running, False otherwise
+        """
+        try:
+            response = requests.get("http://localhost:11434/api/tags", timeout=2)
+            return response.status_code == 200
+        except requests.ConnectionError:
+            return False
 
     @property
-    def huggingface_token(self) -> str:
-        return self.__huggingface_token
+    def llm_model(self) -> str:
+        return self.__llm_model
 
     @property
-    def llm_model_id(self) -> str:
-        return self.__llm_model_id
+    def is_report_generation_active(self) -> bool:
+        return self.__is_report_generation_active

@@ -35,7 +35,7 @@
     "route_algorithm": "ACO"
   },
   "Research": {
-    "hugging_face_token": ""
+    "llm_model": "llama3.2"
   },
   "Run": {
     "step_amount": 1440,
