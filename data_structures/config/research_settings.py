@@ -12,7 +12,7 @@ class ResearchSettings:
         """
         if config is not None:
             # The grid width and height are used to visualize the restaurant in a grid and determine the maximum capacity of customer agents in the restaurant.
-            self.__huggingface_token = config["huggingface_token"]
+            self.__huggingface_token = config["hugging_face_token"]
             self.__llm_model_id = "openai-community/gpt2"
         else:
             os.environ["HUGGINGFACE_TOKEN"] = ''

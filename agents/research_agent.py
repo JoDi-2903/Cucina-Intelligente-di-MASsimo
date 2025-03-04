@@ -1,6 +1,6 @@
 from huggingface_hub import login
 from mesa import Agent, Model
-from transformers import pipeline
+from transformers import pipeline, Pipeline
 
 from agents.customer_agent import CustomerAgent
 from agents.manager_agent import ManagerAgent
@@ -76,57 +76,91 @@ class ResearchAgent(Agent):
 
         # Update the heatmap of the restaurant grid for visualization
         from visualization.restaurant_grid_utils import RestaurantGridUtils  # Avoid circular dependencies
-        RestaurantGridUtils.update_grid_heatmap(self.model.model)
+        RestaurantGridUtils.update_grid_heatmap(self.model)
 
     def __interpret_statistics(self):
         """
         Interpret the statistics using the LLM model and log the results.
         """
         # Initialize the generator
-        generator = pipeline("text-generation", model="openai-community/gpt2")
+        generator: Pipeline = pipeline("text-generation", model="openai-community/gpt2")
 
-        # Interpret the profit change
-        profit_yesterday, profit_today = self.__get_yesterday_and_today_values(history.profit_history)
-        profit_prompt = f"The restaurant's profit is {profit_today}€ and yesterday it was {profit_yesterday}€. So it has grown"
-        profit_result = generator(profit_prompt, max_length=1024, num_return_sequences=1, truncation=True)
-        logger.info(profit_result[0]['generated_text'])
+        # Get the number of passed days
+        days_count = len(history.rating_history) // Config().run.full_day_cycle_period
+        logger.info(f"Interpreting statistics for day {days_count}:")
 
-        # Interpret the rating change
-        rating_yesterday, rating_today = self.__get_yesterday_and_today_values(history.rating_history)
-        rating_prompt = f"The restaurant's rating is {rating_today} stars and yesterday it was {rating_yesterday} stars. So it has grown"
-        rating_result = generator(rating_prompt, max_length=1024, num_return_sequences=1, truncation=True)
-        logger.info(rating_result[0]['generated_text'])
+        # Interpret the profit, rating and waiting time change
+        self.__interpret_statistic(
+            days_count,
+            history.profit_history,
+            generator,
+            "The restaurant's profit today is {today_value} € and yesterday it was {yesterday_value} €. So it has changed by"
+        )
+        self.__interpret_statistic(
+            days_count,
+            history.rating_history,
+            generator,
+            "The restaurant's rating today is {today_value} stars and yesterday it was {yesterday_value} stars. So it has changed by"
+        )
+        self.__interpret_statistic(
+            days_count,
+            history.total_time_spent_history,
+            generator,
+            "The total time spent in the restaurant is {today_value} minutes and yesterday it was {yesterday_value} minutes. So it has changed by"
+        )
+        logger.info("\n")
 
-        # Interpret the time spent change
-        time_spent_yesterday, time_spent_today = self.__get_yesterday_and_today_values(history.total_time_spent_history)
-        time_spent_prompt = f"The restaurant's rating is {time_spent_today} stars and yesterday it was {time_spent_yesterday} stars. So it has grown"
-        time_spent_result = generator(time_spent_prompt, max_length=1024, num_return_sequences=1, truncation=True)
-        logger.info(time_spent_result[0]['generated_text'])
+    def __interpret_statistic(
+            self,
+            days_count: int,
+            history_list: list[int or float],
+            generator: Pipeline,
+            prompt_template: str
+    ):
+        """
+        Interpret the passed statistic using the LLM model and log the results.
+        :param days_count: The number of days that have passed.
+        :param history_list: The history list to get the values from.
+        :param generator: The LLM model to interpret the statistics.
+        :param prompt_template: The template to generate the prompt.
+        """
+        # Get the values of yesterday and today
+        yesterday_value, today_value = self.__get_yesterday_and_today_values(days_count, history_list)
+
+        # Generate the prompt with the values and the passed prompt template
+        prompt = prompt_template.format(today_value=today_value, yesterday_value=yesterday_value)
+
+        # Generate the result with the prompt
+        profit_result = generator(prompt, num_return_sequences=1, truncation=True)
+
+        # Log the result
+        logger.info(profit_result[0]['generated_text'].replace('\n', ' '))
 
     @staticmethod
-    def __get_yesterday_and_today_values(history_array: list[int or float]) -> tuple[int or float, int or float]:
+    def __get_yesterday_and_today_values(
+            days_count: int,
+            history_array: list[int or float]
+    ) -> tuple[int or float, int or float]:
         """
         Get the total values of yesterday and today from the passed history array.
+        :param days_count: The number of days that have passed.
         :param history_array: The history array to get the values from.
         :return: The values of yesterday and today.
         """
-        # Get the days that have passed
-        passed_days_count = len(history_array) // Config().run.full_day_cycle_period
-
         # Sum up the values from yesterday to today
         today_values = history_array[
-                       Config().run.full_day_cycle_period * (passed_days_count - 1)
-                       :Config().run.full_day_cycle_period * passed_days_count
+                       Config().run.full_day_cycle_period * (days_count - 1)
+                       :Config().run.full_day_cycle_period * days_count
                        ]
         today_value = sum(value for value in today_values)
 
         # Sum up the values from the day before yesterday to yesterday
-        if passed_days_count < 2:
+        if days_count < 2:
             yesterday_value = 0
         else:
             yesterdays_values = history_array[
-                                Config().run.full_day_cycle_period * (passed_days_count - 2)
-                                :Config().run.full_day_cycle_period * (passed_days_count - 1)
+                                Config().run.full_day_cycle_period * (days_count - 2)
+                                :Config().run.full_day_cycle_period * (days_count - 1)
                                 ]
             yesterday_value = sum(value for value in yesterdays_values)
 
