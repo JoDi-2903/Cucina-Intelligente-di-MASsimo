@@ -61,7 +61,7 @@ class ResearchAgent(Agent):
         history.add_num_service_agents(len(self.model.agents_by_type[ServiceAgent]))
         history.add_num_active_service_agents(len([a for a in self.model.agents_by_type[ServiceAgent]
                                                    if self.model.steps in a.shift_schedule.keys()
-                                                   and a.shift_schedule[self.model.steps] is True]))
+                                                   and a.shift_schedule[self.model.steps] == 1]))
         history.add_num_manager_agents(len(self.model.agents_by_type[ManagerAgent]))
         # history.add_num_agents(
         #     history.num_customer_agents_history[-1] +

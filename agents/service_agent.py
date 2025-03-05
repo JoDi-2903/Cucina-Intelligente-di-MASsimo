@@ -28,12 +28,12 @@ class ServiceAgent(Agent):
         self.customer_capacity: int = customer_capacity if customer_capacity is not None else Config().service.service_agent_capacity
         self.remaining_capacity: int = self.customer_capacity
 
-        # Initialize the shift schedule dict[step] = bool
-        self.shift_schedule: dict[int, bool] = {}
+        # Initialize the shift schedule dict[step] = int
+        self.shift_schedule: dict[int, int] = {}
 
     def step(self):
         # Don't do anything if the service agent is not scheduled to work
-        if self.model.steps not in self.shift_schedule.keys() or not self.shift_schedule[self.model.steps]:
+        if self.model.steps not in self.shift_schedule.keys() or self.shift_schedule[self.model.steps] == 0:
             return
 
         self.__serve_customers()
