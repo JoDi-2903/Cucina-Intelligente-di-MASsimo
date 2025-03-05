@@ -63,7 +63,7 @@ class ServiceAgent(Agent):
 
             # Update the remaining capacity and the route
             self.remaining_capacity -= 1
-            self.model.serve_route(0)
+            # self.model.serve_route.remove(customer) # TODO: Check if this is necessary
 
             logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s.",
                         self.model.steps, self.unique_id, customer.unique_id, customer.state)
@@ -73,11 +73,11 @@ class ServiceAgent(Agent):
         # For each customer that the service agent can serve
         for _ in range(self.remaining_capacity):
             # Break if there are no customers to serve
-            if len(self.model.serve_route) == 0:
+            if len(self.model.seat_route) == 0:
                 break
 
             # Check if the customer needs to be rejected
-            customer = self.model.serve_route[0]
+            customer = self.model.seat_route[0]
             if customer.dish.preparation_time + customer.dish.eating_time > customer.time_left:
                 customer.state = CustomerAgentState.REJECTED
 
@@ -88,7 +88,7 @@ class ServiceAgent(Agent):
 
             # Update the remaining capacity and the route
             self.remaining_capacity -= 1
-            self.model.serve_route(0)
+            # self.model.seat_route.remove(customer) # TODO: Check if this is necessary
 
             logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s",
                         self.model.steps, self.unique_id, customer.unique_id, customer.state)

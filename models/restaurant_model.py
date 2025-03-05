@@ -198,13 +198,18 @@ class RestaurantModel(Model):
         if CustomerAgent in self.agents_by_type.keys():
             for agent in self.agents_by_type[CustomerAgent]:
                 agent.step()
-        if ServiceAgent in self.agents_by_type.keys() and RouteAgent in self.agents_by_type.keys():
-            # Step through the RouteAgent first to update the routes that the service agents take to serve/seat customers
-            self.agents_by_type[RouteAgent][0].step()
 
-            # Step through all ServiceAgents
+        # Step through the RouteAgent first to update the routes that the service agents take to serve/seat customers
+        if RouteAgent in self.agents_by_type.keys():
+            for agent in self.agents_by_type[RouteAgent]:
+                agent.step()
+
+        # Step through all ServiceAgents
+        if ServiceAgent in self.agents_by_type.keys():
             for agent in self.agents_by_type[ServiceAgent]:
                 agent.step()
+
+        # If this is not the first step, step the ManagerAgent last to handle shifts
         if ManagerAgent in self.agents_by_type.keys() and self.steps > 1:
             for agent in self.agents_by_type[ManagerAgent]:
                 agent.step()
