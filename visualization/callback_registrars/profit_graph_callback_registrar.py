@@ -1,5 +1,6 @@
-import plotly.graph_objects as go
 import logging
+
+import plotly.graph_objects as go
 from dash import Dash, Output, Input
 
 from meta_classes.callback_registrar import CallbackRegistrarMeta
@@ -11,6 +12,7 @@ class ProfitGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
         # Set the logging level to ERROR to suppress informational messages
         log = logging.getLogger("werkzeug")
         log.setLevel(logging.ERROR)
+
         @app.callback(
             Output("profit-graph", "figure"),
             Input('interval-component', 'n_intervals')

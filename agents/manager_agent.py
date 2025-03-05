@@ -268,7 +268,7 @@ class ManagerAgent(Agent):
         #     rating_history=history.rating_history,
         #     n=Config().run.full_day_cycle_period,
         # )
-        predicted_visitors = [30] * Config().run.full_day_cycle_period # TODO FIX LSTM BUG
+        predicted_visitors = [30] * Config().run.full_day_cycle_period  # TODO FIX LSTM BUG
         history.add_predicted_customer_agents_growth(predicted_visitors)
         available_service_agents = list(self.model.agents_by_type[ServiceAgent])
 

@@ -53,9 +53,9 @@ class ServiceAgent(Agent):
 
             # Prepare the food
             customer = self.model.serve_route[0]
-            if customer.state == CustomerAgentState.WAITING_FOR_FOOD and customer.food_preparation_time > 1:
+            if customer.food_preparation_time > 1:
                 customer.food_preparation_time -= 1
-            elif customer.state == CustomerAgentState.WAITING_FOR_FOOD:
+            else:
                 customer.state = CustomerAgentState.EATING
                 customer.waiting_time = customer.init_time - customer.time_left
 

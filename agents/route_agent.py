@@ -122,9 +122,19 @@ class RouteAgent(Agent):
         occupied_tables_lists: list[list[int, int]] = np.column_stack(
             np.nonzero(self.model.grid.empty_mask == False)
         ).tolist()
-        occupied_tables: list[tuple[int, int]] = [(table[0], table[1]) for table in occupied_tables_lists]
 
-        return occupied_tables
+        # Remove all customer agents from the list that are in the state of EATING
+        customer_agents: list[CustomerAgent] = [self.model.grid[i] for i in occupied_tables_lists]
+        waiting_customer_agents: list[CustomerAgent] = [agent for agent in customer_agents if
+                                                        agent.state == CustomerAgentState.WAITING_FOR_FOOD]
+
+        # Return the coordinates of the occupied tables
+        nodes: list[tuple[int, int]] = [
+            (table[0], table[1]) for table in occupied_tables_lists if
+            self.model.grid[table] in waiting_customer_agents
+        ]
+
+        return nodes
 
     @staticmethod
     def __create_graph(occupied_tables: list[tuple[int, int]]) -> Graph:

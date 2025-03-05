@@ -11,6 +11,7 @@ class AutoRefreshCallbackRegistrar(metaclass=CallbackRegistrarMeta):
         # Set the logging level to ERROR to suppress informational messages
         log = logging.getLogger("werkzeug")
         log.setLevel(logging.ERROR)
+
         @app.callback(
             [Output('interval-component', 'disabled'),
              Output('auto-refresh-toggle', 'color')],

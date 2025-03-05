@@ -13,6 +13,7 @@ class RatingGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
         # Set the logging level to ERROR to suppress informational messages
         log = logging.getLogger("werkzeug")
         log.setLevel(logging.ERROR)
+
         @app.callback(
             Output("rating-graph", "figure"),
             Input('interval-component', 'n_intervals')

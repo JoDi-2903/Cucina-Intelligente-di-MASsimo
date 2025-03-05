@@ -21,4 +21,3 @@ class OrdersSettings:
     @property
     def parallel_preparation(self) -> int:
         return self.__parallel_preparation
-
