@@ -63,7 +63,7 @@ class ServiceAgent(Agent):
 
             # Update the remaining capacity and the route
             self.remaining_capacity -= 1
-            # self.model.serve_route.remove(customer) # TODO: Check if this is necessary
+            self.model.serve_route.remove(customer)
 
             logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s.",
                         self.model.steps, self.unique_id, customer.unique_id, customer.state)
@@ -88,7 +88,7 @@ class ServiceAgent(Agent):
 
             # Update the remaining capacity and the route
             self.remaining_capacity -= 1
-            # self.model.seat_route.remove(customer) # TODO: Check if this is necessary
+            self.model.seat_route.remove(customer)
 
             logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s",
                         self.model.steps, self.unique_id, customer.unique_id, customer.state)

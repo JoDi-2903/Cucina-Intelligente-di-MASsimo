@@ -27,7 +27,7 @@ class ResearchAgent(Agent):
         # If ollama is running, initialize the report folder path
         self.__report_folder_path: str = ""
         if Config().research.is_report_generation_active:
-            self.__report_folder_path: str = f"reports/{datetime.now().strftime("%d-%m-%Y_%H-%M-%S-%f")[:-3]}"
+            self.__report_folder_path: str = f"reports/{datetime.now().strftime('%d-%m-%Y_%H-%M-%S-%f')[:-3]}"
 
     def step(self):
         """

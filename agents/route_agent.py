@@ -94,6 +94,10 @@ class RouteAgent(Agent):
         if len(occupied_tables) == 0:
             return []
 
+        # If only one table is occupied, return the customer at that table
+        elif len(occupied_tables) == 1:
+            return [self.model.grid[occupied_tables[0]]]
+
         # Create a graph with the occupied tables as nodes for the ACO algorithm to solve
         graph = self.__create_graph(occupied_tables)
 

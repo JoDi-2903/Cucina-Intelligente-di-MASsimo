@@ -19,7 +19,7 @@ class ResearchSettings:
             self.__is_report_generation_active: bool = False
 
     @staticmethod
-    def __is_ollama_running(self) -> bool:
+    def __is_ollama_running() -> bool:
         """
         Check if the ollama server is running.
         :return: True if the server is running, False otherwise

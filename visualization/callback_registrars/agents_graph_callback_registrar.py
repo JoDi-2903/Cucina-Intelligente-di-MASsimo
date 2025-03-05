@@ -12,6 +12,7 @@ class AgentsGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
         # Set the logging level to ERROR to suppress informational messages
         log = logging.getLogger("werkzeug")
         log.setLevel(logging.ERROR)
+
         @app.callback(
             Output("agents-graph", "figure"),
             Input('interval-component', 'n_intervals')
@@ -50,15 +51,6 @@ class AgentsGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
                 name="Predicted customer agents growth",
                 line=dict(color='cyan')
             ))
-
-            # Add a trace for the number of service agents
-            # figure.add_trace(go.Scatter(
-            #     x=h.steps_history,
-            #     y=h.num_service_agents_history,
-            #     mode='lines+markers',
-            #     name="Number of service agents",
-            #     line=dict(color='orange')
-            # ))
 
             # Add a trace for the number of active service agents
             figure.add_trace(go.Scatter(
