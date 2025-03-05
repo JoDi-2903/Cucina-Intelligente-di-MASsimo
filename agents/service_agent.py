@@ -46,8 +46,6 @@ class ServiceAgent(Agent):
         """
         Serve the customers that are already seated
         """
-        # Get the customer with the smallest time_left
-
         for _ in range(self.remaining_capacity):
             # Break if there are no customers to serve
             if len(self.model.serve_route) == 0:
@@ -70,9 +68,8 @@ class ServiceAgent(Agent):
 
     def __seat_customers(self):
         """ Seat the customers that one service agent can serve """
-        # For each customer that the service agent can serve
         for _ in range(self.remaining_capacity):
-            # Break if there are no customers to serve
+            # Break if there are no customers to seat
             if len(self.model.seat_route) == 0:
                 break
 
