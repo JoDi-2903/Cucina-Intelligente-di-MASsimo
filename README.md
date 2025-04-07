@@ -1,6 +1,6 @@
 # Cucina intelligente di MASsimo
 
-## 1. Introduction
+## Introduction
 
 This program simulates a restaurant with a focus on optimizing shift planning, balancing workload distribution during
 shifts, and interpreting restaurant statistics. By utilizing mathematical optimization, heuristics, and machine learning
@@ -9,9 +9,9 @@ personnel.
 
 <br>
 
-## 2. Requirements
+## Requirements
 
-### 2.1. Python Version
+### Python Version
 
 This software requires **Python 3.12**. Newer versions are not supported because TensorFlow is used for an LSTM model
 that predicts the increasing number of customers in future iterations. LSTM (Long Short-Term Memory) is a type of
@@ -21,7 +21,7 @@ version may cause compatibility issues or unexpected behavior.
 
 Ensure that the Python installation is exactly **3.12.x** before proceeding.
 
-### 2.2. Dependencies
+### Dependencies
 
 To install all required Python packages, use the requirements.txt file with the following commands:
 
@@ -38,7 +38,7 @@ The package `acopy` must be installed separately without its nested dependencies
 version of `click`, and since no functionality from `acopy` that depends on `click` is used, `acopy` can be safely
 installed without dependencies.
 
-## Ollama and LLM
+### Ollama and LLM
 
 The software includes functionality to generate reports based on statistical calculations for the restaurant. To enable
 this feature, **Ollama must be installed**.
@@ -54,28 +54,3 @@ available.
 
 Ensure Ollama is installed before running the software if this feature is required. More information and installation
 instructions can be found on the official [Ollama website](https://ollama.com).
-
-## 3. Implementation
-
-### 3.1. Project overview
-
-The program was developed using the agent-based framework [Mesa](https://mesa.readthedocs.io/stable/). In this
-simulation, the restaurant itself represents the model, while various entities such as visitors, service staff,
-managers, and other resources are implemented as agents. These agents execute tasks in each time step, enabling dynamic
-interactions and realistic workflow simulations.
-
-In the following sections, the model, agents and their interactions are described in detail.
-
-### 3.2. Restaurant Model
-
-### 3.3. Agents
-
-#### Customer Agent
-
-#### Service Agent
-
-#### Manager Agent
-
-#### Route Agent
-
-#### Research Agent
