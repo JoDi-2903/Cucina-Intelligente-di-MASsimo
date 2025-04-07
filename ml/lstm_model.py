@@ -1,4 +1,7 @@
+import os
+
 import numpy as np
+import pandas as pd
 from tensorflow.keras.layers import LSTM, Dense, Dropout
 from tensorflow.keras.models import Sequential
 
@@ -83,7 +86,7 @@ class LSTMModel:
 
         Parameters:
           - last_step: Index of the latest timestep for which real simulation data is available.
-          - customer_count: The observed visitor count
+          - customer_count: The number of new customer agents in the restaurant for the current timestep
           - satisfaction_rating: The observed satisfaction rating
 
         The method stores both counts and ratings in dictionaries keyed by last_step.
@@ -131,3 +134,31 @@ class LSTMModel:
         # Train the model on the new batch
         loss = self.model.train_on_batch(x_train, y_train)
         logger.info(f"Model updated at step {last_step}. Training loss: {loss:.4f}")
+
+    def save_training_data(self, last_step: int, customer_agents_count: int, satisfaction_rating: float, train_data_path: str = 'ml/train_data.csv') -> None:
+        """
+        Save the data created during the simulation run to a file for pretraining the LSTM.
+        
+        Parameters:
+          - last_step: Index of the latest timestep for which real simulation data is available.
+          - customer_agents_count: The number of customer agents in the restaurant
+          - satisfaction_rating: The observed satisfaction rating
+
+        The data is saved in a CSV file. With each function call, a new row is appended to the file.
+        The file is created if it does not exist.
+        """
+        # Create the directory if it doesn't exist
+        os.makedirs(os.path.dirname(train_data_path), exist_ok=True)
+
+        # Create a DataFrame with the new data
+        new_data = pd.DataFrame({
+            'step': [last_step],
+            'customer_count': [customer_agents_count],
+            'satisfaction_rating': [satisfaction_rating]
+        })
+
+        # Append the new data to the CSV file
+        if os.path.exists(train_data_path):
+            new_data.to_csv(train_data_path, mode='a', header=False, index=False)
+        else:
+            new_data.to_csv(train_data_path, mode='w', header=True, index=False)

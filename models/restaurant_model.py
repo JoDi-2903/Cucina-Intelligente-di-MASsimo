@@ -1,7 +1,7 @@
+import math
 import random
 from statistics import fmean
 
-import math
 from mesa import Model
 from mesa.space import SingleGrid
 
@@ -73,6 +73,11 @@ class RestaurantModel(Model):
         # Step through all agents
         self.__step_through_agents()
 
+        # Step through the research agent to evaluate the model
+        if ResearchAgent in self.agents_by_type.keys():
+            research_agent = self.agents_by_type[ResearchAgent][0]
+            research_agent.step()
+
         # Update the time series prediction model (online training) based on the 'real' data of the former step
         satisfaction_rating = (history.rating_history[self.steps - 1] if len(history.rating_history) > 1
                                else Config().rating.rating_default)
@@ -81,11 +86,12 @@ class RestaurantModel(Model):
             customer_count=history.customers_added_history[self.steps - 1],
             satisfaction_rating=satisfaction_rating
         )
-
-        # Step through the research agent to evaluate the model
-        if ResearchAgent in self.agents_by_type.keys():
-            research_agent = self.agents_by_type[ResearchAgent][0]
-            research_agent.step()
+        self.lstm_model.save_training_data(
+            last_step=self.steps - 1,
+            customer_agents_count=history.num_customer_agents_history[self.steps - 1],
+            satisfaction_rating=satisfaction_rating
+        )
+        print(f"DEBUG: num_customer_agents_history: {history.num_customer_agents_history}")
 
         # Log the results of the current step
         total_time_spent = history.total_time_spent_history[-1]
