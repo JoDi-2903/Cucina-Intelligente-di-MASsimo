@@ -19,7 +19,7 @@ class LSTMModel:
            - self.customer_count_history: dictionary with keys as timestep indices and values as visitor counts
            - self.rating_history: dictionary with keys as timestep indices and values as ratings
         """
-        self.window_size = Config().run.retrain_interval
+        self.window_size = Config().run.full_day_cycle_period - 1  # Number of timesteps to consider for training and prediction
         self.feature_dim = 2  # Two features: visitor count and rating
         self.customer_count_history: dict[int, int] = {}  # Dict to store visitor counts over time
         self.rating_history: dict[int, float] = {}  # Dict to store past ratings
@@ -44,34 +44,46 @@ class LSTMModel:
         :param n: Number of time steps to forecast
         :return: List with n predicted visitor counts (e.g., [4, 5, 3, 4, ...])
         """
-        # If fewer than window_size values are available, pad both visitor counts and ratings with the first observed values.
+        # Ensure there are enough values for the input window.
         if len(customer_added_history) < self.window_size:
+            logger.info(f"Insufficient history for prediction. Padding with first value. len(customer_added_history): {len(customer_added_history)}, window_size: {self.window_size}")
             pad_length = self.window_size - len(customer_added_history)
-            pad_visitor = [customer_added_history] * pad_length
-            pad_rating = [rating_history] * pad_length
+            # Use the first value for padding.
+            pad_visitor = [customer_added_history[0]] * pad_length
+            pad_rating = [rating_history[0]] * pad_length
             customer_added_history = pad_visitor + customer_added_history
             rating_history = pad_rating + rating_history
+            logger.info(f"Padding input history with {pad_length} values.")
         else:
-            # Only take the most recent window_size values
+            # Use only the last window_size values.
             customer_added_history = customer_added_history[-self.window_size:]
             rating_history = rating_history[-self.window_size:]
+            logger.info(f"Using the last {self.window_size} values for input. customer_added_history: {customer_added_history}, rating_history: {rating_history}")
 
-        # Create the input for the model: shape (1, window_size, 2)
-        # Each timestep contains [visitor count, corresponding rating]
+        # Create the input array with shape (1, window_size, feature_dim)
         current_input = np.array([[[v, r] for v, r in zip(customer_added_history, rating_history)]])
 
         predictions = []
-        # For future time steps, we will use the last known rating as the constant feature for rating.
-        constant_rating = current_input[0, -1, 1]
 
-        # Iterative prediction: After each forecast step, update the input sequence with the predicted visitor count.
+        # Iterative forecasting: Update the input sequence after each prediction
         for _ in range(n):
             pred = self.model.predict(current_input, verbose=0)
             pred_value = pred[0][0]
             predictions.append(int(round(pred_value)))
-            # Create new step with predicted visitor count and constant rating
-            new_step = np.array([[pred_value, constant_rating]])
-            # Update the current input by removing the oldest timestep and appending the new step
+
+            # Dynamically update the rating value:
+            # If enough values are available, extrapolate the trend of the last two ratings.
+            if current_input.shape[1] > 1:
+                last_rating = current_input[0, -1, 1]
+                prev_rating = current_input[0, -2, 1]
+                delta_rating = last_rating - prev_rating
+                new_rating = last_rating + delta_rating
+            else:
+                new_rating = current_input[0, -1, 1]
+
+            # New timestep with the predicted visitor count and the updated rating.
+            new_step = np.array([[pred_value, new_rating]])
+            # Shorten the current input sequence by the oldest timestep and append the new one.
             current_input = np.concatenate((current_input[:, 1:, :], new_step.reshape(1, 1, self.feature_dim)), axis=1)
 
         logger.info(f"Forecasted {n} steps ahead. Predicted visitor counts: {predictions}")
@@ -104,12 +116,12 @@ class LSTMModel:
 
         # Check how many timesteps we have in total
         all_steps = sorted(self.customer_count_history.keys())
-        if len(all_steps) < self.window_size + 1:
+        if len(all_steps) < self.window_size-1:
             # Not enough data to train
             return
 
-        # Take only the last (window_size + 1) timesteps
-        recent_steps = all_steps[-(self.window_size + 1):]
+        # Take only the last (window_size-1) timesteps
+        recent_steps = all_steps[-(self.window_size-1):]
         # Separate the timesteps into input range and target step
         input_steps = recent_steps[:-1]
         target_step = recent_steps[-1]
