@@ -40,7 +40,10 @@
   "Run": {
     "step_amount": 1440,
     "full_day_cycle_period": 144,
-    "retrain_interval": 6,
+    "window_size": 143,
+    "retrain_interval": 144,
+    "pretrain_epochs": 5,
+    "overwrite_lstm_training_dataset": false,
     "endless_mode": false
   }
 }
