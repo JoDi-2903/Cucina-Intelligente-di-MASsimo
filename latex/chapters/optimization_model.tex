@@ -91,3 +91,31 @@ Dabei:
 \end{enumerate}
 
 Diese mathematische Formulierung deckt die Anforderungen des Problems ab und dient als präzise Grundlage für die Implementierung eines Optimierungsmodells zur Schichtplanung in Python.
+
+
+\begin{align*}
+    r = round(max(r_{min}, min(r_{max}, r_{max} - \alpha \cdot \text{exceedance} - \beta \cdot \text{error} + c)), 2)
+\end{align*}
+
+\begin{longtable}{|l|p{0.8\linewidth}|}
+    \hline
+    \textbf{Variable} & \textbf{Bedeutung} \\
+    \hline
+    $r$ & finale Bewertung\\
+    \hline
+    $r_{min}$ & minimal mögliche Bewertung\\
+    \hline
+    $r_{max}$ & maximal mögliche Bewertung\\
+    \hline
+    $\alpha$ & Gewichtung der Wartezeitstrafe\\
+    \hline
+    exceedance & Quotient aus der tatsächlichen Wartezeit und der angegebenen maximalen Zeit (nur bei Überschreitung, sonst 0)\\
+    \hline
+    $\beta$ & Gewichtung für fehlerhafte Bestellungen\\
+    \hline
+    error & zufällige Fehlerquote\\
+    \hline
+    $c$ & zufällige Bewertungsvariabilität abhängig von der Gruppengröße\\
+    \hline
+\end{longtable}
+
