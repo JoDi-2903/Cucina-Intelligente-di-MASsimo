@@ -263,18 +263,16 @@ class ManagerAgent(Agent):
             the higher the employee's salary.
         """
         # Decision variables
-        # predicted_visitors: list[int] = self.model.lstm_model.forecast(
-        #     customer_added_history=history.customers_added_history,
-        #     rating_history=history.rating_history,
-        #     n=Config().run.full_day_cycle_period,
-        # )
-        print(f"DEBUG: step: {self.model.steps}")
         if self.model.steps == 1:
-            # For the first prediction don't use LSTM model but a simple heuristic based on 80% of the grid size
-            predicted_visitors = [int(round(0.8 * Config().restaurant.grid_height * Config().restaurant.grid_width))] * Config().run.full_day_cycle_period
+            if Config().run.use_heuristic_for_first_step_prediction:
+                # For the first prediction don't use LSTM model but a simple heuristic based on 80% of the grid size
+                predicted_visitors = [int(round(0.8 * Config().restaurant.grid_height * Config().restaurant.grid_width))] * Config().run.full_day_cycle_period
+            else:
+                # Alternative approach: Create synthetic input with average values
+                # Note: Although this approach provides a good approximation for the first 144 steps, it substantially reduces the prediction quality of all further predictions due to the constant synthetic data in the history
+                predicted_visitors: list[int] = self.model.lstm_model.forecast(n=Config().run.full_day_cycle_period, first_step=True)
         else:
             predicted_visitors: list[int] = self.model.lstm_model.forecast(n=Config().run.full_day_cycle_period)
-        print(f"DEBUG: Predicted visitors (len: {len(predicted_visitors)}): {predicted_visitors}")
         history.add_predicted_customer_agents_growth(predicted_visitors)
         available_service_agents = list(self.model.agents_by_type[ServiceAgent])
 

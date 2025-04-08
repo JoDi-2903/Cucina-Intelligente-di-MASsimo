@@ -55,7 +55,6 @@ class LSTMModel:
         # If a pretraining CSV file is provided, perform pretraining using historical data.
         if pretrained_csv_path is not None:
             self.pretrain(pretrained_csv_path, pretrain_epochs)
-            logger.info("Finished model pretraining.")
     
     def normalize_data(self, customer_count: int, satisfaction_rating: float) -> tuple[float, float]:
         """
@@ -145,7 +144,7 @@ class LSTMModel:
         self.model.fit(X, Y, epochs=epochs, verbose=1)
         logger.info("Pretraining completed.")
 
-    def forecast(self, n: int) -> list[int]:
+    def forecast(self, n: int, first_step: bool = False) -> list[int]:
         """
         Forecast the visitor counts for the next n timesteps.
     
@@ -154,28 +153,51 @@ class LSTMModel:
     
         Parameters:
             n (int): Number of future timesteps to forecast.
+            first_step (bool): If True, enables forecasting immediately after pretraining
+                without requiring history data. Default is False.
     
         Returns:
             List[int]: A list of predicted visitor counts for each of the next n timesteps.
         """
+        # Check if we have enough historical data
         all_steps = sorted(self.customer_count_history.keys())
-        if len(all_steps) < self.window_size:
-            logger.warning("Not enough data to make a forecast.")
-            return []
-    
-        # Build the initial window with normalized values
-        recent_steps = all_steps[-self.window_size:]
-        input_seq = []
-        for s in recent_steps:
-            if s not in self.rating_history:
-                logger.warning(f"Missing rating for timestep {s}, cannot forecast.")
+
+        # Handle first step prediction when history is not available yet
+        if first_step and len(all_steps) < self.window_size:
+            logger.info("Using pretrained model for initial forecast.")
+            # Create synthetic input with average values
+            input_seq = []
+
+            # For the initial prediction, we use a balanced starting point
+            # Using middle values from our expected ranges
+            avg_count = (self.max_customer_count + self.min_customer_count) / 2
+            avg_rating = (self.max_satisfaction_rating + self.min_satisfaction_rating) / 2
+
+            # Normalize these average values
+            norm_count, norm_rating = self.normalize_data(avg_count, avg_rating)
+
+            # Create a sequence of the same values to start with
+            for _ in range(self.window_size):
+                input_seq.append([norm_count, norm_rating])
+        else:
+            # Regular case: we need sufficient history
+            if len(all_steps) < self.window_size:
+                logger.warning("Not enough data to make a forecast.")
                 return []
-            # Normalize the input data
-            norm_count, norm_rating = self.normalize_data(
-                self.customer_count_history[s], 
-                self.rating_history[s]
-            )
-            input_seq.append([norm_count, norm_rating])
+
+            # Build the initial window with normalized values from actual history
+            recent_steps = all_steps[-self.window_size:]
+            input_seq = []
+            for s in recent_steps:
+                if s not in self.rating_history:
+                    logger.warning(f"Missing rating for timestep {s}, cannot forecast.")
+                    return []
+                # Normalize the input data
+                norm_count, norm_rating = self.normalize_data(
+                    self.customer_count_history[s], 
+                    self.rating_history[s]
+                )
+                input_seq.append([norm_count, norm_rating])
     
         # Prepare input data with shape (1, window_size, feature_dim)
         input_data = np.array([input_seq])
