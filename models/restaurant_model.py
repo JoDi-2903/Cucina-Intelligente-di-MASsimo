@@ -83,15 +83,15 @@ class RestaurantModel(Model):
                                else Config().rating.rating_default)
         self.lstm_model.update(
             last_step=self.steps - 1,
-            customer_count=history.customers_added_history[self.steps - 1],
+            customer_count=history.num_customer_agents_history[self.steps - 1],
             satisfaction_rating=satisfaction_rating
         )
-        self.lstm_model.save_training_data(
-            last_step=self.steps - 1,
-            customer_agents_count=history.num_customer_agents_history[self.steps - 1],
-            satisfaction_rating=satisfaction_rating
-        )
-        print(f"DEBUG: num_customer_agents_history: {history.num_customer_agents_history}")
+        if Config().run.overwrite_lstm_training_dataset:
+            self.lstm_model.save_training_data(
+                last_step=self.steps - 1,
+                customer_agents_count=history.num_customer_agents_history[self.steps - 1],
+                satisfaction_rating=satisfaction_rating
+            )
 
         # Log the results of the current step
         total_time_spent = history.total_time_spent_history[-1]
