@@ -14,6 +14,7 @@ class RunSettings:
             self.__window_size: int = config["window_size"]
             self.__retrain_interval: int = config["retrain_interval"]
             self.__pretrain_epochs: int = config["pretrain_epochs"]
+            self.__use_heuristic_for_first_step_prediction: bool = bool(config["use_heuristic_for_first_step_prediction"])
             self.__overwrite_lstm_training_dataset: bool = bool(config["overwrite_lstm_training_dataset"])
             self.__endless_mode: bool = bool(config["endless_mode"])
         else:
@@ -40,9 +41,13 @@ class RunSettings:
         return self.__pretrain_epochs
 
     @property
-    def overwrite_lstm_training_dataset(self) -> int:
+    def use_heuristic_for_first_step_prediction(self) -> bool:
+        return self.__use_heuristic_for_first_step_prediction
+
+    @property
+    def overwrite_lstm_training_dataset(self) -> bool:
         return self.__overwrite_lstm_training_dataset
 
     @property
-    def endless_mode(self) -> int:
+    def endless_mode(self) -> bool:
         return self.__endless_mode

@@ -43,6 +43,7 @@
     "window_size": 143,
     "retrain_interval": 144,
     "pretrain_epochs": 5,
+    "use_heuristic_for_first_step_prediction": true,
     "overwrite_lstm_training_dataset": false,
     "endless_mode": false
   }
