@@ -50,18 +50,44 @@ Dabei:
           Jeder Agent darf maximal $M_a = 48$ Zeitschritte pro Tag arbeiten:
           $$\sum_{t \in T} x_{a,t} \leq M_a, \quad \forall a \in A$$
     \item \textbf{Mapping der Service Agents auf Schichten}\\
-          Wenn ein Agent in einer Schicht arbeitet, muss die binäre Variable $x$ den selben Wert haben wie die Schicht.
-          \begin{itemize}
-              \item Gurobi Syntax: $ y_{a,s} = 1 \Rightarrow x_{a,t} = 1, \quad \forall t \in S $
-              \item PyOptInterface Syntax: $ y_{a,s} \leq x_{a,t}, \quad \forall t \in S $
-          \end{itemize}
-          Die umgekehrte Implikation $ x_{a,t} = 1 , \forall t \in S \implies y_{a,s} = 1 $ ist nur dann schlüssig, wenn die Aktivierung aller Zeitschritte innerhalb einer Schicht notwendigerweise bedeutet, dass die gesamte Schicht aktiviert ist. Da $y_{a,s}$ die Aktivierung der gesamten Schicht beschreibt, ist die umgekehrte Implikation logisch konsistent: Wenn alle Zeitschritte aktiv sind ($x_{a,t} = 1 \forall t$), muss auch die gesamte Schicht aktiv sein ($y_{a,s} = 1$).
+        Wenn ein Agent in einer Schicht arbeitet, muss die binäre Variable $x$ für den Zeitschritt den selben Wert haben wie die Variable $y$ für die Schicht.
+        Daraus ergibt sich folgende Implikation: $ y_{a,s} = 1 \Rightarrow x_{a,t} = 1, \quad \forall t \in T , s \in S $.\\
+        Gleichzeitig muss die umgekehrte Implikation gelten, denn für jeden Zeitschritt, an dem der Service Agent arbeitet, ist er der zugehörigen Schicht zugewiesen: $ x_{a,t}  = 1 \Rightarrow y_{a,s} = 1, \quad \forall t \in T , s \in S$.\\
+        Durch eine Und-Verknüpfung können die beiden Gleichungen anschließend kombiniert werden.
+
+        Da Implikationen in der PyOptInterface-Syntax nicht möglich sind, muss die Formel umformuliert werden:
+        \begin{align*}
+            c_1 & = y_{a,s} \leq x_{a,t}, & \quad \forall t \in T , s \in S\\
+            c_2 & = x_{a,t} \leq y_{a,s}, & \quad \forall t \in T , s \in S\\
+            c_{ges} & = c_1 \land c_2\\
+            y_{a,s} \leq x_{a,t} & \land x_{a,t} \leq y_{a,s}, & \quad \forall t \in T , s \in S\\
+            y_{a,s} - x_{a,t} \leq 0 & \land x_{a,t} - y_{a,s} \leq 0, & \quad \forall t \in T , s \in S
+        \end{align*}
+
+        Dass die logische Und-Verknüpfung korrekt ist, zeigt folgende Tabelle (ausgehend für einen willkürlichen Agenten $a$):
+        \begin{center}
+            \begin{tabular}{|c|c|c||c|c||c|}
+                \hline
+                $s$ & $t$ & Soll-Wert & $c_1$ & $c_2$ & $c_1 \land c_2$ \\
+                \hline
+                \hline
+                0 & 0 & 1 & 1 & 1 & 1 \\
+                \hline
+                0 & 1 & 0 & 1 & 0 & 0 \\
+                \hline
+                1 & 0 & 0 & 0 & 1 & 0 \\
+                \hline
+                1 & 1 & 1 & 1 & 1 & 1 \\
+                \hline
+            \end{tabular}
+        \end{center}
+
     \item \textbf{Maximale Anzahl an Schichten}\\
-          Jeder Agent darf maximal $S_a = 3$ Schichten pro Tag übernehmen:
-          $$\sum_{s \in S} y_{a,s} \leq S_a,\quad\forall a\in A$$
+        Jeder Agent darf maximal $S_a = 3$ Schichten pro Tag übernehmen:
+        $$\sum_{s \in S} y_{a,s} \leq S_a,\quad\forall a\in A$$
     \item \textbf{Binäre Entscheidungsvariablen}\\
-          Die Variablen müssen binär sein:
-          $$x_{a,t}, y_{a,s} \in \{0,1\},\quad\forall a,t,s$$
+        Die Variablen müssen binär sein:
+        $$x_{a,t}, y_{a,s} \in \{0,1\},\quad\forall a,t,s$$
 \end{enumerate}
 
 Diese mathematische Formulierung deckt die Anforderungen des Problems ab und dient als präzise Grundlage für die Implementierung eines Optimierungsmodells zur Schichtplanung in Python.
