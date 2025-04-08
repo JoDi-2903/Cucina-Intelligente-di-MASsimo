@@ -12,125 +12,263 @@ logger = machine_learning_logger
 
 
 class LSTMModel:
-    def __init__(self):
+    def __init__(self, pretrained_csv_path: str = None, pretrain_epochs: int = 10):
         """
-        Initialization method for the LSTM model.
+        Initialize the LSTM model.
+    
+        The model takes two features per timestep (visitor count and satisfaction rating)
+        and predicts two outputs:
+          - visitor count for the next timestep,
+          - satisfaction rating for the next timestep.
+    
+        This implementation includes data normalization to improve LSTM performance.
+    
+        Parameters:
+            pretrained_csv_path (str): Optional path to a CSV file for pretraining.
+                Expected CSV format: "step, customer_count, satisfaction_rating".
+            pretrain_epochs (int): Number of epochs to use during the pretraining phase.
+        """
+        self.window_size = Config().run.window_size
+        self.retrain_interval = Config().run.retrain_interval
+        self.feature_dim = 2  # Two features: visitor count and satisfaction rating
+        self.customer_count_history: dict[int, int] = {}  # To store visitor counts over time
+        self.rating_history: dict[int, float] = {}  # To store satisfaction ratings over time
         
-        The model receives two features per timestep (visitor count and satisfaction score).
-       
-        Two internal histories are maintained:
-           - self.customer_count_history: dictionary with keys as timestep indices and values as visitor counts
-           - self.rating_history: dictionary with keys as timestep indices and values as ratings
-        """
-        self.window_size = Config().run.retrain_interval
-        self.feature_dim = 2  # Two features: visitor count and rating
-        self.customer_count_history: dict[int, int] = {}  # Dict to store visitor counts over time
-        self.rating_history: dict[int, float] = {}  # Dict to store past ratings
-
-        # Build a larger LSTM model with two LSTM layers and dropout for regularization
+        # Parameters for data normalization
+        self.max_customer_count = Config().restaurant.grid_width * Config().restaurant.grid_height
+        self.min_customer_count = 0
+        self.max_satisfaction_rating = float(Config().rating.rating_max)
+        self.min_satisfaction_rating = float(Config().rating.rating_min)
+    
+        # Build the LSTM model with two LSTM layers and dropout for regularization.
+        # The final Dense layer outputs 2 values: [visitor_count, rating]
         self.model = Sequential([
             LSTM(64, return_sequences=True, input_shape=(self.window_size, self.feature_dim)),
             Dropout(0.2),
             LSTM(32),
             Dense(16, activation='relu'),
-            Dense(1)
+            Dense(2)
         ])
         self.model.compile(optimizer='adam', loss='mean_squared_error')
         logger.info("LSTM model initialized.")
-
-    def forecast(self, customer_added_history: list[int], rating_history: list[float], n: int) -> list[int]:
+    
+        # If a pretraining CSV file is provided, perform pretraining using historical data.
+        if pretrained_csv_path is not None:
+            self.pretrain(pretrained_csv_path, pretrain_epochs)
+            logger.info("Finished model pretraining.")
+    
+    def normalize_data(self, customer_count: int, satisfaction_rating: float) -> tuple[float, float]:
         """
-        Forecast the visitor count for the next n time steps.
-        For the forecast beyond the known history, the rating is held constant to the last observed rating.
-        :param customer_added_history: List of past visitor counts (e.g., [t1: count1, t2: count2, ...])
-        :param rating_history: List of past ratings (e.g., [t1: rating1, t2: rating2, ...])
-        :param n: Number of time steps to forecast
-        :return: List with n predicted visitor counts (e.g., [4, 5, 3, 4, ...])
+        Normalize the input data to the range [0, 1].
+        
+        Parameters:
+            customer_count (int): Raw visitor count.
+            satisfaction_rating (float): Raw satisfaction rating.
+            
+        Returns:
+            tuple[float, float]: Normalized (customer_count, satisfaction_rating).
         """
-        # If fewer than window_size values are available, pad both visitor counts and ratings with the first observed values.
-        if len(customer_added_history) < self.window_size:
-            pad_length = self.window_size - len(customer_added_history)
-            pad_visitor = [customer_added_history] * pad_length
-            pad_rating = [rating_history] * pad_length
-            customer_added_history = pad_visitor + customer_added_history
-            rating_history = pad_rating + rating_history
-        else:
-            # Only take the most recent window_size values
-            customer_added_history = customer_added_history[-self.window_size:]
-            rating_history = rating_history[-self.window_size:]
+        norm_count = (customer_count - self.min_customer_count) / (self.max_customer_count - self.min_customer_count)
+        norm_rating = (satisfaction_rating - self.min_satisfaction_rating) / (self.max_satisfaction_rating - self.min_satisfaction_rating)
+        
+        # Clip values to ensure they stay in [0, 1] range
+        norm_count = max(0.0, min(1.0, norm_count))
+        norm_rating = max(0.0, min(1.0, norm_rating))
+        
+        return norm_count, norm_rating
+    
+    def denormalize_data(self, norm_customer_count: float, norm_satisfaction_rating: float) -> tuple[int, float]:
+        """
+        Denormalize data from [0, 1] range back to original scale.
+        
+        Parameters:
+            norm_customer_count (float): Normalized visitor count (0-1).
+            norm_satisfaction_rating (float): Normalized satisfaction rating (0-1).
+            
+        Returns:
+            tuple[int, float]: (customer_count as int, satisfaction_rating as float).
+        """
+        customer_count = norm_customer_count * (self.max_customer_count - self.min_customer_count) + self.min_customer_count
+        satisfaction_rating = norm_satisfaction_rating * (self.max_satisfaction_rating - self.min_satisfaction_rating) + self.min_satisfaction_rating
+        
+        # Round customer count to nearest integer
+        customer_count_int = int(round(customer_count))
+        
+        return customer_count_int, satisfaction_rating
 
-        # Create the input for the model: shape (1, window_size, 2)
-        # Each timestep contains [visitor count, corresponding rating]
-        current_input = np.array([[[v, r] for v, r in zip(customer_added_history, rating_history)]])
+    def pretrain(self, csv_path: str, epochs: int = 10) -> None:
+        """
+        Pretrain the model using historical data from a CSV file.
+    
+        The CSV file is expected to have rows with format:
+            "step, customer_count, satisfaction_rating".
+        This method normalizes the data before training to improve model performance.
+    
+        Parameters:
+            csv_path (str): Path to the CSV file containing pretraining data.
+            epochs (int): Number of training epochs during pretraining.
+        """
+        try:
+            # Load data from CSV. Assumes the first row is a header.
+            data = np.loadtxt(csv_path, delimiter=',', skiprows=1)
+        except Exception as e:
+            logger.warning(f"Error loading pretraining data from {csv_path}: {e}")
+            return
+    
+        # Sort the data by step (assumed to be the first column)
+        data = data[np.argsort(data[:, 0])]
+        
+        # Extract features from columns 1 and 2: customer_count and satisfaction_rating
+        raw_features = data[:, 1:3]  # shape: (num_data_points, 2)
+        
+        # Normalize the data
+        normalized_features = np.zeros_like(raw_features, dtype=np.float32)
+        for i in range(raw_features.shape[0]):
+            normalized_features[i, 0], normalized_features[i, 1] = self.normalize_data(
+                raw_features[i, 0], raw_features[i, 1]
+            )
+    
+        # Create sliding windows for training
+        num_samples = normalized_features.shape[0] - self.window_size
+        if num_samples <= 0:
+            logger.warning("Not enough data in CSV for pretraining.")
+            return
+    
+        X, Y = [], []
+        for i in range(num_samples):
+            X.append(normalized_features[i : i + self.window_size])
+            Y.append(normalized_features[i + self.window_size])
+        X = np.array(X)
+        Y = np.array(Y)
+    
+        logger.info(f"Starting pretraining with {num_samples} normalized samples for {epochs} epochs...")
+        self.model.fit(X, Y, epochs=epochs, verbose=1)
+        logger.info("Pretraining completed.")
 
-        predictions = []
-        # For future time steps, we will use the last known rating as the constant feature for rating.
-        constant_rating = current_input[0, -1, 1]
-
-        # Iterative prediction: After each forecast step, update the input sequence with the predicted visitor count.
+    def forecast(self, n: int) -> list[int]:
+        """
+        Forecast the visitor counts for the next n timesteps.
+    
+        This function normalizes input data before prediction and denormalizes
+        the output to ensure proper scaling.
+    
+        Parameters:
+            n (int): Number of future timesteps to forecast.
+    
+        Returns:
+            List[int]: A list of predicted visitor counts for each of the next n timesteps.
+        """
+        all_steps = sorted(self.customer_count_history.keys())
+        if len(all_steps) < self.window_size:
+            logger.warning("Not enough data to make a forecast.")
+            return []
+    
+        # Build the initial window with normalized values
+        recent_steps = all_steps[-self.window_size:]
+        input_seq = []
+        for s in recent_steps:
+            if s not in self.rating_history:
+                logger.warning(f"Missing rating for timestep {s}, cannot forecast.")
+                return []
+            # Normalize the input data
+            norm_count, norm_rating = self.normalize_data(
+                self.customer_count_history[s], 
+                self.rating_history[s]
+            )
+            input_seq.append([norm_count, norm_rating])
+    
+        # Prepare input data with shape (1, window_size, feature_dim)
+        input_data = np.array([input_seq])
+        forecasted_counts = []
+    
+        # Iteratively forecast n timesteps
         for _ in range(n):
-            pred = self.model.predict(current_input, verbose=0)
-            pred_value = pred[0][0]
-            predictions.append(int(round(pred_value)))
-            # Create new step with predicted visitor count and constant rating
-            new_step = np.array([[pred_value, constant_rating]])
-            # Update the current input by removing the oldest timestep and appending the new step
-            current_input = np.concatenate((current_input[:, 1:, :], new_step.reshape(1, 1, self.feature_dim)), axis=1)
-
-        logger.info(f"Forecasted {n} steps ahead. Predicted visitor counts: {predictions}")
-        return predictions
+            prediction = self.model.predict(input_data, verbose=0)
+            norm_next_count = prediction[0, 0]
+            norm_next_rating = prediction[0, 1]
+            
+            # Denormalize the predictions
+            next_visitor_count, next_rating = self.denormalize_data(
+                norm_next_count, 
+                norm_next_rating
+            )
+            
+            # Ensure predictions are within valid ranges
+            next_visitor_count = max(0, next_visitor_count)  # No negative visitors
+            next_rating = max(self.min_satisfaction_rating, 
+                             min(next_rating, self.max_satisfaction_rating))
+            
+            forecasted_counts.append(next_visitor_count)
+    
+            # Update input sequence: remove oldest element and append new prediction
+            norm_count, norm_rating = self.normalize_data(next_visitor_count, next_rating)
+            input_seq = input_seq[1:] + [[norm_count, norm_rating]]
+            input_data = np.array([input_seq])
+    
+        logger.info(f"Predicted visitor counts for next {n} timesteps: {forecasted_counts}")
+        return forecasted_counts
 
     def update(self, last_step: int, customer_count: int, satisfaction_rating: float) -> None:
         """
-        Update the model with the actual visitor count and rating received in the latest timestep.
-
+        Update the model with new observations and perform online training.
+    
+        Data is normalized before training to improve model performance.
+    
         Parameters:
-          - last_step: Index of the latest timestep for which real simulation data is available.
-          - customer_count: The number of new customer agents in the restaurant for the current timestep
-          - satisfaction_rating: The observed satisfaction rating
-
+            last_step (int): Latest timestep index.
+            customer_count (int): Observed visitor count.
+            satisfaction_rating (float): Observed satisfaction rating.
+        
         The method stores both counts and ratings in dictionaries keyed by last_step.
         Once enough data points (window_size + 1) exist, a training batch is constructed using the most recent window_size entries for both counts and ratings.
-        The model is trained on this single batch.
 
         Note: Online learning in machine learning refers to a training paradigm where the model learns incrementally from data as it becomes available, 
             rather than relying on a pre-collected and fixed dataset (as in offline or batch learning). In the context of Long Short-Term Memory (LSTM) networks,
             online learning becomes particularly relevant for applications involving streaming or sequential data, such as time series forecasting.
         """
-        # Store observations in dictionaries
+        # Store the raw data in history for easier retrieval
         self.customer_count_history[last_step] = customer_count
         self.rating_history[last_step] = satisfaction_rating
-
+    
         # Check if it is time for a new training, based on the interval specified in config
-        if last_step % Config().run.retrain_interval != 0:
+        if last_step % self.retrain_interval != 0:
             return
-
+    
         # Check how many timesteps we have in total
         all_steps = sorted(self.customer_count_history.keys())
         if len(all_steps) < self.window_size + 1:
             # Not enough data to train
             return
-
+    
         # Take only the last (window_size + 1) timesteps
         recent_steps = all_steps[-(self.window_size + 1):]
         # Separate the timesteps into input range and target step
         input_steps = recent_steps[:-1]
         target_step = recent_steps[-1]
-
+    
         # Collect input features (visitor counts, ratings)
         input_seq = []
-        input_ratings = []
         for s in input_steps:
             if s not in self.rating_history:
                 logger.warning(f"Missing rating for timestep {s}, skipping update.")
                 return
-            input_seq.append(self.customer_count_history[s])
-            input_ratings.append(self.rating_history[s])
-
+            # Normalize input data
+            norm_count, norm_rating = self.normalize_data(
+                self.customer_count_history[s], 
+                self.rating_history[s]
+            )
+            input_seq.append([norm_count, norm_rating])
+    
+        # Normalize target data
+        norm_target_count, norm_target_rating = self.normalize_data(
+            self.customer_count_history[target_step], 
+            self.rating_history[target_step]
+        )
+    
         # Prepare training batch
-        x_train = np.array([[[cnt, rt] for cnt, rt in zip(input_seq, input_ratings)]])
-        y_train = np.array([[self.customer_count_history[target_step]]])
-
+        x_train = np.array([input_seq])  # Shape: (1, window_size, feature_dim)
+        y_train = np.array([[norm_target_count, norm_target_rating]])
+    
         # Train the model on the new batch
         loss = self.model.train_on_batch(x_train, y_train)
         logger.info(f"Model updated at step {last_step}. Training loss: {loss:.4f}")
