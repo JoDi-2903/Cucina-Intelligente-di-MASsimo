@@ -9,7 +9,7 @@
     "parallel_preparation": 5
   },
   "Weights": {
-    "time_exceeding": 0.05,
+    "time_exceeding": 2,
     "order_error": 2,
     "rating_profit": 0.2,
     "rating_time_spent": 1.0,

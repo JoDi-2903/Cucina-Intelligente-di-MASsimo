@@ -137,6 +137,11 @@ class ManagerAgent(Agent):
         # Solve the optimization model using Highs
         model.optimize()
 
+        if model.get_model_attribute(poi.ModelAttribute.TerminationStatus) != poi.TerminationStatusCode.OPTIMAL:
+            raise Exception(
+                f"Optimization failed with status: {model.get_model_attribute(poi.ModelAttribute.TerminationStatus)}"
+            )
+
         # Retrieve the schedule for each agent across all time slots.
         agent_schedules = {}
         for agent in agents:

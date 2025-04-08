@@ -89,7 +89,7 @@ class CustomerAgent(Agent):
         ####### Rating Variability
 
         # Introduce additional variability to the final rating
-        rating_variability = random.uniform(-0.5, 0.5) * self.num_people
+        rating_variability = random.uniform(-1, 1) * self.num_people
 
         ####### Final Rating
 
