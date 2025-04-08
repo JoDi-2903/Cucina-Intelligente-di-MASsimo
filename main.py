@@ -19,7 +19,7 @@ def run_restaurant():
     from models.restaurant_model import RestaurantModel
 
     # Create the restaurant model and the machine learning model
-    lstm_model = LSTMModel()
+    lstm_model = LSTMModel(pretrained_csv_path='ml/train_data.csv', pretrain_epochs=Config().run.pretrain_epochs)
     restaurant = RestaurantModel(lstm_model)
 
     # Iterate over the steps of the restaurant model

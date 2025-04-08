@@ -268,7 +268,13 @@ class ManagerAgent(Agent):
         #     rating_history=history.rating_history,
         #     n=Config().run.full_day_cycle_period,
         # )
-        predicted_visitors = [30] * Config().run.full_day_cycle_period  # TODO FIX LSTM BUG
+        print(f"DEBUG: step: {self.model.steps}")
+        if self.model.steps == 1:
+            # For the first prediction don't use LSTM model but a simple heuristic based on 80% of the grid size
+            predicted_visitors = [int(round(0.8 * Config().restaurant.grid_height * Config().restaurant.grid_width))] * Config().run.full_day_cycle_period
+        else:
+            predicted_visitors: list[int] = self.model.lstm_model.forecast(n=Config().run.full_day_cycle_period)
+        print(f"DEBUG: Predicted visitors (len: {len(predicted_visitors)}): {predicted_visitors}")
         history.add_predicted_customer_agents_growth(predicted_visitors)
         available_service_agents = list(self.model.agents_by_type[ServiceAgent])
 
