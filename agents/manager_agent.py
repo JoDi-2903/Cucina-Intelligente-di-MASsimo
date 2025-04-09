@@ -148,7 +148,7 @@ class ManagerAgent(Agent):
             schedule = []
             for t in range(n_slots):
                 # The model returns values close to 0 or 1.
-                schedule.append(model.get_value(x_vars[(agent, t)]))
+                schedule.append(round(model.get_value(x_vars[(agent, t)])))
             agent_schedules[agent] = schedule
 
         optimal_objective = model.get_obj_value()
