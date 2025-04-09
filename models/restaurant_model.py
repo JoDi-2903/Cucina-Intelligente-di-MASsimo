@@ -1,7 +1,7 @@
-import math
 import random
 from statistics import fmean
 
+import math
 from mesa import Model
 from mesa.space import SingleGrid
 
@@ -181,17 +181,23 @@ class RestaurantModel(Model):
     def get_total_time_spent(self) -> int:
         """ Compute the total time spent for all customers in the model """
         return sum(agent.get_total_time() for agent in
-                   self.agents_by_type[CustomerAgent])
+                   self.agents_by_type[CustomerAgent] if agent.state != CustomerAgentState.DONE)
 
     def get_waiting_time_spent(self) -> int:
         """ Compute the total time spent for all customers in the model """
         return sum(agent.waiting_time for agent in
-                   self.agents_by_type[CustomerAgent])
+                   self.agents_by_type[CustomerAgent] if agent.state != CustomerAgentState.DONE)
 
-    def get_total_rating(self) -> float | None:
+    def get_total_rating(self) -> float:
         """ Compute the total rating for all customers in the model """
-        return fmean(agent.rating for agent in self.agents_by_type[CustomerAgent]
-                     if agent.rating is not None)
+        ratings = [agent.rating for agent in self.agents_by_type[CustomerAgent] if
+                   agent.state == CustomerAgentState.DONE]
+
+        # If no ratings are available, return default rating
+        if len(ratings) == 0:
+            return Config().rating.rating_default
+
+        return fmean(ratings)
 
     def __step_through_agents(self):
         """Step through all agents in the model."""

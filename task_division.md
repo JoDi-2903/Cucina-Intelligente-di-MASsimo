@@ -7,6 +7,7 @@
 - Reports (LLM)
 - Konfiguration
 - Präsentation
+- Spieltheorie
 
 ## Jannis
 - Agents (MESA)
