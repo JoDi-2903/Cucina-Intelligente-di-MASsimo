@@ -46,6 +46,7 @@
     "use_heuristic_for_first_step_prediction": true,
     "overwrite_lstm_training_dataset": false,
     "endless_mode": false,
-    "reject_unservable_customers": true
+    "reject_unservable_customers": true,
+    "clear_old_logs": true
   }
 }

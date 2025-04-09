@@ -1,12 +1,26 @@
 import logging
 import os
+import shutil
 from datetime import datetime as dt
+from data_structures.config.config import Config
 
 # Set the SINGLE_FILE flag to True if you want to log all loggers to a single file
 SINGLE_FILE = False
 
-# Ensure the log directory exists
 log_directory = os.path.join("log")
+
+# Clear old log files
+if Config().run.clear_old_logs:
+    if os.path.exists(log_directory):
+        shutil.rmtree(log_directory)
+
+    # Also clear the reports directory if it exists
+    if os.path.exists("reports"):
+        shutil.rmtree("reports")
+
+
+# Ensure the log directory exists
+
 if not os.path.exists(log_directory):
     os.makedirs(log_directory)
 

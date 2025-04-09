@@ -18,6 +18,7 @@ class RunSettings:
             self.__overwrite_lstm_training_dataset: bool = bool(config["overwrite_lstm_training_dataset"])
             self.__endless_mode: bool = bool(config["endless_mode"])
             self.__reject_unservable_customers: bool = bool(config["reject_unservable_customers"])
+            self.__clear_old_logs: bool = bool(config["clear_old_logs"])
         else:
             raise ValueError("No default values for run settings available.")
 
@@ -56,3 +57,7 @@ class RunSettings:
     @property
     def reject_unservable_customers(self) -> bool:
         return self.__reject_unservable_customers
+
+    @property
+    def clear_old_logs(self) -> bool:
+        return self.__clear_old_logs
