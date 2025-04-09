@@ -55,7 +55,7 @@ class TimeSpentGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
                 x=h.steps_history,
                 y=h.total_waiting_time_history,
                 mode='lines+markers',
-                name="Waiting time spent",
+                name="Food waiting time spent",
                 line=dict(color='red')
             ))
 
@@ -64,7 +64,7 @@ class TimeSpentGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
                 x=h.steps_history,
                 y=avg_waiting_time_history,
                 mode='lines+markers',
-                name="Average waiting time spent",
+                name="Average food waiting time spent",
                 line=dict(color='orange')
             ))
 
