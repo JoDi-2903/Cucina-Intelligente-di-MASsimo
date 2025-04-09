@@ -17,6 +17,7 @@ class RunSettings:
             self.__use_heuristic_for_first_step_prediction: bool = bool(config["use_heuristic_for_first_step_prediction"])
             self.__overwrite_lstm_training_dataset: bool = bool(config["overwrite_lstm_training_dataset"])
             self.__endless_mode: bool = bool(config["endless_mode"])
+            self.__reject_unservable_customers: bool = bool(config["reject_unservable_customers"])
         else:
             raise ValueError("No default values for run settings available.")
 
@@ -51,3 +52,7 @@ class RunSettings:
     @property
     def endless_mode(self) -> bool:
         return self.__endless_mode
+
+    @property
+    def reject_unservable_customers(self) -> bool:
+        return self.__reject_unservable_customers

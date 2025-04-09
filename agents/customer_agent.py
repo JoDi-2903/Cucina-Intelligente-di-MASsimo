@@ -93,17 +93,15 @@ class CustomerAgent(Agent):
 
         ####### Final Rating
 
-        self.rating = round(
-            max(
-                self.rating_min,
-                min(
-                    self.rating_max,
-                    int(self.rating_max - waiting_penalty - order_error_penalty + rating_variability)
-                )
-            ), 2
+        self.rating = max(
+            self.rating_min,
+            min(
+                self.rating_max,
+                int(self.rating_max - waiting_penalty - order_error_penalty + rating_variability)
+            )
         )
         logger.debug(
-            f"Customer {self.unique_id} rating {self.rating:.2f}. num people {self.num_people}, alpha {alpha:.2f}, beta {beta:.2f}, random error {random_error:.2f}, exceedance ratio {exceedance_ratio:.2f}, waiting penalty {waiting_penalty:.2f}, order error penalty {order_error_penalty:.2f}, rating variabilty {rating_variability:.2f}")
+            f"Customer {self.unique_id} rating {self.rating}. num people {self.num_people}, alpha {alpha:.2f}, beta {beta:.2f}, random error {random_error:.2f}, exceedance ratio {exceedance_ratio:.2f}, waiting penalty {waiting_penalty:.2f}, order error penalty {order_error_penalty:.2f}, rating variabilty {rating_variability:.2f}")
 
     def get_global_rating_contribution(self):
         """Return the contribution to the global restaurant rating"""
@@ -158,7 +156,7 @@ class CustomerAgent(Agent):
         return self.food_preparation_time + self.eating_time
 
     def __str__(self):
-        return f"Step {self.model.steps}: CustomerAgent {self.unique_id} with {self.num_people} people in state {self.state}. Time left: {self.time_left}. Current rating: {self.rating:.2f}. Selected dish: {self.dish}"
+        return f"Step {self.model.steps}: Customer {self.unique_id} with {self.num_people} people in state {self.state}. Time left: {self.time_left}. Current rating: {self.rating:.2f}. Selected dish: {self.dish}"
 
     def __leave_restaurant(self):
         """Remove the customer from the restaurant's grid."""

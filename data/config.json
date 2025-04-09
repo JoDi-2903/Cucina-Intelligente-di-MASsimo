@@ -5,11 +5,11 @@
     "rating_max": 5
   },
   "Orders": {
-    "order_correctness": 0.90,
+    "order_correctness": 0.80,
     "parallel_preparation": 5
   },
   "Weights": {
-    "time_exceeding": 2,
+    "time_exceeding": 0.4,
     "order_error": 2,
     "rating_profit": 0.2,
     "rating_time_spent": 1.0,
@@ -45,6 +45,7 @@
     "pretrain_epochs": 5,
     "use_heuristic_for_first_step_prediction": true,
     "overwrite_lstm_training_dataset": false,
-    "endless_mode": false
+    "endless_mode": false,
+    "reject_unservable_customers": true
   }
 }

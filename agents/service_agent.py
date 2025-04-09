@@ -75,7 +75,8 @@ class ServiceAgent(Agent):
 
             # Check if the customer needs to be rejected
             customer = self.model.seat_route[0]
-            if customer.dish.preparation_time + customer.dish.eating_time > customer.time_left:
+            if Config().run.reject_unservable_customers and \
+                customer.dish.preparation_time + customer.dish.eating_time > customer.time_left:
                 customer.state = CustomerAgentState.REJECTED
 
             # Seat the customers that one service agent can serve
