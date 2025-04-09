@@ -46,13 +46,33 @@ class ServiceAgent(Agent):
         """
         Serve the customers that are already seated
         """
+        walked_distance = 0.0
+        walked_capacity = 0
+        customer: CustomerAgent or None = None
         for _ in range(self.remaining_capacity):
             # Break if there are no customers to serve
             if len(self.model.serve_route) == 0:
                 break
 
+            # Get next customer in the serve route and "walk" to them if needed
+            if customer is None:
+                # If no customer is currently being served, get the first customer in the serve route
+                customer = self.model.serve_route[0]
+            else:
+                # If the service agent has already served a customer, the service agent will walk to the next customer which will affect the capacity
+                next_customer = self.model.serve_route[0]
+                walked_distance += self.__walk_to_customer(customer, next_customer)
+                new_walked_capacity = walked_distance // 4
+                if walked_capacity < new_walked_capacity:  # Decrease the capacity by 1 for every 5 units of distance
+                    walked_capacity = new_walked_capacity
+                    self.remaining_capacity -= 1
+                customer = next_customer
+
+            # If the service agent does not have enough capacity after walking, break
+            if self.remaining_capacity == 0:
+                break
+
             # Prepare the food
-            customer = self.model.serve_route[0]
             if customer.food_preparation_time > 1:
                 customer.food_preparation_time -= 1
             else:
@@ -65,6 +85,34 @@ class ServiceAgent(Agent):
 
             logger.info("Step %d: Service agent %d is serving customer %d. Customer is currently %s.",
                         self.model.steps, self.unique_id, customer.unique_id, customer.state)
+
+    def __walk_to_customer(self, customer: CustomerAgent, next_customer: CustomerAgent):
+        """
+        Calculate the distance between the current position of the service agent (current customer) and the next customer.
+        :param customer: The current customer agent that the service agent is serving.
+        :param next_customer: The next customer agent that the service agent will serve.
+        :return: The distance between the two customers.
+        """
+        # Iterate through the grid to find the positions
+        customer_position: tuple[int, int] or None = None
+        next_customer_position: tuple[int, int] or None = None
+        for agent, position in self.model.grid.coord_iter():
+            if agent == customer:
+                customer_position = position
+            elif agent == next_customer:
+                next_customer_position = position
+
+            # Break early if both positions are found
+            if customer_position and next_customer_position:
+                break
+
+        # Check if both positions are found
+        if customer_position is None or next_customer_position is None:
+            return 0.0
+
+        # Calculate the distance between the two positions
+        return ((customer_position[0] - next_customer_position[0]) ** 2 +
+                (customer_position[1] - next_customer_position[1]) ** 2) ** 0.5
 
     def __seat_customers(self):
         """ Seat the customers that one service agent can serve """

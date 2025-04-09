@@ -278,7 +278,7 @@ class ManagerAgent(Agent):
                 predicted_visitors: list[int] = self.model.lstm_model.forecast(n=Config().run.full_day_cycle_period, first_step=True)
         else:
             predicted_visitors: list[int] = self.model.lstm_model.forecast(n=Config().run.full_day_cycle_period)
-        history.add_predicted_customer_agents_growth(predicted_visitors)
+        history.add_predicted_customer_agents(predicted_visitors)
         available_service_agents = list(self.model.agents_by_type[ServiceAgent])
 
         # Optimize the shift schedule

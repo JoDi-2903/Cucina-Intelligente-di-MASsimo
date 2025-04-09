@@ -46,9 +46,9 @@ class AgentsGraphCallbackRegistrar(metaclass=CallbackRegistrarMeta):
             # Add a trace for the number of predicted customers agents
             figure.add_trace(go.Scatter(
                 x=h.steps_history,
-                y=h.predicted_customer_growth_history,
+                y=h.predicted_customer_agents_history,
                 mode='lines+markers',
-                name="Predicted customer agents growth",
+                name="Predicted customer agents",
                 line=dict(color='cyan')
             ))
 
