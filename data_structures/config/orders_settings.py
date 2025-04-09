@@ -10,14 +10,9 @@ class OrdersSettings:
         """
         if config is not None:
             self.__order_correctness: float = config["order_correctness"]
-            self.__parallel_preparation: int = config["parallel_preparation"]
         else:
             raise ValueError("No default values for orders settings available.")
 
     @property
     def order_correctness(self) -> float:
         return self.__order_correctness
-
-    @property
-    def parallel_preparation(self) -> int:
-        return self.__parallel_preparation

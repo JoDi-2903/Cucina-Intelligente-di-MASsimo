@@ -264,7 +264,7 @@ class ManagerAgent(Agent):
             Some employees are scheduled to work fewer hours and shifts, while others work more. It does not have to be balanced or fair,
             but must contribute to the target function in the best possible way. The challenge is to assign employees for the following day
             in a way that maximizes overall profit. Employees will not be reassigned or replaced during the course of the day. Additionally,
-            each employee has a unique "parallel_preparation" factor, which represents their efficiency or skill level—the higher this factor,
+            each employee has a unique skill factor, which represents their efficiency or skill level—the higher this factor,
             the higher the employee's salary.
         """
         # Decision variables
