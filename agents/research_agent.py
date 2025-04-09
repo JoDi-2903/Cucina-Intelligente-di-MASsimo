@@ -10,6 +10,9 @@ from agents.service_agent import ServiceAgent
 from data_structures.config.config import Config
 from enums.customer_agent_state import CustomerAgentState
 from main import history
+from data_structures.config.logging_config import research_logger
+
+logger = research_logger
 
 
 class ResearchAgent(Agent):
@@ -100,16 +103,22 @@ class ResearchAgent(Agent):
             drop_rating_time=f"{divmod(rating_history.index(min(rating_history)) * 10, 60)[0]}h {divmod(rating_history.index(min(rating_history)) * 10, 60)[1]}m"
         )
 
-        # Generate the report using the LLM model
-        report = ollama.chat(
-            model=Config().research.llm_model,
-            messages=[{"role": "user", "content": prompt}]
-        )
+        try:
+            # Generate the report using the LLM model
+            report = ollama.chat(
+                model=Config().research.llm_model,
+                messages=[{"role": "user", "content": prompt}]
+            )
 
-        # Store the report as a Markdown file
-        os.makedirs(self.__report_folder_path, exist_ok=True)
-        with open(f"{self.__report_folder_path}/report_day_{days_count}.md", "w") as file:
-            file.write(report["message"]["content"])
+            # Store the report as a Markdown file
+            os.makedirs(self.__report_folder_path, exist_ok=True)
+            report_path = f"{self.__report_folder_path}/report_day_{days_count}.md"
+            with open(report_path, "w") as file:
+                file.write(report["message"]["content"])
+        except Exception as ex:
+            logger.error("Step %d: Error while generating report: %s", self.model.steps, ex)
+        else:
+            logger.info("Step %d: Report generated successfully. Path: %s", self.model.steps, report_path)
 
     @staticmethod
     def __create_prompt(
