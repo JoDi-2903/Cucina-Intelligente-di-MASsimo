@@ -66,11 +66,6 @@ class ResearchAgent(Agent):
                                                    if self.model.steps in a.shift_schedule.keys()
                                                    and a.shift_schedule[self.model.steps] == 1]))
         history.add_num_manager_agents(len(self.model.agents_by_type[ManagerAgent]))
-        # history.add_num_agents(
-        #     history.num_customer_agents_history[-1] +
-        #     history.num_active_service_agents_history[-1] +
-        #     history.num_manager_agents_history[-1]
-        # )
 
         # Update the heatmap of the restaurant grid for visualization
         from visualization.restaurant_grid_utils import RestaurantGridUtils  # Avoid circular dependencies
