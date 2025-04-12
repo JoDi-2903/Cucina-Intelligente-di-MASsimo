@@ -131,7 +131,7 @@ instructions can be found on the official [Ollama website](https://ollama.com).
 > #### Note:
 >
 >The **constraints** of the `pyoptinterface` optimizer require that enough service agents are employed to serve the
-> maximum number of guests in each iteration. To calculate the number of service agents, here is an example:
+> maximum number of guests in each iteration. To calculate the number of service agents, here is an example (implementation in `helper/service_agent_calculatory.py`):
 >
 >**Given**:
 >
@@ -157,6 +157,8 @@ instructions can be found on the official [Ollama website](https://ollama.com).
 >
 >There should be set minimum **54 waiters** (`service_agents`) in order to fulfill the constraints of the
 > `pyoptinterface`.
+>
+> > If the configuration value is too low, an indication is printed at the beginning of the program execution.
 
 ### Research
 
