@@ -149,8 +149,7 @@ instructions can be found on the official [Ollama website](https://ollama.com).
 >**Step 2: How many waiter units are required per day?**
 >
 >- There are 144 time steps (10 minutes each) per day:
-   >
-- 144 time steps × 18 waiters = **2,592 waiter time units**.
+>- 144 time steps × 18 waiters = **2,592 waiter time units**.
 >
 >**Step 3: A waiter can work 48 time units (8 hours) per day**.
 >
@@ -165,8 +164,7 @@ instructions can be found on the official [Ollama website](https://ollama.com).
 
 ### Run
 
-- `step_amount` (int): The amount of steps to run in the simulation. Can be overridden with the `endless_mode`
-  parameter.
+- `step_amount` (int): The amount of steps to run in the simulation. Can be overridden with the `endless_mode` parameter.
 - `endless_mode` (bool): If set to `true`, it will overwrite the `step_amount` parameter and rund endlessly.
 - `full_day_cycle_period` (int): The amount of steps that equal to a full day.
     - After 1 day, the optimizer will re-calculate the shift plan for the next day.
@@ -174,6 +172,9 @@ instructions can be found on the official [Ollama website](https://ollama.com).
     - After 5 days, the employee pool is recycled.
     - The LSTM model does a forecast of the customers for the time span of 1 day.
     - The customer spawn function is using the period for creating a periodical spawn rate through the day.
+- `shift_duration_hours` (int): The duration of a single shift in hours.
+- `service_agent_max_working_hours` (int): The maximum amount of hours a service agent is allowed to work (e.g. by law).
+- `service_agent_max_working_shifts` (int): The maximum amount of shifts per day a service agent can be assigned to.
 - `window_size` (int): The window size used in the LSTM model. <br>_Recommended value:_ `full_day_cycle_period`$-1$
 - `retrain_interval` (int): The time after which the LSTM should be retrained with new data.<br>_Recommended value:_
   `full_day_cycle_period`
@@ -189,3 +190,4 @@ instructions can be found on the official [Ollama website](https://ollama.com).
 - `reject_unservable_customers` (bool): Reject customers that can't be served (dish preparation time $+$ dish eating
   time $>$ customer's available time).
 - `clear_old_logs` (bool): Remove old log files and reports before starting a new run.
+- `experienced_manager` (bool): If set to true, the manager **uses machine learning to predict the customer amount**. Otherwise, the manager will just assume that the restaurant will always be full.

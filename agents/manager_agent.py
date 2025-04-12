@@ -46,12 +46,11 @@ class ManagerAgent(Agent):
         :return: agent schedules (dict[agent, list(works_at_step_binary)]) and optimal objective value (total cost)
         """
         # Time parameters
-        n_slots = len(
-            predicted_visitors
-        )  # e.g., 144 time slots for a 24-hour day (10 minutes each)
-        slots_per_hour = 6  # 6 slots per hour (10 minutes each)
+        n_slots = len(predicted_visitors)  # e.g., 144 time slots for a 24-hour day (10 minutes each)
+
+        slots_per_hour = Config().run.full_day_cycle_period // 24  # e.g. 6 slots per hour (10 minutes each)
         n_hours = 24
-        shift_duration_hours = 6  # Each shift lasts 6 hours
+        shift_duration_hours = Config().run.shift_duration_hours  # e.g. Each shift lasts 6 hours
         shift_duration_slots = shift_duration_hours * slots_per_hour  # e.g. 36 slots per shift
         n_shifts = n_hours // shift_duration_hours  # 4 shifts per day
         shifts = [
@@ -60,8 +59,8 @@ class ManagerAgent(Agent):
         ]
 
         # Parameters for each agent
-        max_working_slots = 48  # Maximum working time slots per agent per day
-        max_shifts = 3  # Maximum number of shifts per agent per day
+        max_working_slots = slots_per_hour * Config().run.service_agent_max_working_hours  # Maximum working time slots per agent per day (e.g., 8 hours)
+        max_shifts = Config().run.service_agent_max_working_shifts  # Maximum number of shifts per agent per day
 
         # Create an optimization model using Highs
         model = highs.Model()
@@ -267,17 +266,26 @@ class ManagerAgent(Agent):
             each employee has a unique skill factor, which represents their efficiency or skill level—the higher this factor,
             the higher the employee's salary.
         """
-        # Decision variables
-        if self.model.steps == 1:
-            if Config().run.use_heuristic_for_first_step_prediction:
-                # For the first prediction don't use LSTM model but a simple heuristic based on 80% of the grid size
-                predicted_visitors = [int(round(0.8 * Config().restaurant.grid_height * Config().restaurant.grid_width))] * Config().run.full_day_cycle_period
+
+        # If the manager is experienced, use the LSTM model to predict the number of visitors for the next day.
+        if Config().run.experienced_manager:
+
+            # Decision variables
+            if self.model.steps == 1:
+                if Config().run.use_heuristic_for_first_step_prediction:
+                    # For the first prediction don't use LSTM model but a simple heuristic based on 80% of the grid size
+                    predicted_visitors = [int(round(0.8 * Config().restaurant.grid_height * Config().restaurant.grid_width))] * Config().run.full_day_cycle_period
+                else:
+                    # Alternative approach: Create synthetic input with average values
+                    # Note: Although this approach provides a good approximation for the first 144 steps, it substantially reduces the prediction quality of all further predictions due to the constant synthetic data in the history
+                    predicted_visitors: list[int] = self.model.lstm_model.forecast(n=Config().run.full_day_cycle_period, first_step=True)
             else:
-                # Alternative approach: Create synthetic input with average values
-                # Note: Although this approach provides a good approximation for the first 144 steps, it substantially reduces the prediction quality of all further predictions due to the constant synthetic data in the history
-                predicted_visitors: list[int] = self.model.lstm_model.forecast(n=Config().run.full_day_cycle_period, first_step=True)
+                predicted_visitors: list[int] = self.model.lstm_model.forecast(n=Config().run.full_day_cycle_period)
+
+        # If the manager is inexperienced, always predict a full restaurant.
         else:
-            predicted_visitors: list[int] = self.model.lstm_model.forecast(n=Config().run.full_day_cycle_period)
+            predicted_visitors = [Config().restaurant.grid_height * Config().restaurant.grid_width] * Config().run.full_day_cycle_period
+
         history.add_predicted_customer_agents(predicted_visitors)
         available_service_agents = list(self.model.agents_by_type[ServiceAgent])
 

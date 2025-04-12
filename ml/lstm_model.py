@@ -53,7 +53,7 @@ class LSTMModel:
         logger.info("LSTM model initialized.")
     
         # If a pretraining CSV file is provided, perform pretraining using historical data.
-        if pretrained_csv_path is not None:
+        if Config().run.experienced_manager and pretrained_csv_path is not None:
             self.pretrain(pretrained_csv_path, pretrain_epochs)
     
     def normalize_data(self, customer_count: int, satisfaction_rating: float) -> tuple[float, float]:

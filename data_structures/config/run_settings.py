@@ -11,6 +11,9 @@ class RunSettings:
         if config is not None:
             self.__step_amount: int = config["step_amount"]
             self.__full_day_cycle_period: int = config["full_day_cycle_period"]
+            self.__shift_duration_hours: int = config["shift_duration_hours"]
+            self.__service_agent_max_working_hours: int = config["service_agent_max_working_hours"]
+            self.__service_agent_max_working_shifts: int = config["service_agent_max_working_shifts"]
             self.__window_size: int = config["window_size"]
             self.__retrain_interval: int = config["retrain_interval"]
             self.__pretrain_epochs: int = config["pretrain_epochs"]
@@ -19,6 +22,7 @@ class RunSettings:
             self.__endless_mode: bool = bool(config["endless_mode"])
             self.__reject_unservable_customers: bool = bool(config["reject_unservable_customers"])
             self.__clear_old_logs: bool = bool(config["clear_old_logs"])
+            self.__experienced_manager: bool = bool(config["experienced_manager"])  # Neues Attribut hinzugefügt
         else:
             raise ValueError("No default values for run settings available.")
 
@@ -61,3 +65,19 @@ class RunSettings:
     @property
     def clear_old_logs(self) -> bool:
         return self.__clear_old_logs
+
+    @property
+    def experienced_manager(self) -> bool:
+        return self.__experienced_manager
+
+    @property
+    def shift_duration_hours(self) -> int:
+        return self.__shift_duration_hours
+
+    @property
+    def service_agent_max_working_hours(self) -> int:
+        return self.__service_agent_max_working_hours
+
+    @property
+    def service_agent_max_working_shifts(self) -> int:
+        return self.__service_agent_max_working_shifts

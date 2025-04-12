@@ -41,12 +41,16 @@
     "step_amount": 1440,
     "endless_mode": false,
     "full_day_cycle_period": 144,
+    "shift_duration_hours": 6,
+    "service_agent_max_working_hours": 8,
+    "service_agent_max_working_shifts": 3,
     "window_size": 143,
     "retrain_interval": 144,
     "pretrain_epochs": 5,
     "use_heuristic_for_first_step_prediction": true,
     "overwrite_lstm_training_dataset": false,
     "reject_unservable_customers": true,
-    "clear_old_logs": true
+    "clear_old_logs": true,
+    "experienced_manager": true
   }
 }
