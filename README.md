@@ -193,3 +193,14 @@ instructions can be found on the official [Ollama website](https://ollama.com).
   time $>$ customer's available time).
 - `clear_old_logs` (bool): Remove old log files and reports before starting a new run.
 - `experienced_manager` (bool): If set to true, the manager **uses machine learning to predict the customer amount**. Otherwise, the manager will just assume that the restaurant will always be full.
+
+<br>
+
+## Menu
+
+Menu adjustments can be made in `data/menu.json`. Each time parameter is provided as time steps. Every dish has a `preparationTime` and an `eatingTime` field.
+
+The preparation time is extended if the amount of customers is high. Since the service agents are abstractions of waiters and chefs, they also prepare the food. In the implementation, they just decrease the preparation time by one.  
+Since service agents also have a limited capacity per step, they can only serve that amount of customers. If the amount of customers is too high, they are forced to wait more - the food preparation takes longer. 
+
+The eating time is reduced by the customers on their own and does not include variability.
