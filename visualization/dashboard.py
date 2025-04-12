@@ -28,7 +28,7 @@ class Dashboard:
         self.dash_app.layout = html.Div([
             html.Div([
                 html.H1(
-                    "Restaurant metrics dashboard",
+                    "Cucina intelligente - metrics dashboard",
                     style={
                         'textAlign': 'center',
                         'color': 'white',

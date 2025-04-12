@@ -13,7 +13,7 @@ class RouteAlgorithm(Enum):
         :return: The route algorithm if found, otherwise the default route algorithm (ACO).
         """
         for route_algorithm in RouteAlgorithm:
-            if route_algorithm.name == value:
+            if route_algorithm.name == value.upper():
                 return route_algorithm
 
         return RouteAlgorithm.ACO

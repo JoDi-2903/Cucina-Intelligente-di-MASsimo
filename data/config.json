@@ -2,7 +2,8 @@
   "Rating": {
     "rating_default": 4,
     "rating_min": 0,
-    "rating_max": 5
+    "rating_max": 5,
+    "rating_strategy": "random"
   },
   "Orders": {
     "order_correctness": 0.80

@@ -6,6 +6,7 @@ from data_structures.config.config import Config
 from data_structures.config.logging_config import customer_logger
 from data_structures.menu import Menu
 from enums.customer_agent_state import CustomerAgentState
+from enums.rating_strategy import RatingStrategy
 
 logger = customer_logger
 
@@ -95,16 +96,29 @@ class CustomerAgent(Agent):
         rating_variability = random.random() * self.num_people * random.choice([-1,1])
 
         ####### Final Rating
-
-        self.rating = max(
-            self.rating_min,
-            min(
-                self.rating_max,
-                int(self.rating_max - waiting_penalty - order_error_penalty + rating_variability)
+        if Config().rating.rating_strategy == RatingStrategy.RANDOM:
+            # Take a random rating and subtract the penalties
+            self.rating = round(
+                max(
+                    self.rating_min, 
+                    min(
+                        self.rating_max,
+                        random.randint(self.rating_min, self.rating_max) - waiting_penalty - order_error_penalty + rating_variability
+                    )
+                ), 2
             )
-        )
+        else:
+            # Take the maximal rating and just subtract the penalties
+            self.rating = max(
+                self.rating_min,
+                min(
+                    self.rating_max,
+                    int(self.rating_max - waiting_penalty - order_error_penalty + rating_variability)
+                )
+            )
+
         logger.debug(
-            f"Customer {self.unique_id} rating {self.rating}. num people {self.num_people}, alpha {alpha:.2f}, beta {beta:.2f}, random error {random_error:.2f}, exceedance ratio {exceedance_ratio:.2f}, waiting penalty {waiting_penalty:.2f}, order error penalty {order_error_penalty:.2f}, rating variabilty {rating_variability:.2f}")
+            f"Customer {self.unique_id} rating {self.rating} (strategy {Config().rating.rating_strategy}). num people {self.num_people}, random error {random_error:.2f}, exceedance ratio {exceedance_ratio:.2f}, waiting penalty {waiting_penalty:.2f}, order error penalty {order_error_penalty:.2f}, rating variabilty {rating_variability:.2f}")
 
     def get_global_rating_contribution(self):
         """Return the contribution to the global restaurant rating"""

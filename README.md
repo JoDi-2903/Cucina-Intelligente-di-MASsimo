@@ -78,6 +78,9 @@ instructions can be found on the official [Ollama website](https://ollama.com).
   rating) yet.
 - `rating_min` (int): Minimal possible rating value.
 - `rating_max` (int): Maximal possible rating value.
+- `rating_strategy`(string): The strategy to use for the calculation of the rating. Possible values are `MAX` and `RANDOM`.
+  - `MAX`: Take the maximal **possible rating value** and subtract the penalties and variability.
+  - `RANDOM`: Take a **random rating value** and subtract the penalties and variability.
 
 ### Orders
 
