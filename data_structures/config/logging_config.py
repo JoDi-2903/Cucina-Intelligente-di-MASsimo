@@ -15,14 +15,12 @@ if Config().run.clear_old_logs:
         shutil.rmtree(log_directory)
 
     # Also clear the reports directory if it exists
-    if os.path.exists("reports"):
-        shutil.rmtree("reports")
+    if os.path.exists("report"):
+        shutil.rmtree("report")
 
 
 # Ensure the log directory exists
-
-if not os.path.exists(log_directory):
-    os.makedirs(log_directory)
+os.makedirs(log_directory, exist_ok=True)
 
 
 def setup_logger(name):

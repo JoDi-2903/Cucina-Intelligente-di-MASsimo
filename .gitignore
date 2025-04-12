@@ -172,4 +172,4 @@ cython_debug/
 .idea
 
 .ds_store
-/reports
+/report

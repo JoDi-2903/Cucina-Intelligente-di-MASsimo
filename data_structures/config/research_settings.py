@@ -15,7 +15,7 @@ class ResearchSettings:
             self.__llm_model = config["llm_model"]
             self.__is_report_generation_active: bool = self.__is_ollama_running()
         else:
-            self.__llama_model_path: str = ""
+            self.__llm_model: str = ""
             self.__is_report_generation_active: bool = False
 
     @staticmethod

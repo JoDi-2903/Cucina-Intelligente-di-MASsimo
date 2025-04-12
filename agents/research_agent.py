@@ -8,9 +8,9 @@ from agents.customer_agent import CustomerAgent
 from agents.manager_agent import ManagerAgent
 from agents.service_agent import ServiceAgent
 from data_structures.config.config import Config
+from data_structures.config.logging_config import research_logger
 from enums.customer_agent_state import CustomerAgentState
 from main import history
-from data_structures.config.logging_config import research_logger
 
 logger = research_logger
 
@@ -22,7 +22,7 @@ class ResearchAgent(Agent):
 
     def __init__(self, model: Model):
         """
-        Initialize the research agent with the passed restaurant model and log into the Hugging Face Hub to use the LLM.
+        Initialize the research agent with the passed restaurant model.
         :param model: The restaurant model
         """
         super().__init__(model)
@@ -30,7 +30,7 @@ class ResearchAgent(Agent):
         # If ollama is running, initialize the report folder path
         self.__report_folder_path: str = ""
         if Config().research.is_report_generation_active:
-            self.__report_folder_path: str = f"reports/{datetime.now().strftime('%d-%m-%Y_%H-%M-%S-%f')[:-3]}"
+            self.__report_folder_path: str = f"report/{datetime.now().strftime('%d-%m-%Y_%H-%M-%S-%f')[:-3]}"
 
     def step(self):
         """
@@ -40,7 +40,10 @@ class ResearchAgent(Agent):
 
         # Interpret the statistics if the agent is logged in and the end of a day is reached
         if Config().research.is_report_generation_active and self.model.steps % Config().run.full_day_cycle_period == 0:
-            self.__create_report()
+                self.__create_report()
+        elif self.model.steps % Config().run.full_day_cycle_period == 0:
+            logger.info("Step %d: Report generation is skipped because ollama is not running.", self.model.steps)
+        
 
     def __update_histories(self):
         """Update the history lists with the current values."""
