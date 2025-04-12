@@ -80,7 +80,7 @@ class CustomerAgent(Agent):
         ####### Exceeding Time Penalty
 
         # Ratio proportional to overall time
-        exceedance_ratio = self.init_time + abs(self.time_left) / self.init_time \
+        exceedance_ratio = (self.init_time - self.time_left) / self.init_time \
             if self.time_left < 0 else 0
 
         # Apply penalty only if time_left is negative (time exceeded)
@@ -89,7 +89,10 @@ class CustomerAgent(Agent):
         ####### Rating Variability
 
         # Introduce additional variability to the final rating
-        rating_variability = random.uniform(-1, 1) * self.num_people
+            # random.random generates a float between 0 and 1
+            # Multiply by num_people to increase variability with more people
+            # random.choice([-1,1]) randomly selects either -1 or 1 to increase or decrease the rating
+        rating_variability = random.random() * self.num_people * random.choice([-1,1])
 
         ####### Final Rating
 
@@ -120,7 +123,7 @@ class CustomerAgent(Agent):
 
         # If customer is rejected, set rating to the worst and set agent to done
         if self.state == CustomerAgentState.REJECTED:
-            self.rating = self.rating_min
+            self.rating = int(max(self.rating_min, min(self.rating_max, self.rating_max - random.randint(0, 5))))
             logger.info(self)
             self.state = CustomerAgentState.DONE
             return
