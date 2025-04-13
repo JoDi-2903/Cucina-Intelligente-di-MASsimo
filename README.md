@@ -38,6 +38,14 @@ The package `acopy` must be installed separately without its nested dependencies
 version of `click`, and since no functionality from `acopy` that depends on `click` is used, `acopy` can be safely
 installed without dependencies.
 
+### Start
+
+To start the program, run the main script:
+
+```bash
+python main.py
+```
+
 ### LSTM Model for Customer Flow Prediction
 
 The restaurant simulation employs a Long Short-Term Memory (LSTM) neural network to forecast customer counts and
@@ -78,9 +86,10 @@ instructions can be found on the official [Ollama website](https://ollama.com).
   rating) yet.
 - `rating_min` (int): Minimal possible rating value.
 - `rating_max` (int): Maximal possible rating value.
-- `rating_strategy`(string): The strategy to use for the calculation of the rating. Possible values are `MAX` and `RANDOM`.
-  - `MAX`: Take the maximal **possible rating value** and subtract the penalties and variability.
-  - `RANDOM`: Take a **random rating value** and subtract the penalties and variability.
+- `rating_strategy`(string): The strategy to use for the calculation of the rating. Possible values are `MAX` and
+  `RANDOM`.
+    - `MAX`: Take the maximal **possible rating value** and subtract the penalties and variability.
+    - `RANDOM`: Take a **random rating value** and subtract the penalties and variability.
 
 ### Orders
 
@@ -131,7 +140,8 @@ instructions can be found on the official [Ollama website](https://ollama.com).
 > #### Note:
 >
 >The **constraints** of the `pyoptinterface` optimizer require that enough service agents are employed to serve the
-> maximum number of guests in each iteration. To calculate the number of service agents, here is an example (implementation in `helper/service_agent_calculatory.py`):
+> maximum number of guests in each iteration. To calculate the number of service agents, here is an example (
+> implementation in `helper/service_agent_calculatory.py`):
 >
 >**Given**:
 >
@@ -166,7 +176,8 @@ instructions can be found on the official [Ollama website](https://ollama.com).
 
 ### Run
 
-- `step_amount` (int): The amount of steps to run in the simulation. Can be overridden with the `endless_mode` parameter.
+- `step_amount` (int): The amount of steps to run in the simulation. Can be overridden with the `endless_mode`
+  parameter.
 - `endless_mode` (bool): If set to `true`, it will overwrite the `step_amount` parameter and rund endlessly.
 - `full_day_cycle_period` (int): The amount of steps that equal to a full day.
     - After 1 day, the optimizer will re-calculate the shift plan for the next day.
@@ -192,15 +203,19 @@ instructions can be found on the official [Ollama website](https://ollama.com).
 - `reject_unservable_customers` (bool): Reject customers that can't be served (dish preparation time $+$ dish eating
   time $>$ customer's available time).
 - `clear_old_logs` (bool): Remove old log files and reports before starting a new run.
-- `experienced_manager` (bool): If set to true, the manager **uses machine learning to predict the customer amount**. Otherwise, the manager will just assume that the restaurant will always be full.
+- `experienced_manager` (bool): If set to true, the manager **uses machine learning to predict the customer amount**.
+  Otherwise, the manager will just assume that the restaurant will always be full.
 
 <br>
 
 ## Menu
 
-Menu adjustments can be made in `data/menu.json`. Each time parameter is provided as time steps. Every dish has a `preparationTime` and an `eatingTime` field.
+Menu adjustments can be made in `data/menu.json`. Each time parameter is provided as time steps. Every dish has a
+`preparationTime` and an `eatingTime` field.
 
-The preparation time is extended if the amount of customers is high. Since the service agents are abstractions of waiters and chefs, they also prepare the food. In the implementation, they just decrease the preparation time by one.  
-Since service agents also have a limited capacity per step, they can only serve that amount of customers. If the amount of customers is too high, they are forced to wait more - the food preparation takes longer. 
+The preparation time is extended if the amount of customers is high. Since the service agents are abstractions of
+waiters and chefs, they also prepare the food. In the implementation, they just decrease the preparation time by one.  
+Since service agents also have a limited capacity per step, they can only serve that amount of customers. If the amount
+of customers is too high, they are forced to wait more - the food preparation takes longer.
 
 The eating time is reduced by the customers on their own and does not include variability.
